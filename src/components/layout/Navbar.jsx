@@ -1,82 +1,93 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import { Button } from "../ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
-import { Menu } from "lucide-react";
 
-export default function Navbar() {
+export default function Navbar({ onNavigateToLogin }) {
   const [scrolled, setScrolled] = useState(false);
 
+  // Detect Scroll
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Smooth Scroll
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+    if (section) {
+      window.scrollTo({
+        top: section.offsetTop - 90, // navbar height offset
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const navItems = [
+    { label: "Features", id: "features" },
+    { label: "Services", id: "services" },
+    { label: "How It Works", id: "how-it-works" },
+    { label: "Reviews", id: "reviews" },
+    { label: "Contact", id: "footer" }
+  ];
+
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all ${
-        scrolled ? "bg-white shadow-md" : "bg-white"
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white shadow-md backdrop-blur-md"
+          : "bg-white/90 backdrop-blur-sm"
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="bg-blue-600 rounded-lg h-10 w-10 flex items-center justify-center">
-            <span className="text-white text-xl font-bold">💙</span>
+      <div className="max-w-[1350px] mx-auto px-6">
+        <div className="flex items-center justify-between h-20">
+          
+          {/* Logo */}
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => scrollToSection("hero")}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-lg font-semibold text-blue-700">
+              Swasthya Connect
+            </span>
           </div>
-          <span className="text-xl font-semibold text-gray-900">
-            Swasthya <span className="text-teal-600">Connect</span>
-          </span>
-        </Link>
 
-        {/* Desktop Menu */}
-        <ul className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#how">How it Works</a></li>
-          <li><a href="#reviews">Reviews</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToSection(item.id)}
+                className="text-gray-700 hover:text-blue-700 transition text-sm"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
 
-        {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="outline">Sign In</Button>
-          </Link>
-          <Link to="/register">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+          {/* Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={onNavigateToLogin}
+              className="text-blue-600"
+            >
+              Sign In
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6"
+              onClick={onNavigateToLogin}
+            >
               Get Started
             </Button>
-          </Link>
+          </div>
         </div>
-
-        {/* Mobile Menu */}
-        <Sheet>
-          <SheetTrigger className="md:hidden">
-            <Menu className="h-7 w-7 text-gray-700" />
-          </SheetTrigger>
-
-          <SheetContent side="left" className="p-6">
-            <ul className="flex flex-col gap-6 text-lg text-gray-800 font-medium">
-              <li><a href="#features">Features</a></li>
-              <li><a href="#services">Services</a></li>
-              <li><a href="#how">How it Works</a></li>
-              <li><a href="#reviews">Reviews</a></li>
-              <li><a href="#contact">Contact</a></li>
-
-              <Link to="/login">
-                <Button className="w-full" variant="outline">Sign In</Button>
-              </Link>
-              <Link to="/register">
-                <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white">
-                  Get Started
-                </Button>
-              </Link>
-            </ul>
-          </SheetContent>
-        </Sheet>
-      </nav>
+      </div>
     </header>
   );
 }

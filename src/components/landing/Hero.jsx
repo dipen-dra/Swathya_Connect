@@ -1,52 +1,143 @@
-import heroImg from "../../assets/hero-dashboard.png"; // you will replace this later
+import { Info, Video, CheckCircle2, Calendar } from "lucide-react";
 import { Button } from "../ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
-  return (
-    <section className="pt-32 pb-20 bg-gradient-to-b from-white to-[#f4f9ff]">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+  const navigate = useNavigate();
 
-        {/* LEFT SIDE TEXT */}
+  const handleLoginNavigate = () => {
+    navigate("/login");
+  };
+
+  return (
+    <section id="hero" className="w-full py-28 bg-white">
+      <div className="max-w-[1440px] mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+        
+        {/* LEFT CONTENT */}
         <div>
-          <div className="text-sm bg-blue-100 text-blue-700 px-4 py-1 rounded-full inline-block mb-4 font-medium">
-            Nepal's Premier Healthcare Platform • Trusted by 10,000+ Users
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-6">
+            <Info className="w-4 h-4" />
+            <span className="text-sm">
+              Nepal's Premier Healthcare Platform • Trusted by 10,000+ Users
+            </span>
           </div>
 
-          <h1 className="text-5xl font-bold leading-tight text-gray-900 mb-6">
+          {/* Heading */}
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
             Advanced Healthcare,{" "}
-            <span className="text-teal-600">Digitally Connected</span>
+            <span className="text-blue-600">Digitally Connected</span>
           </h1>
 
-          <p className="text-lg text-gray-600 mb-8">
-            Nepal's most advanced telemedicine platform connecting patients 
-            with board-certified specialists. Experience world-class healthcare 
-            with secure consultations and digital prescriptions.
+          {/* Description */}
+          <p className="text-gray-600 text-xl mb-10 leading-relaxed">
+            Nepal's most advanced telemedicine platform connecting patients with
+            board-certified specialists. Experience world-class healthcare with
+            secure consultations and digital prescriptions.
           </p>
 
-          <div className="flex gap-4">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-6 text-lg">
-              Start Consultation →
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap gap-4 mb-10">
+            <Button
+              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white h-12 px-6"
+              onClick={handleLoginNavigate}
+            >
+              <span className="mr-2">→</span>
+              Start Consultation
             </Button>
-            <Button variant="outline" className="px-6 py-6 text-lg">
-              Watch Demo ▶
+
+            <Button variant="outline" className="h-12 px-6 border-2">
+              <Video className="w-4 h-4 mr-2" />
+              Watch Demo
             </Button>
           </div>
 
-          <div className="flex gap-8 mt-8 text-gray-600">
-            <span>💠 HIPAA Compliant</span>
-            <span>💠 Board Certified Doctors</span>
-            <span>💠 Secure Payments</span>
+          {/* Trust Badges */}
+          <div className="flex flex-wrap gap-6">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-teal-500" />
+              <span className="text-sm text-gray-700">HIPAA Compliant</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-teal-500" />
+              <span className="text-sm text-gray-700">Board Certified Doctors</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-teal-500" />
+              <span className="text-sm text-gray-700">Secure Payments</span>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT SIDE DASHBOARD PREVIEW */}
-        <div className="flex justify-center">
-          <img
-            src={heroImg}
-            alt="Dashboard UI"
-            className="w-[90%] rounded-2xl shadow-xl"
-          />
+        {/* RIGHT CONTENT — Dashboard Card */}
+        <div className="relative">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+
+            {/* Card Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-teal-500 p-6 text-white">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <span>Patient Dashboard</span>
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="p-6">
+
+              {/* Doctor Info */}
+              <div className="flex items-center justify-between mb-6 p-4 bg-blue-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
+                    SW
+                  </div>
+                  <div>
+                    <p className="text-gray-900 font-medium">Dr. Sarah Wilson</p>
+                    <p className="text-sm text-gray-600">Cardiologist</p>
+                  </div>
+                </div>
+                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                  Available
+                </span>
+              </div>
+
+              {/* Appointment */}
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                <span className="text-gray-700">Next Appointment</span>
+                <span className="text-teal-600 font-medium">Today, 2:30 PM</span>
+              </div>
+
+              {/* Health Score */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                <span className="text-gray-700">Health Score</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600 font-medium">85/100</span>
+                  <span className="text-green-500 text-lg">↗</span>
+                </div>
+              </div>
+
+              {/* Button */}
+              <Button
+                className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
+                onClick={handleLoginNavigate}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Book Consultation
+              </Button>
+            </div>
+          </div>
+
+          {/* Floating Doctor Image */}
+          <div className="hidden lg:block absolute -bottom-8 -left-16 w-32 h-32 rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+            <img
+              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop"
+              alt="Medical Professional"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
+
       </div>
     </section>
   );
