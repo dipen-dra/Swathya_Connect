@@ -10,8 +10,11 @@ export default function Hero() {
   };
 
   return (
-    <section id="hero" className="w-full py-28 bg-white">
-      <div className="max-w-[1440px] mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+    <section
+      id="hero"
+      className="w-full py-28 bg-white scroll-mt-24"
+    >
+      <div className="max-w-[1440px] mx-auto px-8 grid lg:grid-cols-2 gap-20 items-center">
         
         {/* LEFT CONTENT */}
         <div>
@@ -30,7 +33,7 @@ export default function Hero() {
           </h1>
 
           {/* Description */}
-          <p className="text-gray-600 text-xl mb-10 leading-relaxed">
+          <p className="text-gray-600 text-xl mb-10 leading-relaxed max-w-2xl">
             Nepal's most advanced telemedicine platform connecting patients with
             board-certified specialists. Experience world-class healthcare with
             secure consultations and digital prescriptions.
@@ -72,8 +75,8 @@ export default function Hero() {
         </div>
 
         {/* RIGHT CONTENT — Dashboard Card */}
-        <div className="relative">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div className="relative flex justify-center items-center">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 w-full max-w-md">
 
             {/* Card Header */}
             <div className="bg-gradient-to-r from-blue-600 to-teal-500 p-6 text-white">
@@ -129,7 +132,7 @@ export default function Hero() {
           </div>
 
           {/* Floating Doctor Image */}
-          <div className="hidden lg:block absolute -bottom-8 -left-16 w-32 h-32 rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+          <div className="hidden lg:block absolute -bottom-10 -left-20 w-36 h-36 rounded-2xl overflow-hidden shadow-lg border border-gray-200">
             <img
               src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop"
               alt="Medical Professional"
