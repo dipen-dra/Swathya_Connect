@@ -16,6 +16,7 @@ import {
   Lock 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import Logo from "@/assets/swasthyalogo.png";
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -156,10 +157,14 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4 pt-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Heart className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Swasthya Connect</h1>
+            {/* <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl flex items-center justify-center"> */}
+              <img
+              src={Logo}
+              alt="Swasthya Connect Logo" 
+    className="h-30 w-auto object-contain"
+              />
+            {/* </div> */}
+            {/* <h1 className="text-2xl font-bold text-gray-900">Swasthya Connect</h1> */}
           </div>
           <p className="text-gray-600 text-sm">Healthcare at your fingertips</p>
         </div>

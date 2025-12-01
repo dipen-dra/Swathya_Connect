@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Logo from "@/assets/swasthyalogo.png";
 import { 
   Heart, 
   Mail, 
@@ -77,12 +78,20 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
+  <div className="flex items-center justify-center space-x-3 mb-3">
+    <img 
+      src={Logo} 
+      alt="Swasthya Connect Logo" 
+      className="h-30 w-auto object-contain"
+    />
+  </div>
+        {/* <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-teal-500 rounded-lg flex items-center justify-center shadow-lg">
               <Heart className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Swasthya Connect</h1>
-          </div>
+          </div> */}
         </div>
 
         {/* Reset Password Card */}

@@ -130,7 +130,7 @@ export default function Navbar() {
           <img
             src={Logo}
             alt="Swasthya Connect Logo"
-            className="w-14 h-14 object-contain"
+            className="w-auto h-25 object-contain"
           />
           <span className="text-lg font-semibold text-blue-700">
           </span>
