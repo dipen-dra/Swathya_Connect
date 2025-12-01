@@ -31,26 +31,34 @@ export default function ForgotPassword() {
     e.preventDefault();
     
     if (!email) {
-      toast.error('Please enter your email address.');
+      toast.error("Email required", {
+        description: "Please enter your email address.",
+      });
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate API call
+    // Simulate API
     setTimeout(() => {
       setIsLoading(false);
       setIsEmailSent(true);
-      toast.success('Reset link sent to your email.');
-    }, 2000);
+
+      toast.success("Reset link sent!", {
+        description: "Check your inbox and spam folder.",
+      });
+    }, 1500);
   };
 
   const handleResendEmail = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      toast.success('Password reset link has been sent again.');
-    }, 1500);
+
+      toast.info("Email sent again", {
+        description: "We've resent the password reset instructions.",
+      });
+    }, 1000);
   };
 
   return (
@@ -83,10 +91,11 @@ export default function ForgotPassword() {
             <CardTitle className="text-2xl font-bold text-gray-900">
               {isEmailSent ? 'Check Your Email' : 'Reset Password'}
             </CardTitle>
+
             <CardDescription className="text-gray-600 text-base mt-2">
               {isEmailSent 
-                ? 'We\'ve sent password reset instructions to your email'
-                : 'Enter your email address and we\'ll send you a reset link'
+                ? "We've sent reset instructions to your email."
+                : "Enter your email and we'll send you a reset link."
               }
             </CardDescription>
           </CardHeader>
@@ -142,16 +151,16 @@ export default function ForgotPassword() {
                       <div>
                         <p className="text-sm font-semibold text-blue-900">What's next?</p>
                         <ul className="text-xs text-blue-700 mt-1 space-y-1.5 list-disc list-inside">
-                          <li>Check your email inbox and spam folder</li>
-                          <li>Click the reset link in the email</li>
-                          <li>Create a new secure password</li>
+                          <li>Check your email inbox & spam folder</li>
+                          <li>Click the reset link</li>
+                          <li>Create a new password</li>
                         </ul>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Action Buttons */}
+                {/* Buttons */}
                 <div className="space-y-3">
                   <Button
                     onClick={handleResendEmail}
@@ -159,7 +168,7 @@ export default function ForgotPassword() {
                     variant="outline"
                     className="w-full h-11 border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg"
                   >
-                    {isLoading ? 'Resending...' : 'Resend Email'}
+                    {isLoading ? "Resending..." : "Resend Email"}
                   </Button>
                   
                   <Button
@@ -185,9 +194,9 @@ export default function ForgotPassword() {
           <CardContent className="p-6">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Need Help?</h3>
             <ul className="space-y-2 text-xs text-gray-600 list-disc list-inside">
-              <li>Make sure to check your spam/junk folder</li>
-              <li>Reset links expire after 1 hour for security</li>
-              <li>Contact support if you don't receive the email</li>
+              <li>Check your spam/junk folder</li>
+              <li>Reset links expire after 1 hour</li>
+              <li>Contact support if you don’t receive the email</li>
             </ul>
             <div className="mt-4 pt-4 border-t border-gray-200/60">
               <p className="text-xs text-gray-500">
