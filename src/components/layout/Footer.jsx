@@ -1,4 +1,5 @@
 import { Shield, MapPin, Phone, Mail } from "lucide-react";
+import Logo from "@/assets/swasthyalogo.png"; // ← ADD THIS
 
 export default function Footer() {
   const platformLinks = [
@@ -20,15 +21,18 @@ export default function Footer() {
   return (
     <footer className="bg-[#0f172a] text-gray-300" id="footer">
       <div className="max-w-[1440px] mx-auto px-8 py-24">
+
         {/* Top Grid */}
         <div className="grid md:grid-cols-3 gap-16 mb-20">
 
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
+              <img
+                src={Logo}
+                alt="Swasthya Connect Logo"
+                className="h-12 w-auto object-contain"
+              />
               <span className="text-white text-xl font-semibold">
                 Swasthya Connect
               </span>
@@ -133,6 +137,7 @@ export default function Footer() {
             </p>
           </div>
         </div>
+
       </div>
     </footer>
   );
