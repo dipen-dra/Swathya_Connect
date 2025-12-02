@@ -80,8 +80,6 @@
 
 
 
-
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/assets/swasthyalogo.png"; // <-- Add your logo import here
@@ -130,19 +128,17 @@ export default function Navbar() {
           <img
             src={Logo}
             alt="Swasthya Connect Logo"
-            className="w-auto h-25 object-contain"
+            className="w-auto h-16 object-contain"
           />
-          <span className="text-lg font-semibold text-blue-700">
-          </span>
         </div>
 
-        {/* Nav */}
+        {/* Navigation */}
         <nav className="hidden md:flex gap-8">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => scrollToId(item.id)}
-              className="text-gray-700 hover:text-blue-600"
+              className="text-gray-700 hover:text-blue-600 transition"
             >
               {item.label}
             </button>
@@ -153,7 +149,7 @@ export default function Navbar() {
         <div className="hidden md:flex gap-3">
           <button
             onClick={() => navigate("/login")}
-            className="text-blue-600 hover:underline"
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition"
           >
             Sign In
           </button>
