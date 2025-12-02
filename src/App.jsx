@@ -1,9 +1,33 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
+
+import Home from "./pages/Home";
+import Login from "./pages/LoginPage";
+import ForgotPassword from "./pages/ForgotPassword";
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <h1 className="text-5xl font-bold text-blue-600">
-        Tailwind is Working!
-      </h1>
-    </div>
+    <>
+      {/* GLOBAL TOAST SYSTEM */}
+      <Toaster
+        position="top-right"
+        richColors
+        expand
+        theme="light"
+      />
+
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth" element={<Login />} />
+
+          {/* Forgot Password Route */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
