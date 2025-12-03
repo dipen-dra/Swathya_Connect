@@ -23,7 +23,7 @@
 // import { Card, CardContent } from "@/components/ui/card";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// // Label Component
+// // Clean lightweight label
 // const Label = ({ children, className, ...props }) => (
 //   <label
 //     className={`text-sm font-normal text-gray-600 ${className}`}
@@ -59,27 +59,56 @@
 //   });
 
 //   const roles = [
-//     {
-//       id: "patient",
-//       label: "Patient",
-//       icon: User,
-//       color: "border-blue-200 bg-blue-50 text-blue-700",
-//     },
-//     {
-//       id: "doctor",
-//       label: "Doctor",
-//       icon: Stethoscope,
-//       color: "border-green-200 bg-green-50 text-green-700",
-//     },
-//     {
-//       id: "pharmacy",
-//       label: "Pharmacy",
-//       icon: Building2,
-//       color: "border-purple-200 bg-purple-50 text-purple-700",
-//     },
+//     { id: "patient", label: "Patient", icon: User },
+//     { id: "doctor", label: "Doctor", icon: Stethoscope },
+//     { id: "pharmacy", label: "Pharmacy", icon: Building2 },
 //   ];
 
-//   // ------------------ LOGIN ------------------
+//   // Role button component with restored colors
+//   const RoleButton = ({ role, selected, onSelect }) => {
+//     const colors = {
+//       patient: {
+//         border: "border-blue-500",
+//         bg: "bg-blue-50",
+//         icon: "text-blue-600",
+//       },
+//       doctor: {
+//         border: "border-green-500",
+//         bg: "bg-green-50",
+//         icon: "text-green-600",
+//       },
+//       pharmacy: {
+//         border: "border-purple-500",
+//         bg: "bg-purple-50",
+//         icon: "text-purple-600",
+//       },
+//     };
+
+//     const isSelected = selected === role.id;
+
+//     return (
+//       <button
+//         type="button"
+//         onClick={() => onSelect(role.id)}
+//         className={`p-3 rounded-xl border-2 flex flex-col items-center transition ${
+//           isSelected
+//             ? `${colors[role.id].border} ${colors[role.id].bg}`
+//             : "border-gray-200 bg-white hover:border-gray-300"
+//         }`}
+//       >
+//         <role.icon
+//           className={`h-5 w-5 ${
+//             isSelected ? colors[role.id].icon : "text-gray-500"
+//           }`}
+//         />
+
+//         <span className="text-xs mt-1 font-normal text-gray-600">
+//           {role.label}
+//         </span>
+//       </button>
+//     );
+//   };
+
 //   const handleLogin = (e) => {
 //     e.preventDefault();
 
@@ -100,7 +129,6 @@
 //     }, 1500);
 //   };
 
-//   // ------------------ REGISTER ------------------
 //   const handleRegister = (e) => {
 //     e.preventDefault();
 
@@ -140,13 +168,11 @@
 //     }, 1500);
 //   };
 
-//   // ------------------ UI ------------------
 //   const inputStyle =
 //     "pl-10 pr-10 h-12 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white placeholder:text-gray-400";
 
 //   return (
 //     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative">
-//       {/* Back Button */}
 //       <Button
 //         variant="ghost"
 //         onClick={() => navigate("/")}
@@ -157,7 +183,6 @@
 //       </Button>
 
 //       <div className="w-full max-w-md">
-//         {/* Header */}
 //         <div className="text-center mb-8">
 //           <div className="flex items-center justify-center mb-4 pt-2">
 //             <img
@@ -169,13 +194,10 @@
 //           <p className="text-gray-600 text-sm">Healthcare at your fingertips</p>
 //         </div>
 
-//         {/* Card */}
 //         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
 //           <CardContent className="p-8">
 //             <Tabs value={activeTab} onValueChange={setActiveTab}>
 //               <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 p-1 rounded-xl">
-
-//                 {/* LOGIN TAB */}
 //                 <TabsTrigger
 //                   value="login"
 //                   className={`rounded-lg ${
@@ -187,7 +209,6 @@
 //                   Login
 //                 </TabsTrigger>
 
-//                 {/* REGISTER TAB */}
 //                 <TabsTrigger
 //                   value="register"
 //                   className={`rounded-lg ${
@@ -203,31 +224,20 @@
 //               {/* ---------------- LOGIN ---------------- */}
 //               <TabsContent value="login" className="space-y-6">
 //                 <form onSubmit={handleLogin} className="space-y-6">
-//                   {/* Role Selector */}
 //                   <div>
 //                     <Label>I am a</Label>
 //                     <div className="grid grid-cols-3 gap-2 mt-2">
 //                       {roles.map((role) => (
-//                         <button
+//                         <RoleButton
 //                           key={role.id}
-//                           type="button"
-//                           onClick={() => setSelectedLoginRole(role.id)}
-//                           className={`p-3 rounded-xl border-2 flex flex-col items-center transition ${
-//                             selectedLoginRole === role.id
-//                               ? role.color
-//                               : "border-gray-200 bg-white hover:border-gray-300"
-//                           }`}
-//                         >
-//                           <role.icon className="h-5 w-5" />
-//                           <span className="text-xs mt-1 font-normal text-gray-600">
-//                             {role.label}
-//                           </span>
-//                         </button>
+//                           role={role}
+//                           selected={selectedLoginRole}
+//                           onSelect={setSelectedLoginRole}
+//                         />
 //                       ))}
 //                     </div>
 //                   </div>
 
-//                   {/* Email */}
 //                   <div>
 //                     <Label>Email or Phone</Label>
 //                     <div className="relative mt-1">
@@ -247,7 +257,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Password */}
 //                   <div>
 //                     <Label>Password</Label>
 //                     <div className="relative mt-1">
@@ -303,37 +312,26 @@
 //               {/* ---------------- REGISTER ---------------- */}
 //               <TabsContent value="register" className="space-y-6">
 //                 <form onSubmit={handleRegister} className="space-y-6">
-//                   {/* Role Selector */}
 //                   <div>
 //                     <Label>I am a</Label>
 //                     <div className="grid grid-cols-3 gap-2 mt-2">
 //                       {roles.map((role) => (
-//                         <button
+//                         <RoleButton
 //                           key={role.id}
-//                           type="button"
-//                           onClick={() => {
-//                             setSelectedRole(role.id);
+//                           role={role}
+//                           selected={selectedRole}
+//                           onSelect={(roleId) => {
+//                             setSelectedRole(roleId);
 //                             setRegisterData({
 //                               ...registerData,
-//                               role: role.id,
+//                               role: roleId,
 //                             });
 //                           }}
-//                           className={`p-3 rounded-xl border-2 flex flex-col items-center transition ${
-//                             selectedRole === role.id
-//                               ? role.color
-//                               : "border-gray-200 bg-white hover:border-gray-300"
-//                           }`}
-//                         >
-//                           <role.icon className="h-5 w-5" />
-//                           <span className="text-xs mt-1 font-normal text-gray-600">
-//                             {role.label}
-//                           </span>
-//                         </button>
+//                         />
 //                       ))}
 //                     </div>
 //                   </div>
 
-//                   {/* Email */}
 //                   <div>
 //                     <Label>Email</Label>
 //                     <div className="relative mt-1">
@@ -353,7 +351,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Password */}
 //                   <div>
 //                     <Label>Password</Label>
 //                     <div className="relative mt-1">
@@ -386,7 +383,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Confirm Password */}
 //                   <div>
 //                     <Label>Confirm Password</Label>
 //                     <div className="relative mt-1">
@@ -421,7 +417,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Full Name */}
 //                   <div>
 //                     <Label>Full Name</Label>
 //                     <div className="relative mt-1">
@@ -441,7 +436,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Phone */}
 //                   <div>
 //                     <Label>Phone Number</Label>
 //                     <div className="relative mt-1">
@@ -461,7 +455,6 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Professional Verification */}
 //                   {(selectedRole === "doctor" || selectedRole === "pharmacy") && (
 //                     <div className="space-y-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
 //                       <div className="flex items-center space-x-2">
@@ -500,7 +493,6 @@
 //               </TabsContent>
 //             </Tabs>
 
-//             {/* Security Badge */}
 //             <div className="mt-6 flex items-center justify-center text-xs text-gray-500 gap-2">
 //               <Shield className="h-4 w-4" />
 //               <span>Secured with end-to-end encryption</span>
@@ -515,10 +507,8 @@
 
 
 
-
-
 // src/pages/LoginPage.jsx
-import React, { useState } from "react";
+import React, { useState, useRef } from "react"; // --- NEW: Added useRef
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -532,6 +522,7 @@ import {
   Phone,
   Mail,
   Lock,
+  FileCheck, // --- NEW: Icon for selected file
 } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/assets/swasthyalogo.png";
@@ -553,6 +544,9 @@ const Label = ({ children, className, ...props }) => (
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  
+  // --- NEW: Reference for the hidden file input
+  const fileInputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -561,6 +555,9 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState("patient");
   const [selectedLoginRole, setSelectedLoginRole] = useState("patient");
   const [activeTab, setActiveTab] = useState("login");
+  
+  // --- NEW: State to store the uploaded document
+  const [verificationFile, setVerificationFile] = useState(null);
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -582,7 +579,6 @@ export default function LoginPage() {
     { id: "pharmacy", label: "Pharmacy", icon: Building2 },
   ];
 
-  // Role button component with restored colors
   const RoleButton = ({ role, selected, onSelect }) => {
     const colors = {
       patient: {
@@ -627,16 +623,30 @@ export default function LoginPage() {
     );
   };
 
+  // --- NEW: Handle file selection logic
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVerificationFile(file);
+      toast.success("Document attached", {
+        description: `Selected: ${file.name}`,
+      });
+    }
+  };
+
+  // --- NEW: Trigger the hidden input click
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
-
     if (!loginData.email || !loginData.password) {
       toast.error("Missing fields", {
         description: "Please enter your email and password.",
       });
       return;
     }
-
     setIsLoading(true);
     setTimeout(() => {
       toast.success("Welcome back!", {
@@ -662,6 +672,14 @@ export default function LoginPage() {
       return;
     }
 
+    // --- NEW: Check if document is uploaded for doctor/pharmacy
+    if ((selectedRole === 'doctor' || selectedRole === 'pharmacy') && !verificationFile) {
+        toast.error("Document Required", {
+            description: "Please upload your professional license/verification documents.",
+        });
+        return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
       toast.error("Passwords do not match", {
         description: "Both passwords must match.",
@@ -677,6 +695,10 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
+    
+    // NOTE: When sending to backend, you will need to use FormData because of the file
+    // Example: const formData = new FormData(); formData.append('file', verificationFile);
+    
     setTimeout(() => {
       toast.success("Account created!", {
         description: "Your account has been created successfully.",
@@ -840,6 +862,7 @@ export default function LoginPage() {
                           selected={selectedRole}
                           onSelect={(roleId) => {
                             setSelectedRole(roleId);
+                            setVerificationFile(null); // Clear file on role switch
                             setRegisterData({
                               ...registerData,
                               role: roleId,
@@ -850,6 +873,7 @@ export default function LoginPage() {
                     </div>
                   </div>
 
+                  {/* ... Existing inputs for Email, Name etc ... */}
                   <div>
                     <Label>Email</Label>
                     <div className="relative mt-1">
@@ -973,6 +997,7 @@ export default function LoginPage() {
                     </div>
                   </div>
 
+                  {/* --- NEW: Updated Documents Section with File Upload Logic --- */}
                   {(selectedRole === "doctor" || selectedRole === "pharmacy") && (
                     <div className="space-y-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                       <div className="flex items-center space-x-2">
@@ -988,15 +1013,36 @@ export default function LoginPage() {
                           : "Upload your pharmacy license and registration documents."}
                       </p>
 
+                      {/* --- NEW: Hidden Input Field --- */}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden" 
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      />
+
+                      {/* --- NEW: Button triggers the hidden input --- */}
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
+                        onClick={handleUploadClick}
                         className="w-full border-amber-300 text-amber-700 hover:bg-amber-100"
                       >
                         <Upload className="h-4 w-4 mr-2" />
-                        Upload Documents
+                        {verificationFile ? "Change Document" : "Upload Documents"}
                       </Button>
+
+                      {/* --- NEW: Show selected filename --- */}
+                      {verificationFile && (
+                        <div className="flex items-center gap-2 p-2 bg-white/50 rounded-lg border border-amber-200">
+                            <FileCheck className="h-4 w-4 text-green-600" />
+                            <span className="text-xs text-amber-900 truncate max-w-[200px]">
+                                {verificationFile.name}
+                            </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
