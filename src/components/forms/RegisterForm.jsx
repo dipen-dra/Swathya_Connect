@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Mail,
   Lock,
@@ -20,6 +20,8 @@ export default function RegisterForm() {
   const [role, setRole] = useState("patient");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [verificationFile, setVerificationFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
     email: "",
@@ -32,6 +34,14 @@ export default function RegisterForm() {
   const update = (key, value) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVerificationFile(file);
+      toast.success(`Selected: ${file.name}`);
+    }
+  };
+
   const validate = () => {
     if (!form.email || !form.password || !form.confirm || !form.name || !form.phone) {
       toast.error("Please complete all fields");
@@ -41,12 +51,45 @@ export default function RegisterForm() {
       toast.error("Passwords do not match");
       return false;
     }
+    if ((role === 'doctor' || role === 'pharmacy') && !verificationFile) {
+      toast.error("Please upload verification document");
+      return false;
+    }
     return true;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!validate()) return;
-    toast.success("Account created successfully!");
+
+    try {
+      const formData = new FormData();
+      formData.append('fullName', form.name);
+      formData.append('email', form.email);
+      formData.append('password', form.password);
+      formData.append('phone', form.phone);
+      formData.append('role', role);
+
+      if (verificationFile) {
+        formData.append('verificationDocument', verificationFile);
+      }
+
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Account created successfully!");
+        // Redirect or clear form could be added here
+      } else {
+        toast.error(data.message || "Registration failed");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
   };
 
   return (
@@ -58,11 +101,10 @@ export default function RegisterForm() {
         {/* patient */}
         <button
           onClick={() => setRole("patient")}
-          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${
-            role === "patient"
+          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${role === "patient"
               ? "border-blue-500 bg-blue-50 text-blue-600"
               : "border-gray-200"
-          }`}
+            }`}
         >
           <User /> Patient
         </button>
@@ -70,11 +112,10 @@ export default function RegisterForm() {
         {/* doctor */}
         <button
           onClick={() => setRole("doctor")}
-          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${
-            role === "doctor"
+          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${role === "doctor"
               ? "border-green-500 bg-green-50 text-green-600"
               : "border-gray-200"
-          }`}
+            }`}
         >
           <Stethoscope /> Doctor
         </button>
@@ -82,11 +123,10 @@ export default function RegisterForm() {
         {/* pharmacy */}
         <button
           onClick={() => setRole("pharmacy")}
-          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${
-            role === "pharmacy"
+          className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${role === "pharmacy"
               ? "border-purple-500 bg-purple-50 text-purple-600"
               : "border-gray-200"
-          }`}
+            }`}
         >
           <Building2 /> Pharmacy
         </button>
@@ -183,8 +223,19 @@ export default function RegisterForm() {
             Upload your license & certification documents for verification.
           </p>
 
-          <Button className="w-full border-orange-500 text-orange-700" variant="outline">
-            <Upload className="w-4 h-4 mr-2" /> Upload Documents
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+          />
+          <Button
+            className="w-full border-orange-500 text-orange-700"
+            variant="outline"
+            onClick={() => fileInputRef.current.click()}
+          >
+            <Upload className="w-4 h-4 mr-2" /> {verificationFile ? verificationFile.name : "Upload Documents"}
           </Button>
         </div>
       )}

@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 
 import Home from "./pages/Home";
 import Login from "./pages/LoginPage";
+import Register from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
 
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/auth" element={<Login />} />
 
           {/* Forgot Password Route */}
