@@ -13,6 +13,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 import {
     User,
     Settings,
@@ -31,10 +33,17 @@ export default function Header() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
     const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
+    const { toast } = useToast();
     const navigate = useNavigate();
+    const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
 
     const handleLogout = async () => {
+        setShowLogoutDialog(false);
         await logout();
+        toast({
+            title: "Signed out successfully",
+            description: "You have been signed out of your account",
+        });
         navigate('/');
     };
 
@@ -231,7 +240,7 @@ export default function Header() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                onClick={handleLogout}
+                                onClick={() => setShowLogoutDialog(true)}
                                 className="cursor-pointer text-red-600 focus:text-red-600"
                             >
                                 <LogOut className="mr-2 h-4 w-4" />
@@ -241,6 +250,24 @@ export default function Header() {
                     </DropdownMenu>
                 </div>
             </div>
+
+            {/* Sign Out Confirmation Dialog */}
+            <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to sign out? You'll need to sign in again to access your account.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700">
+                            Sign Out
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </header>
     );
 }

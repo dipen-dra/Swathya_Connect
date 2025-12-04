@@ -20,12 +20,7 @@ export default function App() {
         <NotificationProvider>
           <ConsultationProvider>
             {/* GLOBAL TOAST SYSTEM */}
-            <Toaster
-              position="top-right"
-              richColors
-              expand
-              theme="light"
-            />
+            <Toaster position="top-right" richColors expand theme="light" />
 
             <BrowserRouter>
               <Routes>
