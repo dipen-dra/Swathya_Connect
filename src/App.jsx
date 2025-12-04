@@ -10,7 +10,8 @@ import Home from "./pages/Home";
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
-import PatientDashboard from "./pages/PatientDashboard";
+import { PatientDashboard } from "./pages/PatientDashboard";
+import ProfilePage from "./pages/ProfilePage";
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<PatientDashboard />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Routes>
             </BrowserRouter>
           </ConsultationProvider>

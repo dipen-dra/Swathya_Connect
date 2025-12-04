@@ -195,7 +195,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                         <span className="text-sm font-semibold text-gray-700">Select Date</span>
                                     </div>
                                     <Select value={selectedDate} onValueChange={setSelectedDate}>
-                                        <SelectTrigger className="h-11 bg-white">
+                                        <SelectTrigger className="h-11 bg-white border-gray-200">
                                             <SelectValue placeholder="Choose a date" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-white">
@@ -214,7 +214,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                         <span className="text-sm font-semibold text-gray-700">Select Time</span>
                                     </div>
                                     <Select value={selectedTime} onValueChange={setSelectedTime}>
-                                        <SelectTrigger className="h-11 bg-white">
+                                        <SelectTrigger className="h-11 bg-white border-gray-200">
                                             <SelectValue placeholder="Choose time slot" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-white">
@@ -240,7 +240,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                     placeholder="Please describe your symptoms or reason for consultation..."
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
-                                    className="min-h-[100px] resize-none bg-white"
+                                    className="min-h-[100px] resize-none bg-white border-gray-200"
                                 />
                             </div>
                         )}
@@ -325,14 +325,14 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
-                        className="px-8 py-2 border-gray-300"
+                        className="px-8 py-2 border-gray-200"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleConfirm}
                         disabled={!selectedType || !selectedDate || !selectedTime || !reason.trim()}
-                        className="px-8 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
                         Confirm Booking
                     </Button>

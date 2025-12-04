@@ -21,14 +21,16 @@ import {
     Shield,
     Activity,
     ChevronDown,
-    Heart
+    Heart,
+    Check,
+    X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
-    const { unreadCount } = useNotifications();
+    const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -56,6 +58,21 @@ export default function Header() {
         }
     };
 
+    const getTimeAgo = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString();
+    };
+
     return (
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-6">
@@ -74,16 +91,109 @@ export default function Header() {
                 {/* User Actions */}
                 <div className="flex items-center space-x-4">
                     {/* Notifications */}
-                    <Button variant="ghost" size="icon" className="relative">
-                        <Bell className="h-5 w-5" />
-                        {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
-                                {unreadCount}
-                            </span>
-                        )}
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="relative">
+                                <Bell className="h-5 w-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-96 bg-white p-0">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-4 py-3 border-b">
+                                <h3 className="font-semibold text-gray-900">Notifications</h3>
+                                <div className="flex items-center space-x-3 text-sm">
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                markAllAsRead();
+                                            }}
+                                            className="text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                                        >
+                                            <Check className="w-4 h-4" />
+                                            <span>Mark all read</span>
+                                        </button>
+                                    )}
+                                    {notifications.length > 0 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                clearAll();
+                                            }}
+                                            className="text-red-600 hover:text-red-700"
+                                        >
+                                            Clear all
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
 
-                    {/* User Menu - Always show with fallback values */}
+                            {/* Notifications List */}
+                            <div className="max-h-96 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="p-8 text-center text-sm text-gray-500">
+                                        <Bell className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                                        <p className="font-medium">No notifications yet</p>
+                                        <p className="text-xs mt-1">We'll notify you when something arrives</p>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y">
+                                        {notifications.map((notification) => (
+                                            <div
+                                                key={notification.id}
+                                                className={`p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50/50' : ''}`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1 pr-3">
+                                                        <h4 className="font-medium text-sm text-gray-900 mb-1">
+                                                            {notification.title}
+                                                        </h4>
+                                                        <p className="text-sm text-gray-600 mb-2">
+                                                            {notification.message}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">
+                                                            {getTimeAgo(notification.createdAt)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        {!notification.read && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    markAsRead(notification.id);
+                                                                }}
+                                                                className="text-green-600 hover:text-green-700"
+                                                                title="Mark as read"
+                                                            >
+                                                                <Check className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                deleteNotification(notification.id);
+                                                            }}
+                                                            className="text-red-500 hover:text-red-600"
+                                                            title="Delete"
+                                                        >
+                                                            <X className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* User Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2 h-auto">

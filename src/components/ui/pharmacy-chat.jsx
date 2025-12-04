@@ -73,7 +73,7 @@ export function PharmacyChat({ open, onOpenChange }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md h-[600px] flex flex-col">
+            <DialogContent className="max-w-md h-[600px] flex flex-col bg-white">
                 <DialogHeader>
                     <DialogTitle className="flex items-center space-x-2">
                         <MessageCircle className="h-5 w-5 text-green-600" />
@@ -94,8 +94,8 @@ export function PharmacyChat({ open, onOpenChange }) {
                             >
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback className={`${message.sender === 'user'
-                                            ? 'bg-blue-100 text-blue-600'
-                                            : 'bg-green-100 text-green-600'
+                                        ? 'bg-blue-100 text-blue-600'
+                                        : 'bg-green-100 text-green-600'
                                         }`}>
                                         {message.sender === 'user' ? (
                                             <User className="h-4 w-4" />
@@ -106,8 +106,8 @@ export function PharmacyChat({ open, onOpenChange }) {
                                 </Avatar>
                                 <div
                                     className={`max-w-[80%] p-3 rounded-lg ${message.sender === 'user'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 text-gray-900'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 text-gray-900'
                                         }`}
                                 >
                                     <p className="text-sm">{message.text}</p>
