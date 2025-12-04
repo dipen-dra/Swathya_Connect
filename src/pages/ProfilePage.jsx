@@ -57,6 +57,13 @@ export function ProfilePage() {
         }
     }, [profile, user]);
 
+    // Helper function to get full image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        return `http://localhost:5000${imagePath}`; // Prepend backend URL
+    };
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -145,7 +152,7 @@ export function ProfilePage() {
                             </div>
                         </div>
                         <Avatar className="h-14 w-14 border-4 border-white/30">
-                            <AvatarImage src={profile?.profileImage} />
+                            <AvatarImage src={getImageUrl(profile?.profileImage)} />
                             <AvatarFallback className="bg-white text-blue-600 text-xl font-bold">
                                 {formData.firstName[0]?.toUpperCase()}
                             </AvatarFallback>
@@ -176,7 +183,7 @@ export function ProfilePage() {
                             <CardContent className="p-6 text-center">
                                 <div className="relative inline-block mb-4">
                                     <Avatar className="h-28 w-28">
-                                        <AvatarImage src={profileImage} />
+                                        <AvatarImage src={getImageUrl(profileImage)} />
                                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-3xl font-bold">
                                             {formData.firstName[0]?.toUpperCase()}
                                         </AvatarFallback>

@@ -78,6 +78,13 @@ export default function Header() {
         return date.toLocaleDateString();
     };
 
+    // Helper function to get full image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        return `http://localhost:5000${imagePath}`; // Prepend backend URL
+    };
+
     return (
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-6">
@@ -203,7 +210,7 @@ export default function Header() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2 h-auto">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={profile?.profileImage} />
+                                    <AvatarImage src={getImageUrl(profile?.profileImage)} />
                                     <AvatarFallback className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
                                         {(profile?.firstName?.[0] || user?.name?.[0] || 'P')}
                                         {(profile?.lastName?.[0] || user?.name?.split(' ')[1]?.[0] || '')}
