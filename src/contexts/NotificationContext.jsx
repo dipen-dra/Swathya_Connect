@@ -41,7 +41,7 @@ export const NotificationProvider = ({ children }) => {
         return notifications.filter(n => !n.read).length;
     }, [notifications]);
 
-    const addNotification = useCallback((notificationData) => {
+    const addNotification = useCallback((notificationData, showToast = true) => {
         const notification = {
             ...notificationData,
             id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -51,12 +51,14 @@ export const NotificationProvider = ({ children }) => {
 
         setNotifications(prev => [notification, ...prev]);
 
-        // Show toast notification with a small delay to prevent conflicts
-        setTimeout(() => {
-            toast[notification.type](notification.title, {
-                description: notification.message,
-            });
-        }, 0);
+        // Only show toast if explicitly requested (not for notifications loaded from localStorage)
+        if (showToast) {
+            setTimeout(() => {
+                toast[notification.type](notification.title, {
+                    description: notification.message,
+                });
+            }, 0);
+        }
     }, []);
 
     const markAsRead = useCallback((id) => {

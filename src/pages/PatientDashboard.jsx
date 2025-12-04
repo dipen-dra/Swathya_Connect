@@ -101,6 +101,13 @@ export function PatientDashboard() {
 
     const welcomeNotificationShown = useRef(false);
 
+    // Helper function to get full image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        return `http://localhost:5000${imagePath}`; // Prepend backend URL
+    };
+
     // Mock consultations data
     const mockConsultations = [
         // Upcoming consultations
@@ -941,52 +948,63 @@ export function PatientDashboard() {
                             </Card>
                         ))
                     ) : stats ? (
-                        // Display stats from API
-                        Object.entries(stats).map(([key, stat], index) => {
-                            const statConfig = {
-                                totalConsultations: { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations' },
-                                activeReminders: { icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Active Reminders' },
-                                totalPrescriptions: { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Prescriptions' },
-                                avgRating: { icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Avg Rating' }
-                            };
-                            const config = statConfig[key] || {};
-                            const Icon = config.icon || Activity;
+                        // Display stats from API - MGX Design
+                        (() => {
+                            const statsToDisplay = [
+                                { key: 'totalConsultations', icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations' },
+                                { key: 'upcomingAppointments', icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Upcoming Appointments' },
+                                { key: 'completedConsultations', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Completed Consultations' },
+                                { key: 'totalSpent', icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Total Spent' }
+                            ];
 
-                            return (
-                                <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
-                                    <CardContent className="p-6">
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-sm font-medium text-gray-600">{config.title}</p>
-                                                <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                                                    <Icon className={`h-5 w-5 ${config.color}`} />
+                            return statsToDisplay.map((config, index) => {
+                                const stat = stats[config.key];
+                                if (!stat) return null;
+
+                                const Icon = config.icon;
+                                const displayValue = config.key === 'totalSpent'
+                                    ? `NPR ${stat.value.toLocaleString()}`
+                                    : stat.value;
+
+                                return (
+                                    <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
+                                        <CardContent className="p-6">
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm font-medium text-gray-600">{config.title}</p>
+                                                    <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                                                        <Icon className={`h-5 w-5 ${config.color}`} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-bold text-gray-900">{displayValue}</h3>
+                                                    <p className="text-xs text-gray-500 mt-1 flex items-center">
+                                                        {stat.change !== 0 && (
+                                                            <>
+                                                                <TrendingUp className={`h-3 w-3 mr-1 ${stat.change > 0 ? 'text-green-600' : 'text-red-600 rotate-180'}`} />
+                                                                <span className={stat.change > 0 ? 'text-green-600' : 'text-red-600'}>
+                                                                    {stat.change > 0 ? '+' : ''}{stat.change}%
+                                                                </span>
+                                                                <span className="ml-1">{stat.changeText}</span>
+                                                            </>
+                                                        )}
+                                                        {stat.change === 0 && <span>{stat.changeText}</span>}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
-                                                {stat.change !== 0 && (
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        <span className={stat.change > 0 ? 'text-green-600' : 'text-red-600'}>
-                                                            {stat.change > 0 ? '+' : ''}{stat.change}%
-                                                        </span> {stat.changeText}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })
+                                        </CardContent>
+                                    </Card>
+                                );
+                            });
+                        })()
                     ) : (
                         // Display default values when not logged in
-                        ['totalConsultations', 'activeReminders', 'totalPrescriptions', 'avgRating'].map((key, index) => {
-                            const statConfig = {
-                                totalConsultations: { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations', value: 0 },
-                                activeReminders: { icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Active Reminders', value: 0 },
-                                totalPrescriptions: { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Prescriptions', value: 0 },
-                                avgRating: { icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Avg Rating', value: '0.0' }
-                            };
-                            const config = statConfig[key];
+                        [
+                            { key: 'totalConsultations', icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations', value: 0 },
+                            { key: 'upcomingAppointments', icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Upcoming Appointments', value: 0 },
+                            { key: 'completedConsultations', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Completed Consultations', value: 0 },
+                            { key: 'totalSpent', icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Total Spent', value: 'NPR 0' }
+                        ].map((config, index) => {
                             const Icon = config.icon;
 
                             return (
@@ -1619,7 +1637,7 @@ export function PatientDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
                                             <Avatar className="h-16 w-16">
-                                                <AvatarImage src={profile?.profileImage} />
+                                                <AvatarImage src={getImageUrl(profile?.profileImage)} />
                                                 <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl font-bold">
                                                     {(profile?.firstName?.[0] || user?.name?.[0] || 'P')}
                                                 </AvatarFallback>
