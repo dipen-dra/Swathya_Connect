@@ -14,10 +14,11 @@ import Header from '@/components/layout/Header';
 
 export function ProfilePage() {
     const { user } = useAuth();
-    const { profile } = useProfile();
+    const { profile, updateProfile, uploadProfileImage } = useProfile();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [profileImage, setProfileImage] = useState(profile?.profileImage || null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const [formData, setFormData] = useState({
         firstName: profile?.firstName || 'patient',
@@ -41,6 +42,7 @@ export function ProfilePage() {
     const handleImageUpload = (e) => {
         const file = e.target.files?.[0];
         if (file) {
+            setSelectedFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImage(reader.result);
@@ -49,10 +51,21 @@ export function ProfilePage() {
         }
     };
 
-    const handleSave = () => {
-        // TODO: Save to backend
-        console.log('Saving profile:', formData);
-        setIsEditing(false);
+    const handleSave = async () => {
+        try {
+            // Upload image if a new one was selected
+            if (selectedFile) {
+                await uploadProfileImage(selectedFile);
+            }
+
+            // Update profile data
+            await updateProfile(formData);
+
+            setIsEditing(false);
+            setSelectedFile(null);
+        } catch (error) {
+            console.error('Failed to save profile:', error);
+        }
     };
 
     const handleCancel = () => {

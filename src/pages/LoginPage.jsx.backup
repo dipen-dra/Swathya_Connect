@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   Eye,
   EyeOff,
@@ -30,7 +29,6 @@ const Label = ({ children, className, ...props }) => (
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -101,25 +99,28 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // Use AuthContext login which saves token to localStorage
-      await login(loginData.email, loginData.password, selectedLoginRole);
-
-      toast.success("Welcome back!", {
-        description: "You have logged in successfully.",
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...loginData, role: selectedLoginRole }), // Include role if backend needs it, or just email/pass
+        credentials: 'include',
       });
+      const data = await res.json();
 
-      // Navigate based on role
-      if (selectedLoginRole === "patient") {
+      if (data.success) {
+        toast.success("Welcome back!", {
+          description: "You have logged in successfully.",
+        });
         navigate("/dashboard");
-      } else if (selectedLoginRole === "doctor") {
-        navigate("/doctor-dashboard");
-      } else if (selectedLoginRole === "pharmacy") {
-        navigate("/pharmacy-dashboard");
+      } else {
+        toast.error("Login Failed", {
+          description: data.message || "Invalid credentials",
+        });
       }
     } catch (error) {
       console.error(error);
-      toast.error("Login Failed", {
-        description: error.message || "Invalid credentials. Please try again.",
+      toast.error("Error", {
+        description: "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);

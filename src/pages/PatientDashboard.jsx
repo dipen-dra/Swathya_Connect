@@ -50,11 +50,14 @@ import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import Header from '@/components/layout/Header';
 import { useNavigate } from 'react-router-dom';
+import { useReminders } from '@/contexts/RemindersContext';
+import { doctorsAPI, pharmaciesAPI, statsAPI } from '@/services/api';
 
 export function PatientDashboard() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
     const { addNotification } = useNotifications();
+    const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('doctors');
     const [searchTerm, setSearchTerm] = useState('');
@@ -67,60 +70,19 @@ export function PatientDashboard() {
     const [editingReminder, setEditingReminder] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
+    // API data states
+    const [doctors, setDoctors] = useState([]);
+    const [pharmacies, setPharmacies] = useState([]);
+    const [stats, setStats] = useState(null);
+    const [loadingDoctors, setLoadingDoctors] = useState(true);
+    const [loadingPharmacies, setLoadingPharmacies] = useState(true);
+    const [loadingStats, setLoadingStats] = useState(true);
+
     // Doctor search and filter states
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('all');
 
     const welcomeNotificationShown = useRef(false);
-
-    // Mock medicine reminders state
-    const [medicineReminders, setMedicineReminders] = useState([
-        {
-            id: 'reminder_001',
-            medicineName: 'Omeprazole',
-            dosage: '20mg',
-            frequency: 'daily',
-            times: ['07:00'],
-            instructions: 'Take before breakfast on empty stomach',
-            startDate: '2025-01-01',
-            endDate: '2025-03-01',
-            emailReminder: true,
-            beforeMealMinutes: 30,
-            isActive: true,
-            createdAt: '2025-01-01T00:00:00Z',
-            nextReminder: '2025-01-16T06:30:00Z'
-        },
-        {
-            id: 'reminder_002',
-            medicineName: 'Metformin',
-            dosage: '500mg',
-            frequency: 'twice-daily',
-            times: ['08:00', '20:00'],
-            instructions: 'Take with meals to reduce stomach upset',
-            startDate: '2024-12-01',
-            endDate: null,
-            emailReminder: true,
-            beforeMealMinutes: 15,
-            isActive: true,
-            createdAt: '2024-12-01T00:00:00Z',
-            nextReminder: '2025-01-16T07:45:00Z'
-        },
-        {
-            id: 'reminder_003',
-            medicineName: 'Vitamin D3',
-            dosage: '1000 IU',
-            frequency: 'daily',
-            times: ['09:00'],
-            instructions: 'Take with breakfast for better absorption',
-            startDate: '2025-01-10',
-            endDate: null,
-            emailReminder: true,
-            beforeMealMinutes: 30,
-            isActive: true,
-            createdAt: '2025-01-10T00:00:00Z',
-            nextReminder: '2025-01-16T08:30:00Z'
-        }
-    ]);
 
     // Mock consultations data
     const mockConsultations = [
@@ -533,89 +495,77 @@ export function PatientDashboard() {
     const upcomingConsultations = sortedConsultations.filter(c => c.status === 'upcoming');
     const completedConsultations = sortedConsultations.filter(c => c.status === 'completed');
 
-    // Filter and sort doctors
-    const filteredDoctors = mockDoctors.filter(doctor => {
-        const matchesSearch = doctor.name.toLowerCase().includes(doctorSearchTerm.toLowerCase()) ||
-            doctor.specialty.toLowerCase().includes(doctorSearchTerm.toLowerCase()) ||
-            doctor.description.toLowerCase().includes(doctorSearchTerm.toLowerCase());
-        const matchesSpecialty = selectedSpecialty === 'all' || doctor.specialty.toLowerCase() === selectedSpecialty.toLowerCase();
-        return matchesSearch && matchesSpecialty;
-    });
-
-    const sortedDoctors = [...filteredDoctors].sort((a, b) => {
-        switch (sortBy) {
-            case 'name':
-                return a.name.localeCompare(b.name);
-            case 'rating':
-                return b.rating - a.rating;
-            case 'fee':
-                return a.consultationFee - b.consultationFee;
-            case 'experience':
-                return b.experience - a.experience;
-            case 'date': // Default to name for doctors
-            case 'doctor':
-            default:
-                return a.name.localeCompare(b.name);
-        }
-    });
+    // Doctors are already filtered by API based on search and specialty
+    const sortedDoctors = doctors;
 
     // Get unique specialties for filter dropdown
-    const uniqueSpecialties = ['all', ...new Set(mockDoctors.map(d => d.specialty))];
+    const uniqueSpecialties = ['all', ...new Set(doctors.map(d => d.specialty))];
 
-    // Calculate total spending
-    const totalSpent = mockConsultations
-        .filter(c => c.status === 'completed')
-        .reduce((sum, c) => sum + c.fee, 0);
+    // Fetch data from API
+    useEffect(() => {
+        if (user) {
+            fetchDoctors();
+            fetchPharmacies();
+            fetchDashboardStats();
+        }
+    }, [user]);
 
-    const stats = [
-        {
-            title: 'Total Consultations',
-            value: 14,
-            icon: Activity,
-            color: 'text-blue-600',
-            bgColor: 'bg-blue-50',
-            change: '+3%',
-            changeText: 'from last month'
-        },
-        {
-            title: 'Upcoming Appointments',
-            value: 3,
-            icon: Clock,
-            color: 'text-orange-600',
-            bgColor: 'bg-orange-50',
-            change: '+3',
-            changeText: 'from last month'
-        },
-        {
-            title: 'Completed Consultations',
-            value: 11,
-            icon: CheckCircle,
-            color: 'text-green-600',
-            bgColor: 'bg-green-50',
-            change: '+2',
-            changeText: 'from last month'
-        },
-        {
-            title: 'Total Spent',
-            value: 'NPR 15,500',
-            icon: TrendingUp,
-            color: 'text-purple-600',
-            bgColor: 'bg-purple-50',
-            change: '+15%',
-            changeText: 'from last month'
-        },
-    ];
+    const fetchDoctors = async () => {
+        try {
+            setLoadingDoctors(true);
+            const response = await doctorsAPI.getDoctors({
+                specialty: selectedSpecialty !== 'all' ? selectedSpecialty : undefined,
+                search: doctorSearchTerm || undefined
+            });
+            setDoctors(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch doctors:', error);
+        } finally {
+            setLoadingDoctors(false);
+        }
+    };
+
+    const fetchPharmacies = async () => {
+        try {
+            setLoadingPharmacies(true);
+            const response = await pharmaciesAPI.getPharmacies();
+            setPharmacies(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch pharmacies:', error);
+        } finally {
+            setLoadingPharmacies(false);
+        }
+    };
+
+    const fetchDashboardStats = async () => {
+        try {
+            setLoadingStats(true);
+            const response = await statsAPI.getDashboardStats();
+            setStats(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch dashboard stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    // Re-fetch doctors when search/filter changes
+    useEffect(() => {
+        if (user) {
+            fetchDoctors();
+        }
+    }, [selectedSpecialty, doctorSearchTerm]);
 
     useEffect(() => {
         if (user && profile && !welcomeNotificationShown.current) {
             welcomeNotificationShown.current = true;
             addNotification({
                 title: 'Welcome to your dashboard',
-                message: `Hello ${profile.firstName || user.name}, you have ${upcomingConsultations.length} upcoming consultations.`,
+                message: `Hello ${profile.firstName || user.name}, welcome back!`,
                 type: 'info',
             });
         }
-    }, [user?.id, profile?.firstName, addNotification, upcomingConsultations.length]);
+    }, [user?.id, profile?.firstName, addNotification]);
 
     const handleBookConsultation = useCallback((doctor) => {
         setSelectedDoctor(doctor);
@@ -650,51 +600,23 @@ export function PatientDashboard() {
         }
     };
 
-    const handleSaveMedicineReminder = (reminderData) => {
-        if (editingReminder) {
-            setMedicineReminders(prev => prev.map(r => r.id === reminderData.id ? reminderData : r));
-            addNotification({
-                title: 'Reminder Updated',
-                message: `Medicine reminder for ${reminderData.medicineName} has been updated.`,
-                type: 'success',
-            });
-        } else {
-            setMedicineReminders(prev => [...prev, reminderData]);
-            addNotification({
-                title: 'Reminder Added',
-                message: `Medicine reminder for ${reminderData.medicineName} has been set. You'll receive email notifications at scheduled times.`,
-                type: 'success',
-            });
+    const handleSaveMedicineReminder = async (reminderData) => {
+        try {
+            console.log('💊 PatientDashboard: Saving medicine reminder...', reminderData);
+            if (editingReminder) {
+                console.log('💊 PatientDashboard: Updating existing reminder:', editingReminder._id);
+                await updateReminder(editingReminder._id, reminderData);
+            } else {
+                console.log('💊 PatientDashboard: Creating new reminder');
+                const newReminder = await createReminder(reminderData);
+                console.log('✅ PatientDashboard: Reminder created successfully:', newReminder);
+            }
+            setMedicineReminderDialog(false);
+            setEditingReminder(null);
+            console.log('✅ PatientDashboard: Dialog closed, reminder should now appear in list');
+        } catch (error) {
+            console.error('❌ PatientDashboard: Failed to save reminder:', error);
         }
-        setMedicineReminderDialog(false);
-        setEditingReminder(null);
-    };
-
-    const handleEditReminder = (reminder) => {
-        setEditingReminder(reminder);
-        setMedicineReminderDialog(true);
-    };
-
-    const handleDeleteReminder = (reminderId) => {
-        const reminder = medicineReminders.find(r => r.id === reminderId);
-        setMedicineReminders(prev => prev.filter(r => r.id !== reminderId));
-        addNotification({
-            title: 'Reminder Deleted',
-            message: `Medicine reminder for ${reminder?.medicineName} has been removed.`,
-            type: 'success',
-        });
-    };
-
-    const toggleReminderStatus = (reminderId) => {
-        setMedicineReminders(prev => prev.map(r =>
-            r.id === reminderId ? { ...r, isActive: !r.isActive } : r
-        ));
-        const reminder = medicineReminders.find(r => r.id === reminderId);
-        addNotification({
-            title: reminder?.isActive ? 'Reminder Paused' : 'Reminder Activated',
-            message: `Medicine reminder for ${reminder?.medicineName} has been ${reminder?.isActive ? 'paused' : 'activated'}.`,
-            type: 'info',
-        });
     };
 
     const getStatusColor = (status) => {
@@ -989,7 +911,92 @@ export function PatientDashboard() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    {stats.map((stat, index) => (
+                    {loadingStats ? (
+                        // Loading skeleton
+                        [1, 2, 3, 4].map((i) => (
+                            <Card key={i} className="border-0 shadow-sm">
+                                <CardContent className="p-6">
+                                    <div className="animate-pulse space-y-3">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                        <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : stats ? (
+                        // Display stats from API
+                        Object.entries(stats).map(([key, stat], index) => {
+                            const statConfig = {
+                                totalConsultations: { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations' },
+                                activeReminders: { icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Active Reminders' },
+                                totalPrescriptions: { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Prescriptions' },
+                                avgRating: { icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Avg Rating' }
+                            };
+                            const config = statConfig[key] || {};
+                            const Icon = config.icon || Activity;
+
+                            return (
+                                <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <CardContent className="p-6">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-sm font-medium text-gray-600">{config.title}</p>
+                                                <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                                                    <Icon className={`h-5 w-5 ${config.color}`} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
+                                                {stat.change !== 0 && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        <span className={stat.change > 0 ? 'text-green-600' : 'text-red-600'}>
+                                                            {stat.change > 0 ? '+' : ''}{stat.change}%
+                                                        </span> {stat.changeText}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })
+                    ) : (
+                        // Display default values when not logged in
+                        ['totalConsultations', 'activeReminders', 'totalPrescriptions', 'avgRating'].map((key, index) => {
+                            const statConfig = {
+                                totalConsultations: { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations', value: 0 },
+                                activeReminders: { icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Active Reminders', value: 0 },
+                                totalPrescriptions: { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Prescriptions', value: 0 },
+                                avgRating: { icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Avg Rating', value: '0.0' }
+                            };
+                            const config = statConfig[key];
+                            const Icon = config.icon;
+
+                            return (
+                                <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <CardContent className="p-6">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-sm font-medium text-gray-600">{config.title}</p>
+                                                <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                                                    <Icon className={`h-5 w-5 ${config.color}`} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-gray-900">{config.value}</h3>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Old stats mapping code removed */}
+                <div className="hidden">
+                    {/* This section is hidden and will be removed */}
+                    {stats && Array.isArray(stats) && stats.map((stat, index) => (
                         <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
                             <CardContent className="p-6">
                                 <div className="space-y-3">
@@ -1548,11 +1555,14 @@ export function PatientDashboard() {
                     {activeTab === 'health-records' && (
                         <HealthRecordsTab
                             profile={profile}
-                            medicineReminders={medicineReminders}
+                            medicineReminders={reminders}
                             onAddReminder={() => setMedicineReminderDialog(true)}
-                            onEditReminder={handleEditReminder}
-                            onToggleReminder={toggleReminderStatus}
-                            onDeleteReminder={handleDeleteReminder}
+                            onEditReminder={(reminder) => {
+                                setEditingReminder(reminder);
+                                setMedicineReminderDialog(true);
+                            }}
+                            onToggleReminder={(id) => toggleReminder(id)}
+                            onDeleteReminder={(id) => deleteReminder(id)}
                         />
                     )}
 

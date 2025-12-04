@@ -141,7 +141,7 @@ export function MedicineReminderDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
                 <DialogHeader>
                     <DialogTitle className="flex items-center space-x-2">
                         <Pill className="h-5 w-5 text-blue-600" />
@@ -184,7 +184,7 @@ export function MedicineReminderDialog({
                             <SelectTrigger className="mt-1">
                                 <SelectValue placeholder="Select frequency" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white">
                                 {frequencyOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
@@ -299,7 +299,7 @@ export function MedicineReminderDialog({
                                     <SelectTrigger className="mt-1">
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="bg-white">
                                         <SelectItem value="15">15 minutes before</SelectItem>
                                         <SelectItem value="30">30 minutes before</SelectItem>
                                         <SelectItem value="60">1 hour before</SelectItem>

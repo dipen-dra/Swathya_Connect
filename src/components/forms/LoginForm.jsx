@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Mail,
   Lock,
@@ -15,6 +17,7 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { toast } from "sonner";
 
 const ROLES = {
   PATIENT: "patient",
@@ -23,7 +26,10 @@ const ROLES = {
 };
 
 export function LoginForm() {
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(ROLES.PATIENT);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Common fields
   const [emailOrPhone, setEmailOrPhone] = useState("");
@@ -42,7 +48,7 @@ export function LoginForm() {
   const resetErrors = () => setErrors({});
 
   // ---------------- LOGIN HANDLER ----------------
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     resetErrors();
     const newErrors = {};
 
@@ -58,18 +64,29 @@ export function LoginForm() {
       return;
     }
 
-    console.log("Sign in with:", {
-      role: selectedRole,
-      emailOrPhone,
-      password,
-    });
+    setIsLoading(true);
+    try {
+      await login(emailOrPhone, password, selectedRole);
+      toast.success("Login successful!");
 
-    // TODO: replace with real API + toast later
-    alert(`Signed in as ${selectedRole.toUpperCase()}`);
+      // Navigate based on role
+      if (selectedRole === ROLES.PATIENT) {
+        navigate("/dashboard");
+      } else if (selectedRole === ROLES.DOCTOR) {
+        navigate("/doctor-dashboard");
+      } else if (selectedRole === ROLES.PHARMACY) {
+        navigate("/pharmacy-dashboard");
+      }
+    } catch (error) {
+      toast.error(error.message || "Login failed. Please check your credentials.");
+      setErrors({ general: error.message || "Login failed" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ---------------- REGISTER HANDLER ----------------
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     resetErrors();
     const newErrors = {};
 
@@ -99,27 +116,41 @@ export function LoginForm() {
       return;
     }
 
-    console.log("Create account:", {
-      role: selectedRole,
-      emailOrPhone,
-      password,
-      fullName,
-      phoneNumber,
-    });
+    setIsLoading(true);
+    try {
+      await register({
+        email: emailOrPhone,
+        password,
+        fullName,
+        phoneNumber,
+        role: selectedRole
+      });
+      toast.success("Account created successfully!");
 
-    // TODO: replace with real API + toast later
-    alert(`Account created for ${selectedRole.toUpperCase()}`);
+      // Navigate based on role
+      if (selectedRole === ROLES.PATIENT) {
+        navigate("/dashboard");
+      } else if (selectedRole === ROLES.DOCTOR) {
+        navigate("/doctor-dashboard");
+      } else if (selectedRole === ROLES.PHARMACY) {
+        navigate("/pharmacy-dashboard");
+      }
+    } catch (error) {
+      toast.error(error.message || "Registration failed. Please try again.");
+      setErrors({ general: error.message || "Registration failed" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const RoleButton = ({ role, icon: Icon, label, activeColor }) => (
     <button
       type="button"
       onClick={() => setSelectedRole(role)}
-      className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-        selectedRole === role
-          ? `${activeColor.bg} ${activeColor.border} ${activeColor.text}`
-          : "border-gray-200 text-gray-600 hover:border-gray-300"
-      }`}
+      className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${selectedRole === role
+        ? `${activeColor.bg} ${activeColor.border} ${activeColor.text}`
+        : "border-gray-200 text-gray-600 hover:border-gray-300"
+        }`}
     >
       <Icon className="w-5 h-5" />
       <span className="text-sm">{label}</span>
@@ -233,9 +264,10 @@ export function LoginForm() {
           <Button
             type="button"
             onClick={handleSignIn}
+            disabled={isLoading}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-4"
           >
-            Sign In
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
 
           {/* Forgot Password */}
@@ -453,9 +485,10 @@ export function LoginForm() {
           <Button
             type="button"
             onClick={handleCreateAccount}
+            disabled={isLoading}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-6"
           >
-            Create Account
+            {isLoading ? "Creating account..." : "Create Account"}
           </Button>
 
           {/* Security Notice */}

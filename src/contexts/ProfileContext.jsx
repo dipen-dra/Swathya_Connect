@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { profileAPI } from '@/services/api';
+import { toast } from 'sonner';
 
 const ProfileContext = createContext(undefined);
 
@@ -17,9 +19,12 @@ export const ProfileProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log('🔄 ProfileContext: useEffect triggered, user:', user?.id);
         if (user) {
+            console.log('🔄 ProfileContext: User found, loading profile...');
             loadProfile();
         } else {
+            console.log('⚠️  ProfileContext: No user found, skipping profile load');
             setProfile(null);
             setLoading(false);
         }
@@ -30,89 +35,15 @@ export const ProfileProvider = ({ children }) => {
 
         setLoading(true);
         try {
-            // Simulate API call - in real app, this would fetch from backend
-            const savedProfile = localStorage.getItem(`profile_${user.id}`);
-            if (savedProfile) {
-                setProfile(JSON.parse(savedProfile));
-            } else {
-                // Create default profile based on user role
-                const defaultProfile = createDefaultProfile(user);
-                setProfile(defaultProfile);
-                localStorage.setItem(`profile_${user.id}`, JSON.stringify(defaultProfile));
-            }
+            console.log('🔄 ProfileContext: Fetching profile from API...');
+            const response = await profileAPI.getProfile();
+            console.log('✅ ProfileContext: Profile loaded:', response.data.data);
+            setProfile(response.data.data);
         } catch (error) {
-            console.error('Failed to load profile:', error);
+            console.error('❌ ProfileContext: Failed to load profile:', error);
+            toast.error('Failed to load profile');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const createDefaultProfile = (user) => {
-        const baseProfile = {
-            id: `profile_${user.id}`,
-            userId: user.id,
-            firstName: user.name.split(' ')[0] || '',
-            lastName: user.name.split(' ')[1] || '',
-            email: user.email,
-            phone: '',
-            address: '',
-            city: '',
-            dateOfBirth: '',
-            gender: 'other',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-
-        switch (user.role) {
-            case 'patient':
-                return {
-                    ...baseProfile,
-                    bloodGroup: '',
-                    allergies: [],
-                    medicalHistory: [],
-                    emergencyContact: {
-                        name: '',
-                        phone: '',
-                        relationship: '',
-                    },
-                };
-
-            case 'doctor':
-                return {
-                    ...baseProfile,
-                    specialization: '',
-                    licenseNumber: '',
-                    experience: 0,
-                    education: [],
-                    certifications: [],
-                    consultationFee: 0,
-                    availableHours: {},
-                    bio: '',
-                    rating: 0,
-                    totalConsultations: 0,
-                };
-
-            case 'pharmacy':
-                return {
-                    ...baseProfile,
-                    pharmacyName: '',
-                    licenseNumber: '',
-                    operatingHours: {},
-                    services: [],
-                    deliveryAvailable: false,
-                    deliveryRadius: 0,
-                };
-
-            case 'admin':
-                return {
-                    ...baseProfile,
-                    department: '',
-                    role: 'admin',
-                    permissions: [],
-                };
-
-            default:
-                return baseProfile;
         }
     };
 
@@ -120,30 +51,47 @@ export const ProfileProvider = ({ children }) => {
         if (!profile) return;
 
         try {
-            const updatedProfile = {
-                ...profile,
-                ...profileData,
-                updatedAt: new Date().toISOString(),
-            };
-
-            setProfile(updatedProfile);
-            localStorage.setItem(`profile_${profile.userId}`, JSON.stringify(updatedProfile));
+            console.log('🔄 ProfileContext: Updating profile...', profileData);
+            const response = await profileAPI.updateProfile(profileData);
+            console.log('✅ ProfileContext: Profile updated:', response.data.data);
+            setProfile(response.data.data);
+            toast.success('Profile updated successfully');
+            return response.data.data;
         } catch (error) {
-            console.error('Failed to update profile:', error);
+            console.error('❌ ProfileContext: Failed to update profile:', error);
+            toast.error('Failed to update profile');
             throw error;
         }
     };
 
     const uploadProfileImage = async (file) => {
-        // Simulate file upload - in real app, this would upload to cloud storage
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const imageUrl = reader.result;
-                resolve(imageUrl);
-            };
-            reader.readAsDataURL(file);
-        });
+        try {
+            console.log('🔄 ProfileContext: Uploading profile image...', file.name);
+            const formData = new FormData();
+            formData.append('profileImage', file);
+
+            const response = await profileAPI.uploadProfileImage(formData);
+            console.log('✅ ProfileContext: Image uploaded:', response.data.imageUrl);
+            setProfile(response.data.data);
+            toast.success('Profile image uploaded successfully');
+            return response.data.imageUrl;
+        } catch (error) {
+            console.error('❌ ProfileContext: Failed to upload profile image:', error);
+            toast.error('Failed to upload profile image');
+            throw error;
+        }
+    };
+
+    const deleteProfileImage = async () => {
+        try {
+            const response = await profileAPI.deleteProfileImage();
+            setProfile(response.data.data);
+            toast.success('Profile image deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete profile image:', error);
+            toast.error('Failed to delete profile image');
+            throw error;
+        }
     };
 
     return (
@@ -152,6 +100,8 @@ export const ProfileProvider = ({ children }) => {
             loading,
             updateProfile,
             uploadProfileImage,
+            deleteProfileImage,
+            refreshProfile: loadProfile
         }}>
             {children}
         </ProfileContext.Provider>

@@ -15,15 +15,20 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored user session
+        // Check for stored user session and token
         const storedUser = localStorage.getItem('swasthya_user');
-        if (storedUser) {
+        const token = localStorage.getItem('token');
+        console.log('🔐 AuthContext: Checking stored session, user:', storedUser ? 'Yes' : 'No', 'token:', token ? 'Yes' : 'No');
+
+        if (storedUser && token) {
             try {
                 const userData = JSON.parse(storedUser);
+                console.log('✅ AuthContext: Restored user session:', userData);
                 setUser(userData);
             } catch (error) {
-                console.error('Error parsing stored user data:', error);
+                console.error('❌ AuthContext: Error parsing stored user data:', error);
                 localStorage.removeItem('swasthya_user');
+                localStorage.removeItem('token');
             }
         }
         setIsLoading(false);
@@ -31,69 +36,95 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password, role) => {
         setIsLoading(true);
+        console.log('🔐 AuthContext: Attempting login for:', email);
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            // Call real backend API
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
+            });
 
-        // Check demo users
-        const demoUser = demoUsers.find(u =>
-            u.email === email &&
-            u.password === password &&
-            (!role || u.role === role)
-        );
+            const data = await response.json();
+            console.log('📥 AuthContext: Login response:', data);
 
-        if (demoUser) {
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+
+            // Store user data and token
             const userData = {
-                id: demoUser.id,
-                name: demoUser.name,
-                email: demoUser.email,
-                role: demoUser.role,
-                verified: demoUser.verified
+                id: data.user._id,
+                name: data.user.fullName,
+                email: data.user.email,
+                role: data.user.role,
+                verified: data.user.isVerified
             };
 
+            console.log('✅ AuthContext: Login successful, storing user:', userData);
             setUser(userData);
             localStorage.setItem('swasthya_user', JSON.stringify(userData));
+            localStorage.setItem('token', data.token);
             setIsLoading(false);
-            return;
+        } catch (error) {
+            console.error('❌ AuthContext: Login error:', error);
+            setIsLoading(false);
+            throw error;
         }
-
-        // If not demo user, create a new user session
-        const userData = {
-            id: Date.now().toString(),
-            name: email.split('@')[0],
-            email,
-            role: role || 'patient',
-            verified: true
-        };
-
-        setUser(userData);
-        localStorage.setItem('swasthya_user', JSON.stringify(userData));
-        setIsLoading(false);
     };
 
     const register = async (userData) => {
         setIsLoading(true);
+        console.log('🔐 AuthContext: Attempting registration for:', userData.email);
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            // Call real backend API
+            const response = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(userData)
+            });
 
-        const newUser = {
-            id: Date.now().toString(),
-            name: userData.name,
-            email: userData.email,
-            role: userData.role,
-            verified: userData.role === 'patient', // Patients are auto-verified, others need admin approval
-            documents: userData.documents ? [userData.documents] : undefined
-        };
+            const data = await response.json();
+            console.log('📥 AuthContext: Register response:', data);
 
-        setUser(newUser);
-        localStorage.setItem('swasthya_user', JSON.stringify(newUser));
-        setIsLoading(false);
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
+            }
+
+            // Store user data and token
+            const newUser = {
+                id: data.user._id,
+                name: data.user.fullName,
+                email: data.user.email,
+                role: data.user.role,
+                verified: data.user.isVerified
+            };
+
+            console.log('✅ AuthContext: Registration successful, storing user:', newUser);
+            setUser(newUser);
+            localStorage.setItem('swasthya_user', JSON.stringify(newUser));
+            localStorage.setItem('token', data.token);
+            setIsLoading(false);
+        } catch (error) {
+            console.error('❌ AuthContext: Registration error:', error);
+            setIsLoading(false);
+            throw error;
+        }
     };
 
     const logout = () => {
+        console.log('🔐 AuthContext: Logging out, clearing session');
         setUser(null);
         localStorage.removeItem('swasthya_user');
+        localStorage.removeItem('token');
     };
 
     const value = {
