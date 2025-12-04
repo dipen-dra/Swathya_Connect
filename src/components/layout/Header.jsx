@@ -1,0 +1,136 @@
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    User,
+    Settings,
+    LogOut,
+    Bell,
+    Shield,
+    Activity,
+    ChevronDown,
+    Heart
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+export default function Header() {
+    const { user, logout } = useAuth();
+    const { profile } = useProfile();
+    const { unreadCount } = useNotifications();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/');
+    };
+
+    const getRoleIcon = (role) => {
+        switch (role) {
+            case 'patient': return <User className="h-4 w-4" />;
+            case 'doctor': return <Activity className="h-4 w-4" />;
+            case 'pharmacy': return <Shield className="h-4 w-4" />;
+            case 'admin': return <Settings className="h-4 w-4" />;
+            default: return <User className="h-4 w-4" />;
+        }
+    };
+
+    const getRoleColor = (role) => {
+        switch (role) {
+            case 'patient': return 'bg-blue-100 text-blue-800';
+            case 'doctor': return 'bg-green-100 text-green-800';
+            case 'pharmacy': return 'bg-purple-100 text-purple-800';
+            case 'admin': return 'bg-orange-100 text-orange-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    return (
+        <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <div className="container mx-auto flex h-16 items-center justify-between px-6">
+                {/* Logo */}
+                <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <Heart className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            Swasthya Connect
+                        </span>
+                    </div>
+                </div>
+
+                {/* User Actions */}
+                <div className="flex items-center space-x-4">
+                    {/* Notifications */}
+                    <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </Button>
+
+                    {/* User Menu - Always show with fallback values */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2 h-auto">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={profile?.profileImage} />
+                                    <AvatarFallback className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                        {(profile?.firstName?.[0] || user?.name?.[0] || 'P')}
+                                        {(profile?.lastName?.[0] || user?.name?.split(' ')[1]?.[0] || '')}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-sm font-medium">
+                                        {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : (user?.name || 'patient')}
+                                    </span>
+                                    <Badge variant="secondary" className={`text-xs ${getRoleColor(user?.role || 'patient')} border-0`}>
+                                        <span className="flex items-center space-x-1">
+                                            {getRoleIcon(user?.role || 'patient')}
+                                            <span className="capitalize">{user?.role || 'Patient'}</span>
+                                        </span>
+                                    </Badge>
+                                </div>
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-white">
+                            <DropdownMenuLabel className="text-gray-900">My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Profile Settings</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Account Settings</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={handleLogout}
+                                className="cursor-pointer text-red-600 focus:text-red-600"
+                            >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Sign Out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </header>
+    );
+}

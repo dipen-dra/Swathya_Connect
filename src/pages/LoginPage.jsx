@@ -71,8 +71,8 @@ export default function LoginPage() {
         type="button"
         onClick={() => onSelect(role.id)}
         className={`p-3 rounded-xl border-2 flex flex-col items-center transition ${isSelected
-            ? `${colors[role.id].border} ${colors[role.id].bg}`
-            : "border-gray-200 bg-white hover:border-gray-300"
+          ? `${colors[role.id].border} ${colors[role.id].bg}`
+          : "border-gray-200 bg-white hover:border-gray-300"
           }`}
       >
         <role.icon
@@ -111,7 +111,7 @@ export default function LoginPage() {
         toast.success("Welcome back!", {
           description: "You have logged in successfully.",
         });
-        navigate("/");
+        navigate("/dashboard");
       } else {
         toast.error("Login Failed", {
           description: data.message || "Invalid credentials",
