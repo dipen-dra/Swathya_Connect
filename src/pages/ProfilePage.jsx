@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Check, Shield, Heart, Edit, Save, X } from 'lucide-react';
+import { User, Check, Shield, Heart, Edit, Save, X, ArrowLeft, Camera } from 'lucide-react';
 import Header from '@/components/layout/Header';
 
 export function ProfilePage() {
@@ -17,6 +17,7 @@ export function ProfilePage() {
     const { profile } = useProfile();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
+    const [profileImage, setProfileImage] = useState(profile?.profileImage || null);
 
     const [formData, setFormData] = useState({
         firstName: profile?.firstName || 'patient',
@@ -35,6 +36,17 @@ export function ProfilePage() {
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSave = () => {
@@ -62,30 +74,44 @@ export function ProfilePage() {
         if (isEditing) {
             setIsEditing(false);
         } else {
-            navigate('/dashboard');
+            navigate('/dashboard?tab=profile');
         }
+    };
+
+    const handleBackToDashboard = () => {
+        navigate('/dashboard?tab=profile');
     };
 
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto px-6 py-8 max-w-6xl">
+            <div className="container mx-auto px-6 py-8 max-w-7xl">
+                {/* Back Button */}
+                <Button
+                    onClick={handleBackToDashboard}
+                    variant="ghost"
+                    className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                </Button>
+
                 {/* Hero Banner */}
-                <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl p-8 mb-8 text-white">
+                <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 rounded-2xl p-8 mb-8 text-white shadow-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                                <User className="h-8 w-8 text-white" />
+                            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+                                <User className="h-7 w-7 text-white" />
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold">My Profile</h1>
                                 <p className="text-blue-100 mt-1">Manage your personal information and settings</p>
                             </div>
                         </div>
-                        <Avatar className="h-16 w-16 border-4 border-white/30">
+                        <Avatar className="h-14 w-14 border-4 border-white/30">
                             <AvatarImage src={profile?.profileImage} />
-                            <AvatarFallback className="bg-white text-blue-600 text-2xl font-bold">
+                            <AvatarFallback className="bg-white text-blue-600 text-xl font-bold">
                                 {formData.firstName[0]?.toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
@@ -107,30 +133,41 @@ export function ProfilePage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content - Side by Side Layout */}
+                <div className="flex gap-6">
                     {/* Left Sidebar - Profile Card */}
-                    <div className="lg:col-span-1">
-                        <Card className="border border-gray-200">
+                    <div className="w-80 flex-shrink-0">
+                        <Card className="border border-gray-200 shadow-sm">
                             <CardContent className="p-6 text-center">
                                 <div className="relative inline-block mb-4">
-                                    <Avatar className="h-32 w-32">
-                                        <AvatarImage src={profile?.profileImage} />
-                                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-4xl font-bold">
+                                    <Avatar className="h-28 w-28">
+                                        <AvatarImage src={profileImage} />
+                                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-3xl font-bold">
                                             {formData.firstName[0]?.toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
-                                        <Check className="h-5 w-5 text-white" />
-                                    </div>
+                                    <input
+                                        type="file"
+                                        id="profile-upload"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                    />
+                                    <label
+                                        htmlFor="profile-upload"
+                                        className="absolute -bottom-1 -right-1 w-9 h-9 bg-teal-500 hover:bg-teal-600 rounded-full border-4 border-white flex items-center justify-center cursor-pointer transition-colors"
+                                    >
+                                        <Camera className="h-4 w-4 text-white" />
+                                    </label>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
                                     {formData.firstName} {formData.lastName}
                                 </h3>
-                                <Badge className="mb-3 bg-blue-100 text-blue-700 border-blue-200">
+                                <Badge className="mb-3 bg-blue-100 text-blue-700 border-blue-200 text-xs">
                                     Patient
                                 </Badge>
-                                <div className="flex items-center justify-center space-x-1 text-sm text-gray-600 mb-4">
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center justify-center space-x-1 text-xs text-gray-600">
+                                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
                                     <span>{formData.email}</span>
@@ -140,8 +177,8 @@ export function ProfilePage() {
                     </div>
 
                     {/* Right Content - Personal Information Form */}
-                    <div className="lg:col-span-2">
-                        <Card className="border border-gray-200">
+                    <div className="flex-1">
+                        <Card className="border border-gray-200 shadow-sm">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
@@ -160,7 +197,7 @@ export function ProfilePage() {
                                     )}
                                 </div>
 
-                                <div className="space-y-6">
+                                <div className="space-y-5">
                                     {/* Name Fields */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -281,7 +318,7 @@ export function ProfilePage() {
                                             onChange={(e) => handleChange('medicalHistory', e.target.value)}
                                             disabled={!isEditing}
                                             placeholder="Any chronic conditions, past surgeries, or important medical history..."
-                                            className="min-h-[100px] border-gray-200"
+                                            className="min-h-[90px] border-gray-200"
                                         />
                                     </div>
 
@@ -292,7 +329,7 @@ export function ProfilePage() {
                                             value={formData.address}
                                             onChange={(e) => handleChange('address', e.target.value)}
                                             disabled={!isEditing}
-                                            className="min-h-[80px] border-gray-200"
+                                            className="min-h-[70px] border-gray-200"
                                         />
                                     </div>
 
