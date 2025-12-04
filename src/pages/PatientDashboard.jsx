@@ -43,9 +43,11 @@ import {
     FileText
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
+import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import Header from '@/components/layout/Header';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,6 +65,7 @@ export function PatientDashboard() {
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
     // Doctor search and filter states
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
@@ -1543,86 +1546,14 @@ export function PatientDashboard() {
 
                     {/* Health Records Tab */}
                     {activeTab === 'health-records' && (
-                        <div className="space-y-6">
-                            {/* Basic Health Information */}
-                            <Card className="border-0 shadow-sm">
-                                <CardHeader>
-                                    <CardTitle>Basic Health Information</CardTitle>
-                                    <CardDescription>Your essential health details and medical history</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                                <AlertCircle className="h-5 w-5 text-red-600" />
-                                                <h4 className="font-semibold text-red-800">Blood Group</h4>
-                                            </div>
-                                            <p className="text-2xl font-bold text-red-600">O+</p>
-                                        </div>
-
-                                        <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                                <Heart className="h-5 w-5 text-orange-600" />
-                                                <h4 className="font-semibold text-orange-800">Allergies</h4>
-                                            </div>
-                                            <p className="text-sm text-orange-700">Penicillin, Shellfish</p>
-                                        </div>
-
-                                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                                <FileText className="h-5 w-5 text-blue-600" />
-                                                <h4 className="font-semibold text-blue-800">Medical History</h4>
-                                            </div>
-                                            <p className="text-sm text-blue-700">Hypertension, Diabetes</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Medicine Reminders Section */}
-                            <Card className="border-0 shadow-sm">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle className="flex items-center space-x-2">
-                                                <Pill className="h-5 w-5 text-blue-600" />
-                                                <span>Medicine Reminders</span>
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Set daily medicine reminders with email notifications to stay on track with your medication schedule
-                                            </CardDescription>
-                                        </div>
-                                        <Button
-                                            onClick={() => setMedicineReminderDialog(true)}
-                                            className="bg-blue-600 hover:bg-blue-700"
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Add Reminder
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {medicineReminders.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {medicineReminders.map(renderMedicineReminderCard)}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-12">
-                                            <Pill className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                                            <p className="text-gray-600 font-medium">No medicine reminders set</p>
-                                            <p className="text-sm text-gray-500 mt-1">Add your daily medicines to get email reminders</p>
-                                            <Button
-                                                onClick={() => setMedicineReminderDialog(true)}
-                                                className="mt-4 bg-blue-600 hover:bg-blue-700"
-                                            >
-                                                <Plus className="h-4 w-4 mr-2" />
-                                                Add Your First Reminder
-                                            </Button>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
+                        <HealthRecordsTab
+                            profile={profile}
+                            medicineReminders={medicineReminders}
+                            onAddReminder={() => setMedicineReminderDialog(true)}
+                            onEditReminder={handleEditReminder}
+                            onToggleReminder={toggleReminderStatus}
+                            onDeleteReminder={handleDeleteReminder}
+                        />
                     )}
 
                     {/* Pharmacy Tab */}
