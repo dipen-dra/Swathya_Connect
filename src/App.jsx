@@ -38,6 +38,11 @@ export default function App() {
 
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<PatientDashboard />} />
+                  <Route path="/dashboard/doctors" element={<PatientDashboard />} />
+                  <Route path="/dashboard/consultations" element={<PatientDashboard />} />
+                  <Route path="/dashboard/pharmacy" element={<PatientDashboard />} />
+                  <Route path="/dashboard/profile" element={<PatientDashboard />} />
+                  <Route path="/dashboard/health-records" element={<PatientDashboard />} />
                   <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </BrowserRouter>

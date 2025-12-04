@@ -116,12 +116,12 @@ export function ProfilePage() {
         if (isEditing) {
             setIsEditing(false);
         } else {
-            navigate('/dashboard?tab=profile');
+            navigate('/dashboard/profile');
         }
     };
 
     const handleBackToDashboard = () => {
-        navigate('/dashboard?tab=profile');
+        navigate('/dashboard/profile');
     };
 
     return (
@@ -136,7 +136,7 @@ export function ProfilePage() {
                     className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Dashboard
+                    Back
                 </Button>
 
                 {/* Hero Banner */}

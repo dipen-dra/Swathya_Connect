@@ -49,7 +49,7 @@ import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import Header from '@/components/layout/Header';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useReminders } from '@/contexts/RemindersContext';
 import { doctorsAPI, pharmaciesAPI, statsAPI } from '@/services/api';
 
@@ -59,7 +59,24 @@ export function PatientDashboard() {
     const { addNotification } = useNotifications();
     const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('doctors');
+    const location = useLocation();
+
+    // Determine active tab from URL
+    const getTabFromPath = (pathname) => {
+        if (pathname.includes('/doctors')) return 'doctors';
+        if (pathname.includes('/consultations')) return 'consultations';
+        if (pathname.includes('/pharmacy')) return 'pharmacy';
+        if (pathname.includes('/profile')) return 'profile';
+        if (pathname.includes('/health-records')) return 'health-records';
+        return 'doctors'; // default tab
+    };
+
+    const [activeTab, setActiveTab] = useState(getTabFromPath(location.pathname));
+
+    // Update activeTab when URL changes
+    useEffect(() => {
+        setActiveTab(getTabFromPath(location.pathname));
+    }, [location.pathname]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('date');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -1060,7 +1077,7 @@ export function PatientDashboard() {
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                             <button
-                                onClick={() => setActiveTab('doctors')}
+                                onClick={() => navigate('/dashboard/doctors')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'doctors'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1069,7 +1086,7 @@ export function PatientDashboard() {
                                 Find Doctors
                             </button>
                             <button
-                                onClick={() => setActiveTab('consultations')}
+                                onClick={() => navigate('/dashboard/consultations')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'consultations'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1078,7 +1095,7 @@ export function PatientDashboard() {
                                 My Consultations
                             </button>
                             <button
-                                onClick={() => setActiveTab('pharmacy')}
+                                onClick={() => navigate('/dashboard/pharmacy')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'pharmacy'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1087,7 +1104,7 @@ export function PatientDashboard() {
                                 Pharmacy Chat
                             </button>
                             <button
-                                onClick={() => setActiveTab('profile')}
+                                onClick={() => navigate('/dashboard/profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1096,7 +1113,7 @@ export function PatientDashboard() {
                                 Profile & Settings
                             </button>
                             <button
-                                onClick={() => setActiveTab('health-records')}
+                                onClick={() => navigate('/dashboard/health-records')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'health-records'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
