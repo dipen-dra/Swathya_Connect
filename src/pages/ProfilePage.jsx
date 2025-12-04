@@ -35,6 +35,28 @@ export function ProfilePage() {
         country: profile?.country || 'Nepal'
     });
 
+    // Update formData when profile loads from API
+    useEffect(() => {
+        if (profile) {
+            console.log('📝 ProfilePage: Profile loaded, updating form data:', profile);
+            setFormData({
+                firstName: profile.firstName || '',
+                lastName: profile.lastName || '',
+                email: user?.email || '',
+                phoneNumber: profile.phoneNumber || '',
+                dateOfBirth: profile.dateOfBirth || '',
+                gender: profile.gender || '',
+                bloodGroup: profile.bloodGroup || '',
+                emergencyContact: profile.emergencyContact || '',
+                medicalHistory: profile.medicalHistory || '',
+                address: profile.address || '',
+                city: profile.city || '',
+                country: profile.country || 'Nepal'
+            });
+            setProfileImage(profile.profileImage || null);
+        }
+    }, [profile, user]);
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
