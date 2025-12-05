@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Eye,
@@ -30,7 +30,11 @@ const Label = ({ children, className, ...props }) => (
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  // Get the page user was trying to access before being redirected to login
+  const from = location.state?.from?.pathname || null;
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -108,13 +112,18 @@ export default function LoginPage() {
         description: "You have logged in successfully.",
       });
 
-      // Navigate based on role
-      if (selectedLoginRole === "patient") {
-        navigate("/dashboard");
-      } else if (selectedLoginRole === "doctor") {
-        navigate("/doctor-dashboard");
-      } else if (selectedLoginRole === "pharmacy") {
-        navigate("/pharmacy-dashboard");
+      // Navigate to the page they were trying to access, or default dashboard
+      if (from) {
+        navigate(from, { replace: true });
+      } else {
+        // Navigate based on role
+        if (selectedLoginRole === "patient") {
+          navigate("/dashboard");
+        } else if (selectedLoginRole === "doctor") {
+          navigate("/doctor-dashboard");
+        } else if (selectedLoginRole === "pharmacy") {
+          navigate("/pharmacy-dashboard");
+        }
       }
     } catch (error) {
       console.error(error);
