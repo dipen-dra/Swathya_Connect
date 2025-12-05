@@ -99,4 +99,11 @@ export const authAPI = {
     logout: () => api.post('/auth/logout')
 };
 
+// Payment API
+export const paymentAPI = {
+    initiateEsewa: (consultationId) => api.post('/payment/esewa/initiate', { consultationId }),
+    verifyEsewa: (data) => api.post(`/payment/esewa/verify?data=${data}`),
+    verifyKhalti: (token, amount, consultationId) => api.post('/payment/khalti/verify', { token, amount, consultationId })
+};
+
 export default api;

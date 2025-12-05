@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { paymentAPI } from '@/services/api';
 
-export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSelect }) {
+export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuccess, onPaymentError }) {
     const [selectedPayment, setSelectedPayment] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+    const esewaFormRef = useRef(null);
+
+    // Load Khalti checkout script
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.17.0.0.0/khalti-checkout.iffe.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     if (!bookingDetails) return null;
 
@@ -31,9 +46,102 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSel
         }
     ];
 
+    const handleKhaltiPayment = async () => {
+        try {
+            setIsProcessing(true);
+
+            const khaltiConfig = {
+                publicKey: "test_public_key_617c4c6fe77c441d88451ec1408a0c0e",
+                productIdentity: bookingDetails.consultationId,
+                productName: `Consultation with ${bookingDetails.doctorName}`,
+                productUrl: window.location.href,
+                eventHandler: {
+                    async onSuccess(payload) {
+                        try {
+                            const response = await paymentAPI.verifyKhalti(
+                                payload.token,
+                                payload.amount,
+                                bookingDetails.consultationId
+                            );
+
+                            if (response.data.success) {
+                                onPaymentSuccess('Khalti', response.data.data);
+                            } else {
+                                onPaymentError('Payment verification failed');
+                            }
+                        } catch (error) {
+                            console.error('Khalti verification error:', error);
+                            onPaymentError(error.response?.data?.message || 'Payment verification failed');
+                        } finally {
+                            setIsProcessing(false);
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Khalti payment error:', error);
+                        onPaymentError('Payment process was interrupted');
+                        setIsProcessing(false);
+                    },
+                    onClose: () => {
+                        console.log('Khalti widget closed');
+                        setIsProcessing(false);
+                    },
+                },
+                paymentPreference: ["KHALTI", "EBANKING", "MOBILE_BANKING", "CONNECT_IPS", "SCT"],
+            };
+
+            const checkout = new window.KhaltiCheckout(khaltiConfig);
+            checkout.show({ amount: bookingDetails.fee * 100 }); // Amount in paisa
+        } catch (error) {
+            console.error('Error initializing Khalti:', error);
+            onPaymentError('Failed to initialize Khalti payment');
+            setIsProcessing(false);
+        }
+    };
+
+    const handleEsewaPayment = async () => {
+        try {
+            setIsProcessing(true);
+
+            const response = await paymentAPI.initiateEsewa(bookingDetails.consultationId);
+
+            if (response.data.success) {
+                const esewaData = response.data.data;
+
+                // Create and submit eSewa form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = esewaData.ESEWA_URL;
+
+                Object.keys(esewaData).forEach(key => {
+                    if (key !== 'ESEWA_URL') {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = esewaData[key];
+                        form.appendChild(input);
+                    }
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                onPaymentError('Failed to initiate eSewa payment');
+                setIsProcessing(false);
+            }
+        } catch (error) {
+            console.error('eSewa initiation error:', error);
+            onPaymentError(error.response?.data?.message || 'Failed to initiate eSewa payment');
+            setIsProcessing(false);
+        }
+    };
+
     const handlePayment = () => {
-        if (selectedPayment) {
-            onPaymentSelect(selectedPayment);
+        if (!selectedPayment) return;
+
+        if (selectedPayment === 'khalti') {
+            handleKhaltiPayment();
+        } else if (selectedPayment === 'esewa') {
+            handleEsewaPayment();
         }
     };
 
@@ -89,9 +197,10 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSel
                             {paymentMethods.map((method) => (
                                 <div
                                     key={method.id}
-                                    onClick={() => setSelectedPayment(method.id)}
+                                    onClick={() => !isProcessing && setSelectedPayment(method.id)}
                                     className={cn(
                                         "relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200",
+                                        isProcessing ? "opacity-50 cursor-not-allowed" : "",
                                         selectedPayment === method.id
                                             ? `${method.borderColor} bg-gradient-to-br ${method.bgColor} bg-opacity-5`
                                             : `border-gray-200 ${method.hoverColor} hover:shadow-md`
@@ -142,18 +251,19 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSel
                 <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                     <Button
                         variant="outline"
-                        onClick={() => onOpenChange(false)}
+                        onClick={() => !isProcessing && onOpenChange(false)}
+                        disabled={isProcessing}
                         className="px-8 py-2 border-gray-200"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handlePayment}
-                        disabled={!selectedPayment}
+                        disabled={!selectedPayment || isProcessing}
                         className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
-                        Proceed to Payment
-                        <ArrowRight className="h-4 w-4 ml-2" />
+                        {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                        {!isProcessing && <ArrowRight className="h-4 w-4 ml-2" />}
                     </Button>
                 </div>
             </DialogContent>

@@ -1524,14 +1524,41 @@ export function PatientDashboard() {
                     open={consultationDialog}
                     onOpenChange={setConsultationDialog}
                     doctor={selectedDoctor}
-                    onConfirm={(bookingData) => {
-                        // Store booking data and open payment dialog
-                        setPendingBooking({
-                            ...bookingData,
-                            doctorName: selectedDoctor?.name
-                        });
-                        setConsultationDialog(false);
-                        setPaymentDialog(true);
+                    onConfirm={async (bookingData) => {
+                        try {
+                            // Create consultation in database first
+                            const consultationData = {
+                                doctorId: selectedDoctor._id,
+                                date: bookingData.date,
+                                time: bookingData.time,
+                                type: bookingData.type,
+                                reason: bookingData.reason
+                            };
+
+                            const response = await consultationsAPI.bookConsultation(consultationData);
+
+                            if (response.data.success) {
+                                const createdConsultation = response.data.data;
+
+                                // Store booking data with actual consultation ID
+                                setPendingBooking({
+                                    ...bookingData,
+                                    doctorName: selectedDoctor?.name,
+                                    consultationId: createdConsultation._id,
+                                    fee: createdConsultation.fee
+                                });
+
+                                setConsultationDialog(false);
+                                setPaymentDialog(true);
+                            }
+                        } catch (error) {
+                            console.error('Failed to create consultation:', error);
+                            addNotification({
+                                type: 'error',
+                                title: 'Booking Failed',
+                                message: 'Failed to create consultation. Please try again.'
+                            });
+                        }
                     }}
                 />
 
@@ -1539,44 +1566,30 @@ export function PatientDashboard() {
                     open={paymentDialog}
                     onOpenChange={setPaymentDialog}
                     bookingDetails={pendingBooking}
-                    onPaymentSelect={async (paymentMethod) => {
+                    onPaymentSuccess={async (paymentMethod, consultationData) => {
                         try {
-                            console.log('Payment method selected:', paymentMethod);
-                            console.log('Booking details:', pendingBooking);
+                            // Refresh consultations list
+                            await fetchConsultations();
 
-                            // Save consultation to backend
-                            const consultationData = {
-                                doctorId: selectedDoctor._id,
-                                date: pendingBooking.date,
-                                time: pendingBooking.time,
-                                type: pendingBooking.type,
-                                reason: pendingBooking.reason
-                            };
+                            setPaymentDialog(false);
+                            setPendingBooking(null);
 
-                            const response = await consultationsAPI.bookConsultation(consultationData);
-
-                            if (response.data.success) {
-                                // Refresh consultations list
-                                await fetchConsultations();
-
-                                setPaymentDialog(false);
-                                setPendingBooking(null);
-
-                                // Show success message
-                                addNotification({
-                                    type: 'success',
-                                    title: 'Booking Confirmed',
-                                    message: `Your consultation with ${pendingBooking?.doctorName} has been booked successfully. Payment via ${paymentMethod}.`
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Failed to book consultation:', error);
+                            // Show success message
                             addNotification({
-                                type: 'error',
-                                title: 'Booking Failed',
-                                message: 'Failed to book consultation. Please try again.'
+                                type: 'success',
+                                title: 'Payment Successful!',
+                                message: `Your consultation with ${pendingBooking?.doctorName} has been booked and paid via ${paymentMethod}.`
                             });
+                        } catch (error) {
+                            console.error('Error after payment success:', error);
                         }
+                    }}
+                    onPaymentError={(errorMessage) => {
+                        addNotification({
+                            type: 'error',
+                            title: 'Payment Failed',
+                            message: errorMessage || 'Payment could not be processed. Please try again.'
+                        });
                     }}
                 />
 
