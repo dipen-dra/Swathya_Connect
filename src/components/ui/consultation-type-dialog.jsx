@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Video, Phone, MessageCircle, Calendar as CalendarIcon, Clock, CreditCard, Stethoscope, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,13 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
     const [reason, setReason] = useState('');
 
     if (!doctor) return null;
+
+    // Helper function to get full image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        return `http://localhost:5000${imagePath}`; // Prepend backend URL
+    };
 
     const consultationTypes = [
         {
@@ -119,9 +127,12 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                         {/* Doctor Information */}
                         <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 border border-purple-200">
                             <div className="flex items-center space-x-4">
-                                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl">
-                                    {doctor.name.split(' ').map(n => n[0]).join('')}
-                                </div>
+                                <Avatar className="h-16 w-16 border-2 border-white shadow-md">
+                                    <AvatarImage src={getImageUrl(doctor.image)} alt={doctor.name} />
+                                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-2xl">
+                                        {doctor.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900">{doctor.name}</h3>
                                     <p className="text-blue-600 font-medium">{doctor.specialty}</p>

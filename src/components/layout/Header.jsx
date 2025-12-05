@@ -28,6 +28,7 @@ import {
     X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Logo from '@/assets/swasthyalogo.png';
 
 export default function Header() {
     const { user, logout } = useAuth();
@@ -90,14 +91,11 @@ export default function Header() {
             <div className="container mx-auto flex h-16 items-center justify-between px-6">
                 {/* Logo */}
                 <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                            <Heart className="h-5 w-5 text-white" />
-                        </div>
-                        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            Swasthya Connect
-                        </span>
-                    </div>
+                    <img
+                        src={Logo}
+                        alt="Swasthya Connect Logo"
+                        className="w-auto h-16 object-contain"
+                    />
                 </div>
 
                 {/* User Actions */}
