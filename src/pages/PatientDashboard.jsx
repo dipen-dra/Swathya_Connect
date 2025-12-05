@@ -45,13 +45,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
+import { PaymentDialog } from '@/components/ui/payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import Header from '@/components/layout/Header';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useReminders } from '@/contexts/RemindersContext';
-import { doctorsAPI, pharmaciesAPI, statsAPI } from '@/services/api';
+import { doctorsAPI, pharmaciesAPI, statsAPI, consultationsAPI } from '@/services/api';
 
 export function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -82,6 +83,8 @@ export function PatientDashboard() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [consultationDialog, setConsultationDialog] = useState(false);
+    const [paymentDialog, setPaymentDialog] = useState(false);
+    const [pendingBooking, setPendingBooking] = useState(null);
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
@@ -91,9 +94,11 @@ export function PatientDashboard() {
     const [doctors, setDoctors] = useState([]);
     const [pharmacies, setPharmacies] = useState([]);
     const [stats, setStats] = useState(null);
+    const [consultations, setConsultations] = useState([]);
     const [loadingDoctors, setLoadingDoctors] = useState(true);
     const [loadingPharmacies, setLoadingPharmacies] = useState(true);
     const [loadingStats, setLoadingStats] = useState(true);
+    const [loadingConsultations, setLoadingConsultations] = useState(true);
 
     // Doctor search and filter states
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
@@ -107,195 +112,6 @@ export function PatientDashboard() {
         if (imagePath.startsWith('http')) return imagePath; // Already a full URL
         return `http://localhost:5000${imagePath}`; // Prepend backend URL
     };
-
-    // Mock consultations data
-    const mockConsultations = [
-        // Upcoming consultations
-        {
-            id: 'cons_001',
-            doctorName: 'Dr. Rajesh Kumar',
-            specialty: 'Cardiologist',
-            date: '2025-01-18',
-            time: '10:00 AM',
-            type: 'video',
-            status: 'upcoming',
-            fee: 1500,
-            reason: 'Regular heart checkup and blood pressure monitoring',
-            rating: null,
-            notes: null,
-            prescription: null
-        },
-        {
-            id: 'cons_002',
-            doctorName: 'Dr. Priya Sharma',
-            specialty: 'Dermatologist',
-            date: '2025-01-20',
-            time: '2:30 PM',
-            type: 'audio',
-            status: 'upcoming',
-            fee: 1200,
-            reason: 'Follow-up for skin condition treatment',
-            rating: null,
-            notes: null,
-            prescription: null
-        },
-        {
-            id: 'cons_003',
-            doctorName: 'Dr. Amit Thapa',
-            specialty: 'Orthopedic',
-            date: '2025-01-22',
-            time: '11:00 AM',
-            type: 'chat',
-            status: 'upcoming',
-            fee: 900,
-            reason: 'Knee pain consultation and physiotherapy advice',
-            rating: null,
-            notes: null,
-            prescription: null
-        },
-
-        // Completed consultations
-        {
-            id: 'cons_004',
-            doctorName: 'Dr. Rajesh Kumar',
-            specialty: 'Cardiologist',
-            date: '2025-01-10',
-            time: '3:00 PM',
-            type: 'video',
-            status: 'completed',
-            fee: 1500,
-            reason: 'Chest pain and shortness of breath',
-            rating: 5,
-            notes: 'Patient shows good recovery. Blood pressure is stable. Continue current medication.',
-            prescription: 'Amlodipine 5mg daily, Atorvastatin 20mg at bedtime'
-        },
-        {
-            id: 'cons_005',
-            doctorName: 'Dr. Sunita Maharjan',
-            specialty: 'General Physician',
-            date: '2025-01-08',
-            time: '1:00 PM',
-            type: 'video',
-            status: 'completed',
-            fee: 1000,
-            reason: 'Fever and cold symptoms',
-            rating: 4,
-            notes: 'Viral infection. Rest and hydration recommended. Symptoms should improve in 3-5 days.',
-            prescription: 'Paracetamol 500mg as needed, Vitamin C supplements'
-        },
-        {
-            id: 'cons_006',
-            doctorName: 'Dr. Priya Sharma',
-            specialty: 'Dermatologist',
-            date: '2025-01-05',
-            time: '4:00 PM',
-            type: 'audio',
-            status: 'completed',
-            fee: 1200,
-            reason: 'Skin rash and itching',
-            rating: 5,
-            notes: 'Allergic reaction to new soap. Switched to hypoallergenic products. Rash improving.',
-            prescription: 'Hydrocortisone cream 1%, Cetirizine 10mg daily'
-        },
-        {
-            id: 'cons_007',
-            doctorName: 'Dr. Krishna Poudel',
-            specialty: 'Gastroenterologist',
-            date: '2025-01-03',
-            time: '10:30 AM',
-            type: 'video',
-            status: 'completed',
-            fee: 1800,
-            reason: 'Stomach pain and acidity',
-            rating: 5,
-            notes: 'Gastritis due to irregular eating habits. Dietary changes recommended.',
-            prescription: 'Omeprazole 20mg before breakfast, Sucralfate syrup'
-        },
-        {
-            id: 'cons_008',
-            doctorName: 'Dr. Amit Thapa',
-            specialty: 'Orthopedic',
-            date: '2024-12-28',
-            time: '11:00 AM',
-            type: 'chat',
-            status: 'completed',
-            fee: 900,
-            reason: 'Back pain after exercise',
-            rating: 4,
-            notes: 'Muscle strain. Rest and physiotherapy recommended. Avoid heavy lifting.',
-            prescription: 'Ibuprofen 400mg twice daily, Hot/cold compress'
-        },
-        {
-            id: 'cons_009',
-            doctorName: 'Dr. Maya Gurung',
-            specialty: 'Gynecologist',
-            date: '2024-12-25',
-            time: '2:00 PM',
-            type: 'video',
-            status: 'completed',
-            fee: 1500,
-            reason: 'Routine checkup and consultation',
-            rating: 5,
-            notes: 'Regular checkup completed. All parameters normal. Continue healthy lifestyle.',
-            prescription: 'Folic acid supplements, Iron tablets'
-        },
-        {
-            id: 'cons_010',
-            doctorName: 'Dr. Rajesh Kumar',
-            specialty: 'Cardiologist',
-            date: '2024-12-20',
-            time: '9:00 AM',
-            type: 'video',
-            status: 'completed',
-            fee: 1500,
-            reason: 'Follow-up for hypertension',
-            rating: 5,
-            notes: 'Blood pressure well controlled. Continue current medication regimen.',
-            prescription: 'Amlodipine 5mg daily, lifestyle modifications'
-        },
-        {
-            id: 'cons_011',
-            doctorName: 'Dr. Binod Shrestha',
-            specialty: 'Neurologist',
-            date: '2024-12-15',
-            time: '3:30 PM',
-            type: 'audio',
-            status: 'completed',
-            fee: 2000,
-            reason: 'Headache and dizziness',
-            rating: 4,
-            notes: 'Tension headache due to stress. Relaxation techniques recommended.',
-            prescription: 'Paracetamol as needed, stress management techniques'
-        },
-        {
-            id: 'cons_012',
-            doctorName: 'Dr. Sunita Maharjan',
-            specialty: 'General Physician',
-            date: '2024-12-10',
-            time: '11:30 AM',
-            type: 'video',
-            status: 'completed',
-            fee: 1000,
-            reason: 'Annual health checkup',
-            rating: 5,
-            notes: 'Comprehensive health checkup completed. All vitals normal. Maintain current lifestyle.',
-            prescription: 'Multivitamin supplements, regular exercise'
-        },
-        {
-            id: 'cons_013',
-            doctorName: 'Dr. Priya Sharma',
-            specialty: 'Dermatologist',
-            date: '2024-12-05',
-            time: '1:30 PM',
-            type: 'chat',
-            status: 'completed',
-            fee: 1200,
-            reason: 'Acne treatment follow-up',
-            rating: 5,
-            notes: 'Acne showing significant improvement. Continue current treatment for 2 more months.',
-            prescription: 'Tretinoin cream, Clindamycin gel'
-        }
-    ];
 
     // Mock doctors data
     const mockDoctors = [
@@ -493,31 +309,6 @@ export function PatientDashboard() {
         }
     ];
 
-    // Filter and sort consultations
-    const filteredConsultations = mockConsultations.filter(consultation => {
-        const matchesSearch = consultation.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            consultation.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            consultation.reason.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || consultation.status === filterStatus;
-        return matchesSearch && matchesStatus;
-    });
-
-    const sortedConsultations = [...filteredConsultations].sort((a, b) => {
-        switch (sortBy) {
-            case 'date':
-                return new Date(b.date).getTime() - new Date(a.date).getTime();
-            case 'doctor':
-                return a.doctorName.localeCompare(b.doctorName);
-            case 'fee':
-                return b.fee - a.fee;
-            default:
-                return 0;
-        }
-    });
-
-    // Separate upcoming and completed consultations
-    const upcomingConsultations = sortedConsultations.filter(c => c.status === 'upcoming');
-    const completedConsultations = sortedConsultations.filter(c => c.status === 'completed');
 
     // Doctors are already filtered by API based on search and specialty
     const sortedDoctors = doctors;
@@ -591,6 +382,28 @@ export function PatientDashboard() {
         }
     }, [user?.id, profile?.firstName, addNotification]);
 
+    // Fetch consultations on mount
+    useEffect(() => {
+        if (user) {
+            fetchConsultations();
+        }
+    }, [user]);
+
+    // Fetch consultations from backend
+    const fetchConsultations = async () => {
+        try {
+            setLoadingConsultations(true);
+            const response = await consultationsAPI.getConsultations();
+            if (response.data.success) {
+                setConsultations(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch consultations:', error);
+        } finally {
+            setLoadingConsultations(false);
+        }
+    };
+
     const handleBookConsultation = useCallback((doctor) => {
         setSelectedDoctor(doctor);
         setConsultationDialog(true);
@@ -652,6 +465,11 @@ export function PatientDashboard() {
         }
     };
 
+    // Filter consultations by status
+    const upcomingConsultations = consultations.filter(c => c.status === 'upcoming');
+    const completedConsultations = consultations.filter(c => c.status === 'completed');
+    const sortedConsultations = [...consultations].sort((a, b) => new Date(b.date) - new Date(a.date));
+
     const getConsultationTypeIcon = (type) => {
         switch (type) {
             case 'video': return Video;
@@ -684,6 +502,7 @@ export function PatientDashboard() {
                         <div className="flex items-start space-x-4 flex-1">
                             {/* Doctor Avatar */}
                             <Avatar className="h-14 w-14 border-2 border-blue-100">
+                                <AvatarImage src={getImageUrl(consultation.doctorImage)} alt={consultation.doctorName} />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-lg">
                                     {consultation.doctorName.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
@@ -1705,7 +1524,60 @@ export function PatientDashboard() {
                     open={consultationDialog}
                     onOpenChange={setConsultationDialog}
                     doctor={selectedDoctor}
-                    onConfirm={handleConsultationConfirm}
+                    onConfirm={(bookingData) => {
+                        // Store booking data and open payment dialog
+                        setPendingBooking({
+                            ...bookingData,
+                            doctorName: selectedDoctor?.name
+                        });
+                        setConsultationDialog(false);
+                        setPaymentDialog(true);
+                    }}
+                />
+
+                <PaymentDialog
+                    open={paymentDialog}
+                    onOpenChange={setPaymentDialog}
+                    bookingDetails={pendingBooking}
+                    onPaymentSelect={async (paymentMethod) => {
+                        try {
+                            console.log('Payment method selected:', paymentMethod);
+                            console.log('Booking details:', pendingBooking);
+
+                            // Save consultation to backend
+                            const consultationData = {
+                                doctorId: selectedDoctor._id,
+                                date: pendingBooking.date,
+                                time: pendingBooking.time,
+                                type: pendingBooking.type,
+                                reason: pendingBooking.reason
+                            };
+
+                            const response = await consultationsAPI.bookConsultation(consultationData);
+
+                            if (response.data.success) {
+                                // Refresh consultations list
+                                await fetchConsultations();
+
+                                setPaymentDialog(false);
+                                setPendingBooking(null);
+
+                                // Show success message
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Booking Confirmed',
+                                    message: `Your consultation with ${pendingBooking?.doctorName} has been booked successfully. Payment via ${paymentMethod}.`
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Failed to book consultation:', error);
+                            addNotification({
+                                type: 'error',
+                                title: 'Booking Failed',
+                                message: 'Failed to book consultation. Please try again.'
+                            });
+                        }
+                    }}
                 />
 
                 <PharmacyChat
