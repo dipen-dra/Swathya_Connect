@@ -1312,7 +1312,6 @@ export function PatientDashboard() {
                                                     </div>
                                                     <Button
                                                         onClick={() => handleBookConsultation(doctor)}
-                                                        disabled={doctor.availability !== 'Available'}
                                                         className="bg-blue-600 hover:bg-blue-700 text-white"
                                                     >
                                                         <Calendar className="h-4 w-4 mr-2" />

@@ -340,7 +340,7 @@ export function MedicineReminderDialog({
                     <Button
                         onClick={handleSave}
                         disabled={!medicineName.trim() || !dosage.trim() || !times.some(t => t.trim())}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                         {editingReminder ? 'Update Reminder' : 'Save Reminder'}
                     </Button>
