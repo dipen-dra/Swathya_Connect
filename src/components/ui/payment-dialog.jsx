@@ -50,6 +50,9 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
         try {
             setIsProcessing(true);
 
+            // Temporarily hide the payment dialog to prevent z-index conflicts
+            onOpenChange(false);
+
             const khaltiConfig = {
                 publicKey: "test_public_key_617c4c6fe77c441d88451ec1408a0c0e",
                 productIdentity: bookingDetails.consultationId,
@@ -80,10 +83,14 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                         console.error('Khalti payment error:', error);
                         onPaymentError('Payment process was interrupted');
                         setIsProcessing(false);
+                        // Restore payment dialog on error
+                        onOpenChange(true);
                     },
                     onClose: () => {
                         console.log('Khalti widget closed');
                         setIsProcessing(false);
+                        // Restore payment dialog when user closes Khalti
+                        onOpenChange(true);
                     },
                 },
                 paymentPreference: ["KHALTI", "EBANKING", "MOBILE_BANKING", "CONNECT_IPS", "SCT"],
@@ -95,6 +102,8 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
             console.error('Error initializing Khalti:', error);
             onPaymentError('Failed to initialize Khalti payment');
             setIsProcessing(false);
+            // Restore payment dialog on error
+            onOpenChange(true);
         }
     };
 
