@@ -1507,7 +1507,7 @@ export function PatientDashboard() {
                             </div>
 
                             {/* Sign Out */}
-                            <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={handleLogout}>
+                            <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={() => setShowLogoutDialog(true)}>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-center space-x-2 text-red-600">
                                         <LogOut className="h-5 w-5" />
@@ -1605,6 +1605,29 @@ export function PatientDashboard() {
                     onSave={handleSaveMedicineReminder}
                     editingReminder={editingReminder}
                 />
+
+                {/* Logout Confirmation Dialog */}
+                <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                    <LogOut className="h-6 w-6 text-red-600" />
+                                </div>
+                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription>
+                                Are you sure you want to sign out? You'll need to sign in again to access your account.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white">
+                                Sign Out
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div >
         </div >
     );
