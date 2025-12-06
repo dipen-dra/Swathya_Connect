@@ -44,6 +44,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/layout/Header';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function DoctorDashboard() {
     console.log('🏥 DoctorDashboard component is rendering!');
@@ -862,7 +863,7 @@ export default function DoctorDashboard() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Button
-                                            onClick={() => navigate('/profile')}
+                                            onClick={() => navigate('/doctor/profile')}
                                             className="h-16 bg-white border-2 border-green-200 text-green-700 hover:bg-green-50 flex items-center justify-center space-x-3"
                                         >
                                             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">

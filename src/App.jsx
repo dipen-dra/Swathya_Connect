@@ -9,15 +9,16 @@ import { RemindersProvider } from "./contexts/RemindersContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import Home from "./pages/Home";
-import Login from "./pages/LoginPage";
-import Register from "./pages/RegisterPage";
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from "./pages/ForgotPassword";
-import { PatientDashboard } from "./pages/PatientDashboard";
-import DoctorDashboard from "./pages/DoctorDashboard";
-import ProfilePage from "./pages/ProfilePage";
-import EsewaSuccess from "./pages/EsewaSuccess";
+import PatientDashboard from './pages/PatientDashboard';
+import DoctorDashboard from './pages/DoctorDashboard';
+import DoctorProfilePage from './pages/DoctorProfilePage';
+import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from "./pages/EsewaFailure";
-import KhaltiSuccess from "./pages/KhaltiSuccess";
+import KhaltiSuccess from './pages/KhaltiSuccess';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   return (
@@ -38,7 +39,7 @@ export default function App() {
                     path="/login"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Login />
+                        <LoginPage />
                       </ProtectedRoute>
                     }
                   />
@@ -46,7 +47,7 @@ export default function App() {
                     path="/register"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Register />
+                        <RegisterPage />
                       </ProtectedRoute>
                     }
                   />
@@ -54,7 +55,7 @@ export default function App() {
                     path="/auth"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Login />
+                        <LoginPage />
                       </ProtectedRoute>
                     }
                   />
@@ -112,12 +113,20 @@ export default function App() {
                     }
                   />
 
-                  {/* Doctor Dashboard Route */}
+                  {/* Doctor Dashboard Routes */}
                   <Route
                     path="/doctor/dashboard"
                     element={
                       <ProtectedRoute>
                         <DoctorDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/doctor/profile"
+                    element={
+                      <ProtectedRoute>
+                        <DoctorProfilePage />
                       </ProtectedRoute>
                     }
                   />
