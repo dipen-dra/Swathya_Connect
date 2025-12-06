@@ -31,7 +31,7 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
         {
             id: 'khalti',
             name: 'Khalti',
-            logo: 'https://web.khalti.com/static/img/logo1.png',
+            logo: 'https://dao578ztqooau.cloudfront.net/static/img/logo1.png',
             description: 'Pay with Khalti wallet',
             bgColor: 'from-purple-500 to-purple-600',
             borderColor: 'border-purple-200',

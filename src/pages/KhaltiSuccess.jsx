@@ -66,7 +66,7 @@ export default function KhaltiSuccess() {
                     <div className="flex items-center justify-center space-x-2">
                         <span className="text-sm text-gray-500">Paid via</span>
                         <img
-                            src="https://web.khalti.com/static/img/logo1.png"
+                            src="https://dao578ztqooau.cloudfront.net/static/img/logo1.png"
                             alt="Khalti"
                             className="h-6"
                         />
