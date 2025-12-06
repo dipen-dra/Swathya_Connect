@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { paymentAPI } from '@/services/api';
 
 export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuccess, onPaymentError }) {
+    const navigate = useNavigate();
     const [selectedPayment, setSelectedPayment] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const esewaFormRef = useRef(null);
@@ -68,7 +70,8 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                             );
 
                             if (response.data.success) {
-                                onPaymentSuccess('Khalti', response.data.data);
+                                // Navigate to Khalti success page
+                                navigate('/payment/khalti/success');
                             } else {
                                 onPaymentError('Payment verification failed');
                             }

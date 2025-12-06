@@ -16,6 +16,7 @@ import { PatientDashboard } from "./pages/PatientDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import EsewaSuccess from "./pages/EsewaSuccess";
 import EsewaFailure from "./pages/EsewaFailure";
+import KhaltiSuccess from "./pages/KhaltiSuccess";
 
 export default function App() {
   return (
@@ -124,6 +125,14 @@ export default function App() {
                     element={
                       <ProtectedRoute>
                         <EsewaFailure />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/payment/khalti/success"
+                    element={
+                      <ProtectedRoute>
+                        <KhaltiSuccess />
                       </ProtectedRoute>
                     }
                   />
