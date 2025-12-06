@@ -112,19 +112,39 @@ export default function LoginPage() {
         description: "You have logged in successfully.",
       });
 
-      // Navigate to the page they were trying to access, or default dashboard
-      if (from) {
-        navigate(from, { replace: true });
-      } else {
-        // Navigate based on role
-        if (selectedLoginRole === "patient") {
-          navigate("/dashboard");
-        } else if (selectedLoginRole === "doctor") {
-          navigate("/doctor-dashboard");
-        } else if (selectedLoginRole === "pharmacy") {
-          navigate("/pharmacy-dashboard");
+      // Get the user data from localStorage to check their actual role
+      const storedUser = localStorage.getItem('swasthya_user');
+      const userData = storedUser ? JSON.parse(storedUser) : null;
+      const userRole = userData?.role || selectedLoginRole;
+
+      console.log('🔍 Login redirect - User data:', userData);
+      console.log('🔍 Login redirect - User role:', userRole);
+      console.log('🔍 Login redirect - Selected role:', selectedLoginRole);
+
+      // Use setTimeout to ensure state is fully updated before navigation
+      setTimeout(() => {
+        // Navigate to the page they were trying to access, or default dashboard
+        if (from) {
+          console.log('🚀 Navigating to saved location:', from);
+          navigate(from, { replace: true });
+        } else {
+          // Navigate based on the role from backend (not frontend selection)
+          console.log('🚀 Navigating based on role:', userRole);
+          if (userRole === "patient") {
+            console.log('→ Going to /dashboard');
+            navigate("/dashboard", { replace: true });
+          } else if (userRole === "doctor") {
+            console.log('→ Going to /doctor/dashboard');
+            navigate("/doctor/dashboard", { replace: true });
+          } else if (userRole === "pharmacy") {
+            console.log('→ Going to /pharmacy-dashboard');
+            navigate("/pharmacy-dashboard", { replace: true });
+          } else {
+            console.log('⚠️ Unknown role, defaulting to /dashboard');
+            navigate("/dashboard", { replace: true });
+          }
         }
-      }
+      }, 100); // Small delay to ensure state is updated
     } catch (error) {
       console.error(error);
       toast.error("Login Failed", {

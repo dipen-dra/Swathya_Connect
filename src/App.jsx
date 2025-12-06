@@ -13,6 +13,7 @@ import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import { PatientDashboard } from "./pages/PatientDashboard";
+import DoctorDashboard from "./pages/DoctorDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import EsewaSuccess from "./pages/EsewaSuccess";
 import EsewaFailure from "./pages/EsewaFailure";
@@ -107,6 +108,16 @@ export default function App() {
                     element={
                       <ProtectedRoute>
                         <PatientDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Doctor Dashboard Route */}
+                  <Route
+                    path="/doctor/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DoctorDashboard />
                       </ProtectedRoute>
                     }
                   />
