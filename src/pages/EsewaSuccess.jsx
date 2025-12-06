@@ -3,10 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { paymentAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 export default function EsewaSuccess() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { addNotification } = useNotifications();
     const [status, setStatus] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('Verifying your payment...');
     const hasVerified = useRef(false); // Prevent duplicate verification calls
@@ -35,6 +37,13 @@ export default function EsewaSuccess() {
 
                     // Show success toast
                     toast.success('Payment completed successfully!');
+
+                    // Add notification
+                    addNotification({
+                        type: 'success',
+                        title: 'Consultation Booked!',
+                        message: 'Your consultation has been successfully booked and paid via eSewa.'
+                    });
 
                     // Redirect to consultations after 3 seconds
                     setTimeout(() => {

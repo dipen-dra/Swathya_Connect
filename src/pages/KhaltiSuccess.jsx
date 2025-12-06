@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 export default function KhaltiSuccess() {
     const navigate = useNavigate();
+    const { addNotification } = useNotifications();
     const [status, setStatus] = useState('success');
     const [message, setMessage] = useState('Payment successful! Your consultation has been booked.');
     const hasShownToast = useRef(false); // Prevent duplicate toast
@@ -13,6 +15,14 @@ export default function KhaltiSuccess() {
         // Prevent duplicate toast (React StrictMode runs effects twice in dev)
         if (!hasShownToast.current) {
             toast.success('Khalti payment completed successfully!');
+
+            // Add notification
+            addNotification({
+                type: 'success',
+                title: 'Consultation Booked!',
+                message: 'Your consultation has been successfully booked and paid via Khalti.'
+            });
+
             hasShownToast.current = true;
         }
 
