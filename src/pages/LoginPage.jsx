@@ -121,7 +121,7 @@ export default function LoginPage() {
       console.log('🔍 Login redirect - User role:', userRole);
       console.log('🔍 Login redirect - Selected role:', selectedLoginRole);
 
-      // Use setTimeout to ensure state is fully updated before navigation
+      // Use minimal setTimeout to ensure state is updated before navigation
       setTimeout(() => {
         // Navigate to the page they were trying to access, or default dashboard
         if (from) {
@@ -144,7 +144,7 @@ export default function LoginPage() {
             navigate("/dashboard", { replace: true });
           }
         }
-      }, 100); // Small delay to ensure state is updated
+      }, 10); // Minimal delay - just enough for state update
     } catch (error) {
       console.error(error);
       toast.error("Login Failed", {
