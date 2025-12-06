@@ -1126,7 +1126,7 @@ export function PatientDashboard() {
                                                 {/* Price and Book Button */}
                                                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                                                     <div>
-                                                        <p className="text-lg font-bold text-green-600">From NPR {doctor.consultationFee}</p>
+                                                        <p className="text-lg font-bold text-green-600">From NPR {Math.round(doctor.consultationFee * 0.6)}</p>
                                                         <p className="text-xs text-gray-500">Starting price for chat</p>
                                                     </div>
                                                     <Button
@@ -1532,7 +1532,8 @@ export function PatientDashboard() {
                                 date: bookingData.date,
                                 time: bookingData.time,
                                 type: bookingData.type,
-                                reason: bookingData.reason
+                                reason: bookingData.reason,
+                                fee: bookingData.fee
                             };
 
                             const response = await consultationsAPI.bookConsultation(consultationData);
