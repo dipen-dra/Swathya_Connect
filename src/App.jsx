@@ -14,6 +14,8 @@ import Register from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import { PatientDashboard } from "./pages/PatientDashboard";
 import ProfilePage from "./pages/ProfilePage";
+import EsewaSuccess from "./pages/EsewaSuccess";
+import EsewaFailure from "./pages/EsewaFailure";
 
 export default function App() {
   return (
@@ -107,6 +109,25 @@ export default function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Payment Callback Routes */}
+                  <Route
+                    path="/payment/esewa/success"
+                    element={
+                      <ProtectedRoute>
+                        <EsewaSuccess />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/payment/esewa/failure"
+                    element={
+                      <ProtectedRoute>
+                        <EsewaFailure />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route
                     path="/profile"
                     element={
