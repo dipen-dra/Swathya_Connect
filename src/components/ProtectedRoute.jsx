@@ -34,8 +34,13 @@ export function ProtectedRoute({ children, requireAuth = true }) {
 
     // If route is for non-authenticated users (login, register)
     if (!requireAuth && user) {
-        // Redirect authenticated users to dashboard
-        return <Navigate to="/dashboard" replace />;
+        // Redirect authenticated users to their role-specific dashboard
+        const dashboardPath = user.role === 'doctor'
+            ? '/doctor/dashboard'
+            : user.role === 'pharmacy'
+                ? '/pharmacy-dashboard'
+                : '/dashboard';
+        return <Navigate to={dashboardPath} replace />;
     }
 
     return children;
