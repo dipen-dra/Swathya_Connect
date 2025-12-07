@@ -25,6 +25,7 @@ export function ProfilePage() {
         lastName: profile?.lastName || '',
         email: user?.email || 'patient@demo.com',
         phoneNumber: profile?.phoneNumber || '',
+        whatsappNumber: profile?.whatsappNumber || '',
         dateOfBirth: profile?.dateOfBirth || '',
         gender: profile?.gender || '',
         bloodGroup: profile?.bloodGroup || '',
@@ -44,7 +45,8 @@ export function ProfilePage() {
                 lastName: profile.lastName || '',
                 email: user?.email || '',
                 phoneNumber: profile.phoneNumber || '',
-                dateOfBirth: profile.dateOfBirth || '',
+                whatsappNumber: profile.whatsappNumber || '',
+                dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || '',
                 bloodGroup: profile.bloodGroup || '',
                 emergencyContact: profile.emergencyContact || '',
@@ -104,7 +106,8 @@ export function ProfilePage() {
             lastName: profile?.lastName || '',
             email: user?.email || 'patient@demo.com',
             phoneNumber: profile?.phoneNumber || '',
-            dateOfBirth: profile?.dateOfBirth || '',
+            whatsappNumber: profile?.whatsappNumber || '',
+            dateOfBirth: profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
             gender: profile?.gender || '',
             bloodGroup: profile?.bloodGroup || '',
             emergencyContact: profile?.emergencyContact || '',
@@ -284,6 +287,22 @@ export function ProfilePage() {
                                                 className="border-gray-200"
                                             />
                                         </div>
+                                    </div>
+
+                                    {/* WhatsApp Number */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            WhatsApp Number (for medicine reminders)
+                                            <span className="text-xs text-gray-500 ml-2">Format: +9779812345678</span>
+                                        </label>
+                                        <Input
+                                            type="tel"
+                                            placeholder="+977..."
+                                            value={formData.whatsappNumber}
+                                            onChange={(e) => handleChange('whatsappNumber', e.target.value)}
+                                            disabled={!isEditing}
+                                            className="border-gray-200"
+                                        />
                                     </div>
 
                                     {/* Date of Birth and Gender */}

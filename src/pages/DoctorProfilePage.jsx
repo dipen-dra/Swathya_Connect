@@ -25,6 +25,7 @@ export default function DoctorProfilePage() {
         lastName: '',
         email: '',
         phoneNumber: '',
+        whatsappNumber: '',
         dateOfBirth: '',
         gender: '',
         specialty: '',
@@ -44,6 +45,7 @@ export default function DoctorProfilePage() {
                 lastName: profile.lastName || '',
                 email: user?.email || '',
                 phoneNumber: profile.phoneNumber || '',
+                whatsappNumber: profile.whatsappNumber || '',
                 dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || '',
                 specialty: profile.specialty || '',
@@ -87,6 +89,7 @@ export default function DoctorProfilePage() {
                 lastName: profile.lastName || '',
                 email: user?.email || '',
                 phoneNumber: profile.phoneNumber || '',
+                whatsappNumber: profile.whatsappNumber || '',
                 dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || '',
                 specialty: profile.specialty || '',
@@ -264,6 +267,24 @@ export default function DoctorProfilePage() {
                                                 className="border-gray-200"
                                             />
                                         </div>
+                                    </div>
+
+                                    {/* WhatsApp Number */}
+                                    <div>
+                                        <Label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                                            WhatsApp Number (for medicine reminders)
+                                            <span className="text-xs text-gray-500 ml-2">Format: +9779812345678</span>
+                                        </Label>
+                                        <Input
+                                            id="whatsappNumber"
+                                            name="whatsappNumber"
+                                            type="tel"
+                                            placeholder="+977..."
+                                            value={formData.whatsappNumber}
+                                            onChange={handleInputChange}
+                                            disabled={!isEditing}
+                                            className="border-gray-200"
+                                        />
                                     </div>
 
                                     {/* DOB and Gender */}

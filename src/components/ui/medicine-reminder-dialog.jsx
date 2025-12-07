@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pill, Clock, Plus, X, Bell, CheckCircle } from 'lucide-react';
+import { Pill, Clock, Plus, X, Bell, CheckCircle, MessageSquare } from 'lucide-react';
 
 export function MedicineReminderDialog({
     open,
@@ -22,6 +22,7 @@ export function MedicineReminderDialog({
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState('');
     const [emailReminder, setEmailReminder] = useState(true);
+    const [whatsappReminder, setWhatsappReminder] = useState(false);
     const [beforeMealMinutes, setBeforeMealMinutes] = useState(30);
 
     const frequencyOptions = [
@@ -43,6 +44,7 @@ export function MedicineReminderDialog({
             setStartDate(editingReminder.startDate);
             setEndDate(editingReminder.endDate || '');
             setEmailReminder(editingReminder.emailReminder);
+            setWhatsappReminder(editingReminder.whatsappReminder || false);
             setBeforeMealMinutes(editingReminder.beforeMealMinutes);
         } else {
             resetForm();
@@ -60,6 +62,7 @@ export function MedicineReminderDialog({
             startDate,
             endDate: endDate || null,
             emailReminder,
+            whatsappReminder,
             beforeMealMinutes,
             isActive: true,
             createdAt: editingReminder?.createdAt || new Date().toISOString(),
@@ -115,6 +118,7 @@ export function MedicineReminderDialog({
         setStartDate(new Date().toISOString().split('T')[0]);
         setEndDate('');
         setEmailReminder(true);
+        setWhatsappReminder(false);
         setBeforeMealMinutes(30);
     };
 
@@ -310,6 +314,28 @@ export function MedicineReminderDialog({
                         )}
                     </div>
 
+                    {/* WhatsApp Reminder Settings */}
+                    <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <MessageSquare className="h-5 w-5 text-green-600" />
+                                <Label htmlFor="whatsappReminder" className="font-medium text-green-900">WhatsApp Reminders</Label>
+                            </div>
+                            <Switch
+                                id="whatsappReminder"
+                                checked={whatsappReminder}
+                                onCheckedChange={setWhatsappReminder}
+                                className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-300"
+                            />
+                        </div>
+                        {whatsappReminder && (
+                            <div className="text-sm text-green-700 bg-green-100 p-3 rounded-md border border-green-300">
+                                <p className="font-medium mb-1">📱 WhatsApp notifications enabled!</p>
+                                <p className="text-xs">Make sure you have added your WhatsApp number in your profile settings.</p>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Preview */}
                     {medicineName && dosage && times.some(t => t) && (
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200">
@@ -321,6 +347,7 @@ export function MedicineReminderDialog({
                                 <strong>{medicineName}</strong> ({dosage}) - {frequency.replace('-', ' ')} at{' '}
                                 {times.filter(t => t).join(', ')}
                                 {emailReminder && ` with email reminders ${beforeMealMinutes} minutes before`}
+                                {whatsappReminder && ` and WhatsApp notifications`}
                             </p>
                         </div>
                     )}
