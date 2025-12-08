@@ -44,6 +44,9 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
@@ -52,7 +55,9 @@ import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import Header from '@/components/layout/Header';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useReminders } from '@/contexts/RemindersContext';
-import { doctorsAPI, pharmaciesAPI, statsAPI, consultationsAPI } from '@/services/api';
+import { doctorsAPI, pharmaciesAPI, statsAPI, consultationsAPI, prescriptionsAPI } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
+import PrescriptionPreview from '@/components/dashboard/PrescriptionPreview';
 
 export function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -61,6 +66,7 @@ export function PatientDashboard() {
     const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
     const location = useLocation();
+    const { toast } = useToast();
 
     // Determine active tab from URL
     const getTabFromPath = (pathname) => {
@@ -89,6 +95,12 @@ export function PatientDashboard() {
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [ratingDialog, setRatingDialog] = useState(false);
+    const [selectedConsultation, setSelectedConsultation] = useState(null);
+    const [rating, setRating] = useState(0);
+    const [review, setReview] = useState('');
+    const [prescriptionDialog, setPrescriptionDialog] = useState(false);
+    const [prescriptionConsultationId, setPrescriptionConsultationId] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -321,7 +333,7 @@ export function PatientDashboard() {
         if (user) {
             fetchDoctors();
             fetchPharmacies();
-            fetchDashboardStats();
+            // Don't call fetchDashboardStats here - it will be called after consultations load
         }
     }, [user]);
 
@@ -355,10 +367,63 @@ export function PatientDashboard() {
     const fetchDashboardStats = async () => {
         try {
             setLoadingStats(true);
-            const response = await statsAPI.getDashboardStats();
-            setStats(response.data.data);
+
+            // Calculate stats from consultations data
+            if (consultations && consultations.length > 0) {
+                console.log('📊 Calculating stats from consultations:', consultations);
+                const upcoming = consultations.filter(c => c.status === 'upcoming').length;
+                const completed = consultations.filter(c => c.status === 'completed').length;
+                const total = consultations.length;
+                const totalSpent = consultations
+                    .filter(c => c.paymentStatus === 'paid')
+                    .reduce((sum, c) => sum + (c.fee || 0), 0);
+
+                console.log('📊 Stats calculated:', { total, upcoming, completed, totalSpent });
+
+                // Calculate percentage changes (mock data for now - you can calculate real changes later)
+                const calculateChange = (current) => {
+                    if (current === 0) return 0;
+                    // Mock: assume 100% growth if we have data
+                    return current > 0 ? 100 : 0;
+                };
+
+                setStats({
+                    totalConsultations: {
+                        value: total,
+                        change: calculateChange(total),
+                        changeText: 'from last month'
+                    },
+                    upcomingAppointments: {
+                        value: upcoming,
+                        change: calculateChange(upcoming),
+                        changeText: 'from last month'
+                    },
+                    completedConsultations: {
+                        value: completed,
+                        change: calculateChange(completed),
+                        changeText: 'from last month'
+                    },
+                    totalSpent: {
+                        value: totalSpent,
+                        change: calculateChange(totalSpent),
+                        changeText: 'from last month'
+                    }
+                });
+            } else {
+                console.log('📊 No consultations data, using API fallback');
+                // Fallback to API if no consultations loaded yet
+                const response = await statsAPI.getDashboardStats();
+                setStats(response.data.data);
+            }
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error);
+            // Set default stats on error
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+            });
         } finally {
             setLoadingStats(false);
         }
@@ -388,6 +453,23 @@ export function PatientDashboard() {
             fetchConsultations();
         }
     }, [user]);
+
+    // Recalculate stats when consultations change
+    useEffect(() => {
+        if (consultations && consultations.length > 0) {
+            console.log('🔄 Consultations loaded, recalculating stats...');
+            fetchDashboardStats();
+        } else if (consultations && consultations.length === 0) {
+            // If consultations array is empty (not undefined), set stats to 0
+            console.log('📊 No consultations found, setting stats to 0');
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+            });
+        }
+    }, [consultations.length]); // Only re-run when the length changes
 
     // Fetch consultations from backend
     const fetchConsultations = async () => {
@@ -453,6 +535,76 @@ export function PatientDashboard() {
             console.log('✅ PatientDashboard: Dialog closed, reminder should now appear in list');
         } catch (error) {
             console.error('❌ PatientDashboard: Failed to save reminder:', error);
+        }
+    };
+
+    const handleSubmitRating = async () => {
+        if (!selectedConsultation || rating === 0) {
+            toast({
+                title: "Rating required",
+                description: "Please select a rating",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        console.log('🔑 Token from localStorage:', token);
+        console.log('🔑 Token type:', typeof token);
+        console.log('🔑 All localStorage keys:', Object.keys(localStorage));
+
+        if (!token || token === 'undefined') {
+            toast({
+                title: "Authentication required",
+                description: "Please log in again to rate consultations",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/consultations/${selectedConsultation._id}/rate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    rating,
+                    review: review.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast({
+                    title: "Success!",
+                    description: "Rating submitted successfully"
+                });
+
+                // Update local consultation data
+                setConsultations(prev => prev.map(c =>
+                    c._id === selectedConsultation._id
+                        ? { ...c, rating, review, ratedAt: new Date() }
+                        : c
+                ));
+
+                // Reset and close dialog
+                setRatingDialog(false);
+                setSelectedConsultation(null);
+                setRating(0);
+                setReview('');
+            } else {
+                throw new Error(data.message || 'Failed to submit rating');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            toast({
+                title: "Error",
+                description: error.message || 'Failed to submit rating. Please try again.',
+                variant: "destructive"
+            });
         }
     };
 
@@ -590,6 +742,36 @@ export function PatientDashboard() {
                                 >
                                     <ConsultationIcon className="h-4 w-4 mr-2" />
                                     {consultation.type === 'chat' ? 'Join Chat' : 'Join Call'}
+                                </Button>
+                            )}
+
+                            {/* Rate Button - Only for completed without rating */}
+                            {consultation.status === 'completed' && !consultation.rating && (
+                                <Button
+                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white mt-2 shadow-sm"
+                                    size="default"
+                                    onClick={() => {
+                                        setSelectedConsultation(consultation);
+                                        setRatingDialog(true);
+                                    }}
+                                >
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Rate Doctor
+                                </Button>
+                            )}
+
+                            {/* Prescription Badge and Button - Only for completed */}
+                            {consultation.status === 'completed' && consultation.prescriptionId && (
+                                <Button
+                                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white mt-2 shadow-sm"
+                                    size="default"
+                                    onClick={() => {
+                                        setPrescriptionConsultationId(consultation._id);
+                                        setPrescriptionDialog(true);
+                                    }}
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    View Prescription
                                 </Button>
                             )}
                         </div>
@@ -778,12 +960,15 @@ export function PatientDashboard() {
 
                             return statsToDisplay.map((config, index) => {
                                 const stat = stats[config.key];
-                                if (!stat) return null;
+                                if (!stat) {
+                                    console.warn(`Missing stat for ${config.key}`, stats);
+                                    return null;
+                                }
 
                                 const Icon = config.icon;
                                 const displayValue = config.key === 'totalSpent'
-                                    ? `NPR ${stat.value.toLocaleString()}`
-                                    : stat.value;
+                                    ? `NPR ${(stat.value || 0).toLocaleString()}`
+                                    : (stat.value !== undefined ? stat.value : 0);
 
                                 return (
                                     <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
@@ -1606,6 +1791,67 @@ export function PatientDashboard() {
                     editingReminder={editingReminder}
                 />
 
+                {/* Rating Dialog */}
+                <Dialog open={ratingDialog} onOpenChange={setRatingDialog}>
+                    <DialogContent className="sm:max-w-md bg-white">
+                        <DialogHeader>
+                            <DialogTitle>Rate Your Consultation</DialogTitle>
+                            <DialogDescription>
+                                How was your consultation with {selectedConsultation?.doctorName}?
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-6 py-4">
+                            {/* Star Rating */}
+                            <div className="space-y-3">
+                                <Label className="text-center block">Rating</Label>
+                                <div className="flex items-center justify-center space-x-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            className="focus:outline-none transition-transform hover:scale-110"
+                                        >
+                                            <Star
+                                                className={`h-12 w-12 ${star <= rating
+                                                    ? 'text-yellow-400 fill-yellow-400'
+                                                    : 'text-gray-300'
+                                                    }`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                {rating > 0 && (
+                                    <p className="text-center text-sm font-medium text-gray-700">
+                                        {rating} {rating === 1 ? 'star' : 'stars'}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setRatingDialog(false);
+                                    setRating(0);
+                                    setReview('');
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSubmitRating}
+                                disabled={rating === 0}
+                                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                            >
+                                Submit Rating
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
                 {/* Logout Confirmation Dialog */}
                 <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
                     <AlertDialogContent>
@@ -1628,6 +1874,13 @@ export function PatientDashboard() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+
+                {/* Prescription Preview Dialog */}
+                <PrescriptionPreview
+                    open={prescriptionDialog}
+                    onOpenChange={setPrescriptionDialog}
+                    consultationId={prescriptionConsultationId}
+                />
             </div >
         </div >
     );

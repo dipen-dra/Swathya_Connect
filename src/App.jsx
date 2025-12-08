@@ -123,6 +123,14 @@ export default function App() {
                     }
                   />
                   <Route
+                    path="/doctor/dashboard/:tab"
+                    element={
+                      <ProtectedRoute>
+                        <DoctorDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/doctor/profile"
                     element={
                       <ProtectedRoute>

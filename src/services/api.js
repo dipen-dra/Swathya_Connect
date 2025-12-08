@@ -106,4 +106,29 @@ export const paymentAPI = {
     verifyKhalti: (token, amount, consultationId) => api.post('/payment/khalti/verify', { token, amount, consultationId })
 };
 
+// Documents API
+export const documentsAPI = {
+    uploadDocument: (formData) => api.post('/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    getMyDocuments: () => api.get('/documents/my-documents'),
+    updateDocument: (id, data) => api.put(`/documents/${id}`, data),
+    deleteDocument: (id) => api.delete(`/documents/${id}`),
+    // Admin endpoints (for future use)
+    getAllDocuments: (status) => api.get('/documents/all', { params: { status } }),
+    verifyDocument: (id) => api.put(`/documents/${id}/verify`),
+    rejectDocument: (id, reason) => api.put(`/documents/${id}/reject`, { reason })
+};
+
+export const prescriptionsAPI = {
+    create: (data) => api.post('/prescriptions/create', data),
+    getByConsultation: (consultationId) => api.get(`/prescriptions/consultation/${consultationId}`),
+    update: (id, data) => api.put(`/prescriptions/${id}`, data),
+    downloadPDF: (id) => {
+        return api.get(`/prescriptions/${id}/pdf`, {
+            responseType: 'blob'
+        });
+    }
+};
+
 export default api;

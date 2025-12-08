@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,24 +8,38 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft } from 'lucide-react';
+import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 
 export default function DoctorProfilePage() {
-    const { user } = useAuth();
-    const { profile, updateProfile } = useProfile();
+    const { user, logout } = useAuth();
+    const { profile, updateProfile, uploadProfileImage } = useProfile();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
+    const [profileImagePreview, setProfileImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         email: '',
         phoneNumber: '',
-        whatsappNumber: '',
         dateOfBirth: '',
         gender: '',
         specialty: '',
@@ -45,7 +59,6 @@ export default function DoctorProfilePage() {
                 lastName: profile.lastName || '',
                 email: user?.email || '',
                 phoneNumber: profile.phoneNumber || '',
-                whatsappNumber: profile.whatsappNumber || '',
                 dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || '',
                 specialty: profile.specialty || '',
@@ -71,12 +84,19 @@ export default function DoctorProfilePage() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            // First, upload profile image if selected
+            if (profileImage) {
+                await uploadProfileImage(profileImage);
+            }
+
+            // Then update profile data
             await updateProfile(formData);
+
             setIsEditing(false);
-            toast.success('Profile updated successfully!');
+            setProfileImage(null);
+            setProfileImagePreview(null);
         } catch (error) {
             console.error('Failed to update profile:', error);
-            toast.error('Failed to update profile');
         } finally {
             setIsSaving(false);
         }
@@ -89,7 +109,6 @@ export default function DoctorProfilePage() {
                 lastName: profile.lastName || '',
                 email: user?.email || '',
                 phoneNumber: profile.phoneNumber || '',
-                whatsappNumber: profile.whatsappNumber || '',
                 dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || '',
                 specialty: profile.specialty || '',
@@ -102,7 +121,35 @@ export default function DoctorProfilePage() {
                 country: profile.country || 'Nepal'
             });
         }
+        setProfileImage(null);
+        setProfileImagePreview(null);
         setIsEditing(false);
+    };
+
+    const handleProfileImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            setProfileImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await logout();
+            navigate('/');
+            toast.success('Signed out successfully');
+        } catch (error) {
+            toast.error('Failed to sign out');
+        }
     };
 
     const getImageUrl = (imagePath) => {
@@ -170,12 +217,31 @@ export default function DoctorProfilePage() {
                             <CardContent className="p-6 text-center">
                                 <div className="relative inline-block mb-4">
                                     <Avatar className="h-28 w-28">
-                                        <AvatarImage src={getImageUrl(profile?.profileImage)} />
+                                        <AvatarImage src={profileImagePreview || getImageUrl(profile?.profileImage)} />
                                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-3xl font-bold">
                                             {formData.firstName[0]?.toUpperCase() || 'D'}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+                                    {isEditing && (
+                                        <>
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="absolute bottom-0 right-0 w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                                            >
+                                                <Camera className="h-4 w-4" />
+                                            </button>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleProfileImageChange}
+                                                className="hidden"
+                                            />
+                                        </>
+                                    )}
+                                    {!isEditing && (
+                                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+                                    )}
                                 </div>
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">
                                     {formData.firstName || 'doctor'} {formData.lastName}
@@ -269,24 +335,6 @@ export default function DoctorProfilePage() {
                                         </div>
                                     </div>
 
-                                    {/* WhatsApp Number */}
-                                    <div>
-                                        <Label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                                            WhatsApp Number (for medicine reminders)
-                                            <span className="text-xs text-gray-500 ml-2">Format: +9779812345678</span>
-                                        </Label>
-                                        <Input
-                                            id="whatsappNumber"
-                                            name="whatsappNumber"
-                                            type="tel"
-                                            placeholder="+977..."
-                                            value={formData.whatsappNumber}
-                                            onChange={handleInputChange}
-                                            disabled={!isEditing}
-                                            className="border-gray-200"
-                                        />
-                                    </div>
-
                                     {/* DOB and Gender */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -304,14 +352,20 @@ export default function DoctorProfilePage() {
                                         </div>
                                         <div>
                                             <Label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">Gender</Label>
-                                            <Input
-                                                id="gender"
-                                                name="gender"
+                                            <Select
                                                 value={formData.gender}
-                                                onChange={handleInputChange}
+                                                onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
                                                 disabled={!isEditing}
-                                                className="border-gray-200"
-                                            />
+                                            >
+                                                <SelectTrigger className="border-gray-200">
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="male">Male</SelectItem>
+                                                    <SelectItem value="female">Female</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
 
@@ -443,11 +497,48 @@ export default function DoctorProfilePage() {
                                             </Button>
                                         </div>
                                     )}
+
+                                    {/* Sign Out Button */}
+                                    {!isEditing && (
+                                        <div className="pt-6 mt-6 border-t border-gray-200">
+                                            <Button
+                                                onClick={() => setShowSignOutDialog(true)}
+                                                variant="outline"
+                                                className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                            >
+                                                <LogOut className="h-4 w-4 mr-2" />
+                                                Sign Out
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 </div>
+
+                {/* Sign Out Confirmation Dialog */}
+                <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                    <LogOut className="h-6 w-6 text-red-600" />
+                                </div>
+                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription>
+                                Are you sure you want to sign out? You'll need to sign in again to access your account.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white">
+                                Sign Out
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     );

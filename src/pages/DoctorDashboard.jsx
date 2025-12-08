@@ -11,6 +11,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
     Calendar,
     Clock,
     Star,
@@ -43,8 +53,11 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/layout/Header';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { documentsAPI, prescriptionsAPI } from '@/services/api';
+import DoctorDocuments from '@/components/dashboard/DoctorDocuments';
+import PrescriptionDialog from '@/components/dashboard/PrescriptionDialog';
 
 export default function DoctorDashboard() {
     console.log('🏥 DoctorDashboard component is rendering!');
@@ -53,7 +66,11 @@ export default function DoctorDashboard() {
     const { profile } = useProfile();
     const { addNotification } = useNotifications();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('requests');
+    const location = useLocation();
+    const { tab } = useParams();
+
+    // Set active tab based on URL parameter, default to 'requests'
+    const [activeTab, setActiveTab] = useState(tab || 'requests');
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedRequest, setSelectedRequest] = useState(null);
@@ -62,6 +79,9 @@ export default function DoctorDashboard() {
     const [rejectionReason, setRejectionReason] = useState('');
     const [documentDialog, setDocumentDialog] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState(null);
+    const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+    const [prescriptionDialog, setPrescriptionDialog] = useState(false);
+    const [selectedConsultation, setSelectedConsultation] = useState(null);
 
     const welcomeNotificationShown = useRef(false);
 
@@ -368,6 +388,19 @@ export default function DoctorDashboard() {
         }
     }, [user?.id, profile?.firstName, addNotification, pendingRequests.length]);
 
+    // Sync activeTab with URL parameter
+    useEffect(() => {
+        if (tab && tab !== activeTab) {
+            setActiveTab(tab);
+        }
+    }, [tab]);
+
+    // Handle tab change and update URL
+    const handleTabChange = (newTab) => {
+        setActiveTab(newTab);
+        navigate(`/doctor/dashboard/${newTab}`);
+    };
+
     const handleApproveRequest = useCallback((request) => {
         setSelectedRequest(request);
         setActionType('approve');
@@ -380,10 +413,11 @@ export default function DoctorDashboard() {
         setActionDialog(true);
     }, []);
 
-    const handleConfirmAction = useCallback(() => {
+    const handleConfirmAction = useCallback(async () => {
         if (!selectedRequest) return;
 
         if (actionType === 'approve') {
+            // TODO: Implement approve API call
             addNotification({
                 title: 'Consultation Approved',
                 message: `Consultation with ${selectedRequest.patientName} has been approved.`,
@@ -398,11 +432,40 @@ export default function DoctorDashboard() {
                 });
                 return;
             }
-            addNotification({
-                title: 'Consultation Rejected',
-                message: `Consultation with ${selectedRequest.patientName} has been rejected.`,
-                type: 'info',
-            });
+
+            try {
+                // Call rejection API
+                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest.id}/reject`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        rejectionReason: rejectionReason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addNotification({
+                        title: 'Consultation Rejected',
+                        message: `Consultation rejected. Patient has been notified via email and refund is being processed.`,
+                        type: 'success',
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to reject consultation');
+                }
+            } catch (error) {
+                console.error('Error rejecting consultation:', error);
+                addNotification({
+                    title: 'Error',
+                    message: error.message || 'Failed to reject consultation. Please try again.',
+                    type: 'error',
+                });
+                return;
+            }
         }
 
         setActionDialog(false);
@@ -480,12 +543,45 @@ export default function DoctorDashboard() {
 
     const renderRequestCard = (request) => {
         const ConsultationIcon = getConsultationTypeIcon(request.consultationType);
-        const isUrgent = request.reason.toLowerCase().includes('urgent') ||
-            request.reason.toLowerCase().includes('severe') ||
-            request.reason.toLowerCase().includes('pain');
+
+        // Helper function to convert 12-hour time to 24-hour format
+        const convertTo24Hour = (time12h) => {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+
+            if (hours === '12') {
+                hours = '00';
+            }
+            if (modifier === 'PM') {
+                hours = parseInt(hours, 10) + 12;
+            }
+
+            return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+        };
+
+        // Calculate if consultation is urgent (within 30 minutes)
+        const isUrgent = () => {
+            try {
+                const now = new Date();
+                const time24 = convertTo24Hour(request.requestedTime);
+                const consultationDateTime = new Date(`${request.requestedDate}T${time24}`);
+                const timeDiff = consultationDateTime - now;
+                const minutesUntil = Math.floor(timeDiff / (1000 * 60));
+
+                // Show urgent if within 30 minutes and consultation hasn't passed
+                return minutesUntil <= 30 && minutesUntil > 0;
+            } catch (error) {
+                // Fallback to keyword-based detection if date parsing fails
+                return request.reason.toLowerCase().includes('urgent') ||
+                    request.reason.toLowerCase().includes('severe') ||
+                    request.reason.toLowerCase().includes('pain');
+            }
+        };
+
+        const urgent = isUrgent();
 
         return (
-            <Card key={request.id} className={`border hover:shadow-md transition-all duration-200 ${isUrgent ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+            <Card key={request.id} className={`border hover:shadow-md transition-all duration-200 ${urgent ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
                 }`}>
                 <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -498,7 +594,7 @@ export default function DoctorDashboard() {
                             <div>
                                 <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-lg text-gray-900">{request.patientName}</h4>
-                                    {isUrgent && (
+                                    {urgent && (
                                         <Badge className="bg-red-100 text-red-800 border-red-200">
                                             <AlertCircle className="h-3 w-3 mr-1" />
                                             Urgent
@@ -556,14 +652,23 @@ export default function DoctorDashboard() {
                         </div>
                     )}
 
-                    {request.consultationNotes && (
+                    {/* Show prescription details ONLY if prescription exists */}
+                    {request.status === 'completed' && request.prescriptionId && request.prescriptionData && (
                         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                             <p className="text-sm font-medium text-green-800 mb-1">Consultation Notes</p>
-                            <p className="text-sm text-green-700">{request.consultationNotes}</p>
-                            {request.prescription && (
+                            <p className="text-sm text-green-700">{request.prescriptionData.diagnosis || 'No diagnosis provided'}</p>
+
+                            {request.prescriptionData.medicines && request.prescriptionData.medicines.length > 0 && (
                                 <div className="mt-2">
                                     <p className="text-sm font-medium text-green-800">Prescription</p>
-                                    <p className="text-sm text-green-700">{request.prescription}</p>
+                                    <div className="text-sm text-green-700">
+                                        {request.prescriptionData.medicines.map((med, idx) => (
+                                            <div key={idx} className="mt-1">
+                                                {med.name} - {med.dosage}, {med.frequency}, {med.duration}
+                                                {med.instructions && ` (${med.instructions})`}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -591,7 +696,7 @@ export default function DoctorDashboard() {
                                     <Button
                                         size="sm"
                                         onClick={() => handleApproveRequest(request)}
-                                        className="bg-green-600 hover:bg-green-700"
+                                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm"
                                     >
                                         <Check className="h-3 w-3 mr-1" />
                                         Approve
@@ -603,31 +708,57 @@ export default function DoctorDashboard() {
                                 <Button
                                     size="sm"
                                     onClick={() => window.open(request.consultationLink, '_blank')}
-                                    className="bg-blue-600 hover:bg-blue-700"
+                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm"
                                 >
                                     <ConsultationIcon className="h-3 w-3 mr-1" />
                                     Start Consultation
                                 </Button>
                             )}
 
-                            {request.status === 'completed' && request.rating && (
-                                <div className="flex items-center space-x-1">
-                                    <span className="text-sm text-gray-600">Rating:</span>
-                                    <div className="flex">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star
-                                                key={i}
-                                                className={`h-4 w-4 ${i < request.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
+                            {request.status === 'completed' && (
+                                <>
+                                    {request.rating && (
+                                        <div className="flex items-center space-x-1">
+                                            <span className="text-sm text-gray-600">Rating:</span>
+                                            <div className="flex">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star
+                                                        key={i}
+                                                        className={`h-4 w-4 ${i < request.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
+
+                    {/* Centered Create Prescription Button - Only for completed without prescription */}
+                    {request.status === 'completed' && !request.prescriptionId && (
+                        <div className="flex justify-center pt-4 mt-4 border-t border-gray-200">
+                            <Button
+                                onClick={() => {
+                                    setSelectedConsultation(request);
+                                    setPrescriptionDialog(true);
+                                }}
+                                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm"
+                            >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Create Prescription
+                            </Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         );
+    };
+
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath;
+        return `http://localhost:5000${imagePath}`;
     };
 
     return (
@@ -673,7 +804,7 @@ export default function DoctorDashboard() {
 
                         <div className="flex items-center space-x-4">
                             <Avatar className="h-16 w-16 border-4 border-white/30 shadow-lg">
-                                <AvatarImage src={profile?.profileImage} />
+                                <AvatarImage src={getImageUrl(profile?.profileImage)} />
                                 <AvatarFallback className="text-green-600 font-semibold text-xl bg-white">
                                     {(profile?.firstName?.[0] || user?.name?.[0] || 'D')}
                                     {(profile?.lastName?.[0] || user?.name?.split(' ')[1]?.[0] || 'R')}
@@ -738,7 +869,7 @@ export default function DoctorDashboard() {
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                             <button
-                                onClick={() => setActiveTab('requests')}
+                                onClick={() => handleTabChange('requests')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'requests'
                                     ? 'border-green-600 text-green-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -747,7 +878,7 @@ export default function DoctorDashboard() {
                                 Consultation Requests
                             </button>
                             <button
-                                onClick={() => setActiveTab('schedule')}
+                                onClick={() => handleTabChange('schedule')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'schedule'
                                     ? 'border-green-600 text-green-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -756,7 +887,7 @@ export default function DoctorDashboard() {
                                 My Schedule
                             </button>
                             <button
-                                onClick={() => setActiveTab('profile')}
+                                onClick={() => handleTabChange('profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
                                     ? 'border-green-600 text-green-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -844,7 +975,7 @@ export default function DoctorDashboard() {
                                 <CardContent className="space-y-6">
                                     <div className="flex items-center space-x-4 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-100">
                                         <Avatar className="h-16 w-16">
-                                            <AvatarImage src={profile?.profileImage} />
+                                            <AvatarImage src={getImageUrl(profile?.profileImage)} />
                                             <AvatarFallback className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xl font-bold">
                                                 {(profile?.firstName?.[0] || user?.name?.[0] || 'D')}
                                             </AvatarFallback>
@@ -891,7 +1022,7 @@ export default function DoctorDashboard() {
 
                                     <div className="pt-6 border-t border-gray-200">
                                         <Button
-                                            onClick={handleLogout}
+                                            onClick={() => setShowSignOutDialog(true)}
                                             variant="outline"
                                             className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                                         >
@@ -903,111 +1034,14 @@ export default function DoctorDashboard() {
                             </Card>
 
                             {/* Documents Section */}
-                            <Card className="border-0 shadow-sm">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle>Professional Documents</CardTitle>
-                                            <CardDescription>Manage your medical licenses, certificates, and credentials</CardDescription>
-                                        </div>
-                                        <Button onClick={handleDocumentUpload} className="bg-green-600 hover:bg-green-700">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Upload Document
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {doctorDocuments.map((doc) => (
-                                            <Card key={doc.id} className="border border-gray-200">
-                                                <CardContent className="p-6">
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex items-start space-x-4">
-                                                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                                <FileText className="h-6 w-6 text-blue-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-2 mb-2">
-                                                                    <h4 className="font-semibold text-lg text-gray-900">{doc.name}</h4>
-                                                                    <Badge className={`${getStatusColor(doc.status)} border font-medium`}>
-                                                                        {doc.status === 'verified' ? (
-                                                                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                                                                        ) : (
-                                                                            <Clock className="h-3 w-3 mr-1" />
-                                                                        )}
-                                                                        {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                                                                    </Badge>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600 mb-2">{doc.description}</p>
-                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                                                    <div>
-                                                                        <p className="text-gray-500 font-medium">File Name</p>
-                                                                        <p className="text-gray-900">{doc.fileName}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-gray-500 font-medium">Upload Date</p>
-                                                                        <p className="text-gray-900">{new Date(doc.uploadDate).toLocaleDateString()}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-gray-500 font-medium">Expiry Date</p>
-                                                                        <p className="text-gray-900">
-                                                                            {doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : 'No expiry'}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex space-x-2">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => setSelectedDocument(doc)}
-                                                                className="border-gray-200"
-                                                            >
-                                                                <Eye className="h-3 w-3 mr-1" />
-                                                                View
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                                                            >
-                                                                <Download className="h-3 w-3 mr-1" />
-                                                                Download
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="border-green-200 text-green-600 hover:bg-green-50"
-                                                            >
-                                                                <Edit3 className="h-3 w-3 mr-1" />
-                                                                Update
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleDocumentDelete(doc.id)}
-                                                                className="border-red-200 text-red-600 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="h-3 w-3 mr-1" />
-                                                                Delete
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <DoctorDocuments />
                         </div>
                     )}
                 </div>
 
                 {/* Action Dialog */}
                 <Dialog open={actionDialog} onOpenChange={setActionDialog}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md bg-white">
                         <DialogHeader>
                             <DialogTitle>
                                 {actionType === 'approve' ? 'Approve Consultation' : 'Reject Consultation'}
@@ -1059,7 +1093,7 @@ export default function DoctorDashboard() {
 
                 {/* Document Upload Dialog */}
                 <Dialog open={documentDialog} onOpenChange={setDocumentDialog}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md bg-white">
                         <DialogHeader>
                             <DialogTitle>Upload New Document</DialogTitle>
                             <DialogDescription>
@@ -1119,7 +1153,44 @@ export default function DoctorDashboard() {
                         </div>
                     </DialogContent>
                 </Dialog>
+
+                {/* Sign Out Confirmation Dialog */}
+                <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                    <LogOut className="h-6 w-6 text-red-600" />
+                                </div>
+                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription>
+                                Are you sure you want to sign out? You'll need to sign in again to access your account.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white">
+                                Sign Out
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Prescription Dialog */}
+                <PrescriptionDialog
+                    open={prescriptionDialog}
+                    onOpenChange={setPrescriptionDialog}
+                    consultation={selectedConsultation}
+                    doctorProfile={profile}
+                    patientProfile={{
+                        firstName: selectedConsultation?.patientName?.split(' ')[0] || '',
+                        lastName: selectedConsultation?.patientName?.split(' ')[1] || '',
+                        dateOfBirth: null, // Would come from actual patient data
+                        gender: selectedConsultation?.gender || 'N/A'
+                    }}
+                />
             </div>
-        </div>
+        </div >
     );
 }
