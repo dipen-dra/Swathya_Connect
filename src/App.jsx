@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/DoctorProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
 import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
@@ -135,6 +136,16 @@ export default function App() {
                     element={
                       <ProtectedRoute>
                         <DoctorProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin Dashboard Routes */}
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <AdminDashboard />
                       </ProtectedRoute>
                     }
                   />

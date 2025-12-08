@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
+import { profileAPI } from '@/services/api';
 
 export default function DoctorProfilePage() {
     const { user, logout } = useAuth();

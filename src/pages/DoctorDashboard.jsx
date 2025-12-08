@@ -55,7 +55,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Header from '@/components/layout/Header';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { documentsAPI, prescriptionsAPI } from '@/services/api';
+import { documentsAPI, prescriptionsAPI, profileAPI, consultationsAPI } from '@/services/api';
 import DoctorDocuments from '@/components/dashboard/DoctorDocuments';
 import PrescriptionDialog from '@/components/dashboard/PrescriptionDialog';
 
@@ -83,264 +83,328 @@ export default function DoctorDashboard() {
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
 
+    // Verification fees state
+    const [verificationFees, setVerificationFees] = useState({
+        chatFee: '',
+        audioFee: '',
+        videoFee: '',
+        workplace: '',
+        availabilityDays: [],
+        availabilityTime: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // API data states
+    const [consultations, setConsultations] = useState([]);
+    const [loadingConsultations, setLoadingConsultations] = useState(true);
+
     const welcomeNotificationShown = useRef(false);
 
-    // Mock consultation requests from patients
-    const mockConsultationRequests = [
-        // Recent Pending Requests
-        {
-            id: 'req_001',
-            patientName: 'Ramesh Sharma',
-            patientId: 'pat_001',
-            age: 45,
-            gender: 'Male',
-            consultationType: 'video',
-            requestedDate: '2025-01-16',
-            requestedTime: '10:00 AM',
-            reason: 'Experiencing chest pain and shortness of breath for the past 2 days. Need urgent consultation.',
-            fee: 1500,
-            status: 'pending',
-            submittedAt: '2025-01-14T09:30:00Z',
-            patientHistory: 'Previous heart condition, diabetes',
-            contactNumber: '+977-9841234567',
-            emergencyContact: '+977-9851234567'
-        },
-        {
-            id: 'req_002',
-            patientName: 'Sita Poudel',
-            patientId: 'pat_002',
-            age: 32,
-            gender: 'Female',
-            consultationType: 'audio',
-            requestedDate: '2025-01-17',
-            requestedTime: '2:30 PM',
-            reason: 'Follow-up consultation for skin condition treatment. Rash is improving but need to discuss next steps.',
-            fee: 1200,
-            status: 'pending',
-            submittedAt: '2025-01-14T11:15:00Z',
-            patientHistory: 'Allergic to penicillin, previous eczema treatment',
-            contactNumber: '+977-9851234568',
-            emergencyContact: '+977-9861234568'
-        },
-        {
-            id: 'req_003',
-            patientName: 'Binod Thapa',
-            patientId: 'pat_003',
-            age: 28,
-            gender: 'Male',
-            consultationType: 'chat',
-            requestedDate: '2025-01-18',
-            requestedTime: '11:00 AM',
-            reason: 'Knee pain after sports injury. Need advice on treatment and physiotherapy options.',
-            fee: 900,
-            status: 'pending',
-            submittedAt: '2025-01-14T14:20:00Z',
-            patientHistory: 'Athletic, no major medical history',
-            contactNumber: '+977-9861234569',
-            emergencyContact: '+977-9871234569'
-        },
-
-        // Approved Requests
-        {
-            id: 'req_004',
-            patientName: 'Maya Gurung',
-            patientId: 'pat_004',
-            age: 38,
-            gender: 'Female',
-            consultationType: 'video',
-            requestedDate: '2025-01-15',
-            requestedTime: '3:00 PM',
-            reason: 'Regular checkup and blood pressure monitoring.',
-            fee: 1500,
-            status: 'approved',
-            submittedAt: '2025-01-13T16:45:00Z',
-            approvedAt: '2025-01-13T18:00:00Z',
-            patientHistory: 'Hypertension, regular medication',
-            contactNumber: '+977-9871234570',
-            emergencyContact: '+977-9881234570',
-            consultationLink: 'https://meet.example.com/maya-consultation',
-            paymentStatus: 'paid'
-        },
-        {
-            id: 'req_005',
-            patientName: 'Arjun Rai',
-            patientId: 'pat_005',
-            age: 52,
-            gender: 'Male',
-            consultationType: 'audio',
-            requestedDate: '2025-01-16',
-            requestedTime: '9:30 AM',
-            reason: 'Diabetes management consultation and medication review.',
-            fee: 1200,
-            status: 'approved',
-            submittedAt: '2025-01-13T10:30:00Z',
-            approvedAt: '2025-01-13T12:00:00Z',
-            patientHistory: 'Type 2 diabetes, cholesterol issues',
-            contactNumber: '+977-9881234571',
-            emergencyContact: '+977-9891234571',
-            consultationLink: 'https://meet.example.com/arjun-consultation',
-            paymentStatus: 'paid'
-        },
-
-        // Completed Consultations
-        {
-            id: 'req_006',
-            patientName: 'Sunita Magar',
-            patientId: 'pat_006',
-            age: 29,
-            gender: 'Female',
-            consultationType: 'video',
-            requestedDate: '2025-01-12',
-            requestedTime: '1:00 PM',
-            reason: 'Pregnancy consultation and routine checkup.',
-            fee: 1500,
-            status: 'completed',
-            submittedAt: '2025-01-11T09:00:00Z',
-            approvedAt: '2025-01-11T10:30:00Z',
-            completedAt: '2025-01-12T13:30:00Z',
-            patientHistory: 'First pregnancy, no complications',
-            contactNumber: '+977-9891234572',
-            emergencyContact: '+977-9801234572',
-            consultationNotes: 'Patient is healthy. Prescribed prenatal vitamins. Next checkup in 4 weeks.',
-            prescription: 'Folic acid 400mcg daily, Iron supplements',
-            paymentStatus: 'paid',
-            rating: 5
-        },
-        {
-            id: 'req_007',
-            patientName: 'Deepak Tamang',
-            patientId: 'pat_007',
-            age: 41,
-            gender: 'Male',
-            consultationType: 'chat',
-            requestedDate: '2025-01-11',
-            requestedTime: '10:30 AM',
-            reason: 'Follow-up for hypertension medication adjustment.',
-            fee: 900,
-            status: 'completed',
-            submittedAt: '2025-01-10T14:15:00Z',
-            approvedAt: '2025-01-10T15:00:00Z',
-            completedAt: '2025-01-11T11:00:00Z',
-            patientHistory: 'Hypertension, family history of heart disease',
-            contactNumber: '+977-9801234573',
-            emergencyContact: '+977-9811234573',
-            consultationNotes: 'Blood pressure well controlled. Continue current medication.',
-            prescription: 'Amlodipine 5mg daily, lifestyle modifications',
-            paymentStatus: 'paid',
-            rating: 4
-        },
-        {
-            id: 'req_008',
-            patientName: 'Priya Maharjan',
-            patientId: 'pat_008',
-            age: 35,
-            gender: 'Female',
-            consultationType: 'video',
-            requestedDate: '2025-01-10',
-            requestedTime: '4:00 PM',
-            reason: 'Child vaccination consultation and health checkup.',
-            fee: 1000,
-            status: 'completed',
-            submittedAt: '2025-01-09T11:30:00Z',
-            approvedAt: '2025-01-09T13:00:00Z',
-            completedAt: '2025-01-10T16:30:00Z',
-            patientHistory: 'Mother of 2 children, regular checkups',
-            contactNumber: '+977-9811234574',
-            emergencyContact: '+977-9821234574',
-            consultationNotes: 'Child is healthy. Vaccination schedule discussed. No concerns.',
-            prescription: 'Continue regular diet, next vaccination in 2 months',
-            paymentStatus: 'paid',
-            rating: 5
-        },
-
-        // Rejected Request
-        {
-            id: 'req_009',
-            patientName: 'Laxmi Shrestha',
-            patientId: 'pat_009',
-            age: 35,
-            gender: 'Female',
-            consultationType: 'video',
-            requestedDate: '2025-01-13',
-            requestedTime: '4:00 PM',
-            reason: 'Severe headache and vision problems for past week.',
-            fee: 1500,
-            status: 'rejected',
-            submittedAt: '2025-01-12T11:30:00Z',
-            rejectedAt: '2025-01-12T13:00:00Z',
-            rejectionReason: 'This condition requires immediate in-person examination. Please visit the emergency department.',
-            patientHistory: 'Migraine history, recent stress',
-            contactNumber: '+977-9811234574',
-            emergencyContact: '+977-9821234574'
+    // Fetch consultations from backend
+    useEffect(() => {
+        if (user) {
+            fetchConsultations();
         }
-    ];
+    }, [user]);
 
-    // Mock doctor documents
-    const [doctorDocuments, setDoctorDocuments] = useState([
-        {
-            id: 'doc_001',
-            name: 'Medical License',
-            type: 'license',
-            fileName: 'medical_license.pdf',
-            uploadDate: '2024-01-15',
-            status: 'verified',
-            expiryDate: '2026-01-15',
-            description: 'Nepal Medical Council License'
-        },
-        {
-            id: 'doc_002',
-            name: 'MBBS Degree Certificate',
-            type: 'degree',
-            fileName: 'mbbs_certificate.pdf',
-            uploadDate: '2024-01-15',
-            status: 'verified',
-            expiryDate: null,
-            description: 'Bachelor of Medicine and Bachelor of Surgery'
-        },
-        {
-            id: 'doc_003',
-            name: 'Cardiology Specialization',
-            type: 'specialization',
-            fileName: 'cardiology_cert.pdf',
-            uploadDate: '2024-01-15',
-            status: 'verified',
-            expiryDate: null,
-            description: 'Post-graduate specialization in Cardiology'
-        },
-        {
-            id: 'doc_004',
-            name: 'Professional Indemnity Insurance',
-            type: 'insurance',
-            fileName: 'insurance_policy.pdf',
-            uploadDate: '2024-06-01',
-            status: 'pending',
-            expiryDate: '2025-06-01',
-            description: 'Medical malpractice insurance coverage'
+    const fetchConsultations = async () => {
+        try {
+            setLoadingConsultations(true);
+            const response = await consultationsAPI.getConsultations();
+            if (response.data.success) {
+                setConsultations(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch consultations:', error);
+            toast.error('Failed to load consultations');
+        } finally {
+            setLoadingConsultations(false);
         }
-    ]);
+    };
 
     // Filter requests based on search and status
-    const filteredRequests = mockConsultationRequests.filter(request => {
-        const matchesSearch = request.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            request.reason.toLowerCase().includes(searchTerm.toLowerCase());
+    const filteredRequests = consultations.filter(request => {
+        const patientName = request.patientId?.name || '';
+        const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (request.reason || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
+
+
+    //     // API data states
+    //     const [consultations, setConsultations] = useState([]);
+    //     const [loadingConsultations, setLoadingConsultations] = useState(true);
+
+    //     const welcomeNotificationShown = useRef(false);
+
+    //     // Filter requests based on search and status
+    //     const filteredRequests = consultations.filter(request => {
+    //         const patientName = request.patientId?.name || '';
+    //         const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //             (request.reason || '').toLowerCase().includes(searchTerm.toLowerCase());
+    //         const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    //         return matchesSearch && matchesStatus;
+    //     });
+
+
+    //     id: 'req_001',
+    //         patientName: 'Ramesh Sharma',
+    //             patientId: 'pat_001',
+    //                 age: 45,
+    //                     gender: 'Male',
+    //                         consultationType: 'video',
+    //                             requestedDate: '2025-01-16',
+    //                                 requestedTime: '10:00 AM',
+    //                                     reason: 'Experiencing chest pain and shortness of breath for the past 2 days. Need urgent consultation.',
+    //                                         fee: 1500,
+    //                                             status: 'pending',
+    //                                                 submittedAt: '2025-01-14T09:30:00Z',
+    //                                                     patientHistory: 'Previous heart condition, diabetes',
+    //                                                         contactNumber: '+977-9841234567',
+    //                                                             emergencyContact: '+977-9851234567'
+    // },
+    // {
+    //     id: 'req_002',
+    //         patientName: 'Sita Poudel',
+    //             patientId: 'pat_002',
+    //                 age: 32,
+    //                     gender: 'Female',
+    //                         consultationType: 'audio',
+    //                             requestedDate: '2025-01-17',
+    //                                 requestedTime: '2:30 PM',
+    //                                     reason: 'Follow-up consultation for skin condition treatment. Rash is improving but need to discuss next steps.',
+    //                                         fee: 1200,
+    //                                             status: 'pending',
+    //                                                 submittedAt: '2025-01-14T11:15:00Z',
+    //                                                     patientHistory: 'Allergic to penicillin, previous eczema treatment',
+    //                                                         contactNumber: '+977-9851234568',
+    //                                                             emergencyContact: '+977-9861234568'
+    // },
+    // {
+    //     id: 'req_003',
+    //         patientName: 'Binod Thapa',
+    //             patientId: 'pat_003',
+    //                 age: 28,
+    //                     gender: 'Male',
+    //                         consultationType: 'chat',
+    //                             requestedDate: '2025-01-18',
+    //                                 requestedTime: '11:00 AM',
+    //                                     reason: 'Knee pain after sports injury. Need advice on treatment and physiotherapy options.',
+    //                                         fee: 900,
+    //                                             status: 'pending',
+    //                                                 submittedAt: '2025-01-14T14:20:00Z',
+    //                                                     patientHistory: 'Athletic, no major medical history',
+    //                                                         contactNumber: '+977-9861234569',
+    //                                                             emergencyContact: '+977-9871234569'
+    // },
+
+    // // Approved Requests
+    // {
+    //     id: 'req_004',
+    //         patientName: 'Maya Gurung',
+    //             patientId: 'pat_004',
+    //                 age: 38,
+    //                     gender: 'Female',
+    //                         consultationType: 'video',
+    //                             requestedDate: '2025-01-15',
+    //                                 requestedTime: '3:00 PM',
+    //                                     reason: 'Regular checkup and blood pressure monitoring.',
+    //                                         fee: 1500,
+    //                                             status: 'approved',
+    //                                                 submittedAt: '2025-01-13T16:45:00Z',
+    //                                                     approvedAt: '2025-01-13T18:00:00Z',
+    //                                                         patientHistory: 'Hypertension, regular medication',
+    //                                                             contactNumber: '+977-9871234570',
+    //                                                                 emergencyContact: '+977-9881234570',
+    //                                                                     consultationLink: 'https://meet.example.com/maya-consultation',
+    //                                                                         paymentStatus: 'paid'
+    // },
+    // {
+    //     id: 'req_005',
+    //         patientName: 'Arjun Rai',
+    //             patientId: 'pat_005',
+    //                 age: 52,
+    //                     gender: 'Male',
+    //                         consultationType: 'audio',
+    //                             requestedDate: '2025-01-16',
+    //                                 requestedTime: '9:30 AM',
+    //                                     reason: 'Diabetes management consultation and medication review.',
+    //                                         fee: 1200,
+    //                                             status: 'approved',
+    //                                                 submittedAt: '2025-01-13T10:30:00Z',
+    //                                                     approvedAt: '2025-01-13T12:00:00Z',
+    //                                                         patientHistory: 'Type 2 diabetes, cholesterol issues',
+    //                                                             contactNumber: '+977-9881234571',
+    //                                                                 emergencyContact: '+977-9891234571',
+    //                                                                     consultationLink: 'https://meet.example.com/arjun-consultation',
+    //                                                                         paymentStatus: 'paid'
+    // },
+
+    // // Completed Consultations
+    // {
+    //     id: 'req_006',
+    //         patientName: 'Sunita Magar',
+    //             patientId: 'pat_006',
+    //                 age: 29,
+    //                     gender: 'Female',
+    //                         consultationType: 'video',
+    //                             requestedDate: '2025-01-12',
+    //                                 requestedTime: '1:00 PM',
+    //                                     reason: 'Pregnancy consultation and routine checkup.',
+    //                                         fee: 1500,
+    //                                             status: 'completed',
+    //                                                 submittedAt: '2025-01-11T09:00:00Z',
+    //                                                     approvedAt: '2025-01-11T10:30:00Z',
+    //                                                         completedAt: '2025-01-12T13:30:00Z',
+    //                                                             patientHistory: 'First pregnancy, no complications',
+    //                                                                 contactNumber: '+977-9891234572',
+    //                                                                     emergencyContact: '+977-9801234572',
+    //                                                                         consultationNotes: 'Patient is healthy. Prescribed prenatal vitamins. Next checkup in 4 weeks.',
+    //                                                                             prescription: 'Folic acid 400mcg daily, Iron supplements',
+    //                                                                                 paymentStatus: 'paid',
+    //                                                                                     rating: 5
+    // },
+    // {
+    //     id: 'req_007',
+    //         patientName: 'Deepak Tamang',
+    //             patientId: 'pat_007',
+    //                 age: 41,
+    //                     gender: 'Male',
+    //                         consultationType: 'chat',
+    //                             requestedDate: '2025-01-11',
+    //                                 requestedTime: '10:30 AM',
+    //                                     reason: 'Follow-up for hypertension medication adjustment.',
+    //                                         fee: 900,
+    //                                             status: 'completed',
+    //                                                 submittedAt: '2025-01-10T14:15:00Z',
+    //                                                     approvedAt: '2025-01-10T15:00:00Z',
+    //                                                         completedAt: '2025-01-11T11:00:00Z',
+    //                                                             patientHistory: 'Hypertension, family history of heart disease',
+    //                                                                 contactNumber: '+977-9801234573',
+    //                                                                     emergencyContact: '+977-9811234573',
+    //                                                                         consultationNotes: 'Blood pressure well controlled. Continue current medication.',
+    //                                                                             prescription: 'Amlodipine 5mg daily, lifestyle modifications',
+    //                                                                                 paymentStatus: 'paid',
+    //                                                                                     rating: 4
+    // },
+    // {
+    //     id: 'req_008',
+    //         patientName: 'Priya Maharjan',
+    //             patientId: 'pat_008',
+    //                 age: 35,
+    //                     gender: 'Female',
+    //                         consultationType: 'video',
+    //                             requestedDate: '2025-01-10',
+    //                                 requestedTime: '4:00 PM',
+    //                                     reason: 'Child vaccination consultation and health checkup.',
+    //                                         fee: 1000,
+    //                                             status: 'completed',
+    //                                                 submittedAt: '2025-01-09T11:30:00Z',
+    //                                                     approvedAt: '2025-01-09T13:00:00Z',
+    //                                                         completedAt: '2025-01-10T16:30:00Z',
+    //                                                             patientHistory: 'Mother of 2 children, regular checkups',
+    //                                                                 contactNumber: '+977-9811234574',
+    //                                                                     emergencyContact: '+977-9821234574',
+    //                                                                         consultationNotes: 'Child is healthy. Vaccination schedule discussed. No concerns.',
+    //                                                                             prescription: 'Continue regular diet, next vaccination in 2 months',
+    //                                                                                 paymentStatus: 'paid',
+    //                                                                                     rating: 5
+    // },
+
+    // // Rejected Request
+    // {
+    //     id: 'req_009',
+    //         patientName: 'Laxmi Shrestha',
+    //             patientId: 'pat_009',
+    //                 age: 35,
+    //                     gender: 'Female',
+    //                         consultationType: 'video',
+    //                             requestedDate: '2025-01-13',
+    //                                 requestedTime: '4:00 PM',
+    //                                     reason: 'Severe headache and vision problems for past week.',
+    //                                         fee: 1500,
+    //                                             status: 'rejected',
+    //                                                 submittedAt: '2025-01-12T11:30:00Z',
+    //                                                     rejectedAt: '2025-01-12T13:00:00Z',
+    //                                                         rejectionReason: 'This condition requires immediate in-person examination. Please visit the emergency department.',
+    //                                                             patientHistory: 'Migraine history, recent stress',
+    //                                                                 contactNumber: '+977-9811234574',
+    //                                                                     emergencyContact: '+977-9821234574'
+    // }
+    //     ];
+
+    // // Mock doctor documents
+    // const [doctorDocuments, setDoctorDocuments] = useState([
+    //     {
+    //         id: 'doc_001',
+    //         name: 'Medical License',
+    //         type: 'license',
+    //         fileName: 'medical_license.pdf',
+    //         uploadDate: '2024-01-15',
+    //         status: 'verified',
+    //         expiryDate: '2026-01-15',
+    //         description: 'Nepal Medical Council License'
+    //     },
+    //     {
+    //         id: 'doc_002',
+    //         name: 'MBBS Degree Certificate',
+    //         type: 'degree',
+    //         fileName: 'mbbs_certificate.pdf',
+    //         uploadDate: '2024-01-15',
+    //         status: 'verified',
+    //         expiryDate: null,
+    //         description: 'Bachelor of Medicine and Bachelor of Surgery'
+    //     },
+    //     {
+    //         id: 'doc_003',
+    //         name: 'Cardiology Specialization',
+    //         type: 'specialization',
+    //         fileName: 'cardiology_cert.pdf',
+    //         uploadDate: '2024-01-15',
+    //         status: 'verified',
+    //         expiryDate: null,
+    //         description: 'Post-graduate specialization in Cardiology'
+    //     },
+    //     {
+    //         id: 'doc_004',
+    //         name: 'Professional Indemnity Insurance',
+    //         type: 'insurance',
+    //         fileName: 'insurance_policy.pdf',
+    //         uploadDate: '2024-06-01',
+    //         status: 'pending',
+    //         expiryDate: '2025-06-01',
+    //         description: 'Medical malpractice insurance coverage'
+    //     }
+    // ]);
+
+    // // Filter requests based on search and status
+    // const filteredRequests = mockConsultationRequests.filter(request => {
+    //     const matchesSearch = request.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //         request.reason.toLowerCase().includes(searchTerm.toLowerCase());
+    //     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    //     return matchesSearch && matchesStatus;
+    // });
+
     // Separate requests by status
-    const pendingRequests = filteredRequests.filter(r => r.status === 'pending');
-    const approvedRequests = filteredRequests.filter(r => r.status === 'approved');
+    const pendingRequests = filteredRequests.filter(r => r.status === 'upcoming');
     const completedRequests = filteredRequests.filter(r => r.status === 'completed');
     const rejectedRequests = filteredRequests.filter(r => r.status === 'rejected');
 
-    // Calculate statistics
-    const totalEarnings = mockConsultationRequests
-        .filter(r => r.status === 'completed')
-        .reduce((sum, r) => sum + r.fee, 0);
+    // Calculate statistics from real data
+    const totalEarnings = consultations
+        .filter(r => r.status === 'completed' && r.paymentStatus === 'paid')
+        .reduce((sum, r) => sum + (r.fee || 0), 0);
 
-    const todayConsultations = mockConsultationRequests
-        .filter(r => r.requestedDate === '2025-01-15' && (r.status === 'approved' || r.status === 'completed'))
+    const today = new Date().toISOString().split('T')[0];
+    const todayConsultations = consultations
+        .filter(r => {
+            const consultDate = new Date(r.date).toISOString().split('T')[0];
+            return consultDate === today && (r.status === 'upcoming' || r.status === 'completed');
+        })
         .length;
+
 
     const stats = [
         {
@@ -395,10 +459,96 @@ export default function DoctorDashboard() {
         }
     }, [tab]);
 
+    // Initialize verification fees from profile
+    useEffect(() => {
+        if (profile) {
+            setVerificationFees({
+                chatFee: profile.chatFee || '',
+                audioFee: profile.audioFee || '',
+                videoFee: profile.videoFee || '',
+                workplace: profile.workplace || '',
+                availabilityDays: profile.availabilityDays || [],
+                availabilityTime: profile.availabilityTime || ''
+            });
+        }
+    }, [profile]);
+
     // Handle tab change and update URL
     const handleTabChange = (newTab) => {
         setActiveTab(newTab);
         navigate(`/doctor/dashboard/${newTab}`);
+    };
+
+    // Handle fee input changes
+    const handleFeeChange = (e) => {
+        const { name, value } = e.target;
+        setVerificationFees(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Handle availability day toggle
+    const handleAvailabilityDayToggle = (day) => {
+        setVerificationFees(prev => ({
+            ...prev,
+            availabilityDays: prev.availabilityDays.includes(day)
+                ? prev.availabilityDays.filter(d => d !== day)
+                : [...prev.availabilityDays, day]
+        }));
+    };
+
+    // Handle verification submission
+    const handleSubmitVerification = async () => {
+        // Validate all fees are filled
+        if (!verificationFees.chatFee || !verificationFees.audioFee || !verificationFees.videoFee) {
+            toast.error('Please fill in all consultation fees');
+            return;
+        }
+
+        // Validate availability fields
+        if (!verificationFees.workplace || verificationFees.availabilityDays.length === 0 || !verificationFees.availabilityTime) {
+            toast.error('Please fill in all availability details', {
+                description: 'Workplace, availability days, and time are required'
+            });
+            return;
+        }
+
+        // Validate profile completeness
+        if (!profile?.firstName || !profile?.lastName || !profile?.specialty ||
+            !profile?.licenseNumber || !profile?.yearsOfExperience) {
+            toast.error('Please complete your profile first', {
+                description: 'Go to Profile & Documents tab to complete your information'
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            // First update the fees and availability
+            await profileAPI.updateProfile({
+                chatFee: parseInt(verificationFees.chatFee),
+                audioFee: parseInt(verificationFees.audioFee),
+                videoFee: parseInt(verificationFees.videoFee),
+                workplace: verificationFees.workplace,
+                availabilityDays: verificationFees.availabilityDays,
+                availabilityTime: verificationFees.availabilityTime
+            });
+
+            // Then submit for review
+            const response = await profileAPI.submitForReview();
+            if (response.data.success) {
+                toast.success('Profile submitted for review!', {
+                    description: 'Admin will review your profile within 24-48 hours'
+                });
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error submitting for review:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit profile');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleApproveRequest = useCallback((request) => {
@@ -814,6 +964,35 @@ export default function DoctorDashboard() {
                     </div>
                 </div>
 
+                {/* Quick Link to Verification Tab for Pending/Rejected Doctors */}
+                {(profile?.verificationStatus === 'pending' || profile?.verificationStatus === 'rejected') && (
+                    <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <Shield className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-blue-900">
+                                            {profile?.submittedForReview ? 'Profile Under Review' : 'Complete Verification'}
+                                        </p>
+                                        <p className="text-sm text-blue-700">
+                                            {profile?.submittedForReview ? 'Check verification status' : 'Set fees and submit for review'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={() => handleTabChange('verification')}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                    Go to Verification
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     {stats.map((stat, index) => (
@@ -886,6 +1065,18 @@ export default function DoctorDashboard() {
                             >
                                 My Schedule
                             </button>
+                            {/* Verification Tab - Only show when pending or rejected */}
+                            {(profile?.verificationStatus === 'pending' || profile?.verificationStatus === 'rejected') && (
+                                <button
+                                    onClick={() => handleTabChange('verification')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
+                                        ? 'border-green-600 text-green-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    Verification
+                                </button>
+                            )}
                             <button
                                 onClick={() => handleTabChange('profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
@@ -960,6 +1151,237 @@ export default function DoctorDashboard() {
                                     <p className="text-sm text-gray-500 mt-1">Approved consultations will appear here</p>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* Verification Tab */}
+                    {activeTab === 'verification' && (
+                        <div className="space-y-6">
+                            {/* Verification Status Banners */}
+                            {profile?.verificationStatus === 'pending' && !profile?.submittedForReview && (
+                                <Card className="border-2 border-yellow-200 bg-yellow-50">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start space-x-4">
+                                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <AlertCircle className="h-6 w-6 text-yellow-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-yellow-900 mb-1">Complete Verification</h3>
+                                                <p className="text-sm text-yellow-800">
+                                                    Set your consultation fees and submit your profile for admin review to start accepting patients.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {profile?.verificationStatus === 'pending' && profile?.submittedForReview && (
+                                <Card className="border-2 border-blue-200 bg-blue-50">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start space-x-4">
+                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <Clock className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-blue-900 mb-1">Profile Under Review</h3>
+                                                <p className="text-sm text-blue-800">
+                                                    Your profile is being reviewed by our admin team. You'll be notified once it's approved. This usually takes 24-48 hours.
+                                                </p>
+                                                {profile?.submittedAt && (
+                                                    <p className="text-xs text-blue-700 mt-2">
+                                                        Submitted on: {new Date(profile.submittedAt).toLocaleDateString()}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {profile?.verificationStatus === 'rejected' && (
+                                <Card className="border-2 border-red-200 bg-red-50">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start space-x-4">
+                                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <X className="h-6 w-6 text-red-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-red-900 mb-1">Profile Needs Attention</h3>
+                                                <p className="text-sm text-red-800 mb-2">
+                                                    Your profile submission was not approved. Please review the feedback below and resubmit.
+                                                </p>
+                                                {profile?.rejectionReason && (
+                                                    <div className="bg-white border border-red-200 rounded-lg p-3 mb-3">
+                                                        <p className="text-sm font-medium text-red-900 mb-1">Reason:</p>
+                                                        <p className="text-sm text-red-800">{profile.rejectionReason}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Professional Information (Read-only) */}
+                            <Card className="border-0 shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Professional Information</CardTitle>
+                                    <CardDescription>Your profile details (update in Profile & Documents tab)</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-500">Full Name</Label>
+                                            <p className="text-gray-900 font-medium">{profile?.firstName} {profile?.lastName}</p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-500">Specialty</Label>
+                                            <p className="text-gray-900 font-medium">{profile?.specialty || 'Not set'}</p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-500">License Number</Label>
+                                            <p className="text-gray-900 font-medium">{profile?.licenseNumber || 'Not set'}</p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-500">Years of Experience</Label>
+                                            <p className="text-gray-900 font-medium">{profile?.yearsOfExperience || 'Not set'}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Consultation Fees */}
+                            <Card className="border-0 shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Consultation Fees</CardTitle>
+                                    <CardDescription>Set your fees for different consultation types (in NPR)</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="chatFee" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Chat Consultation Fee (NPR)
+                                            </Label>
+                                            <Input
+                                                id="chatFee"
+                                                name="chatFee"
+                                                type="number"
+                                                value={verificationFees.chatFee}
+                                                onChange={handleFeeChange}
+                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                className="border-gray-200"
+                                                placeholder="e.g., 600"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="audioFee" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Audio Consultation Fee (NPR)
+                                            </Label>
+                                            <Input
+                                                id="audioFee"
+                                                name="audioFee"
+                                                type="number"
+                                                value={verificationFees.audioFee}
+                                                onChange={handleFeeChange}
+                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                className="border-gray-200"
+                                                placeholder="e.g., 800"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="videoFee" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Video Consultation Fee (NPR)
+                                            </Label>
+                                            <Input
+                                                id="videoFee"
+                                                name="videoFee"
+                                                type="number"
+                                                value={verificationFees.videoFee}
+                                                onChange={handleFeeChange}
+                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                className="border-gray-200"
+                                                placeholder="e.g., 1000"
+                                            />
+                                        </div>
+
+                                        {/* Workplace */}
+                                        <div className="pt-4 border-t border-gray-200">
+                                            <Label htmlFor="workplace" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Workplace / Hospital / Clinic
+                                            </Label>
+                                            <Input
+                                                id="workplace"
+                                                name="workplace"
+                                                type="text"
+                                                value={verificationFees.workplace}
+                                                onChange={handleFeeChange}
+                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                className="border-gray-200"
+                                                placeholder="e.g., City Hospital, Kathmandu"
+                                            />
+                                        </div>
+
+                                        {/* Availability Days */}
+                                        <div>
+                                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Availability Days
+                                            </Label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                                    <div key={day} className="flex items-center space-x-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={day}
+                                                            checked={verificationFees.availabilityDays.includes(day)}
+                                                            onChange={() => handleAvailabilityDayToggle(day)}
+                                                            disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                        />
+                                                        <label htmlFor={day} className="text-sm text-gray-700">
+                                                            {day}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Availability Time */}
+                                        <div>
+                                            <Label htmlFor="availabilityTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Availability Time
+                                            </Label>
+                                            <Input
+                                                id="availabilityTime"
+                                                name="availabilityTime"
+                                                type="text"
+                                                value={verificationFees.availabilityTime}
+                                                onChange={handleFeeChange}
+                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                className="border-gray-200"
+                                                placeholder="e.g., 9:00 AM - 5:00 PM"
+                                            />
+                                        </div>
+
+                                        {/* Submit Button */}
+                                        {(!profile?.submittedForReview || profile?.verificationStatus === 'rejected') && (
+                                            <div className="pt-4">
+                                                <Button
+                                                    onClick={handleSubmitVerification}
+                                                    disabled={isSubmitting}
+                                                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                                                >
+                                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                                    {isSubmitting ? 'Submitting...' : 'Submit for Review'}
+                                                </Button>
+                                                <p className="text-xs text-gray-500 mt-2 text-center">
+                                                    Your profile will be reviewed by our admin team within 24-48 hours
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     )}
 

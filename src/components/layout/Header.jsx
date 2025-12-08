@@ -233,6 +233,14 @@ export default function Header() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 onClick={() => {
+                                    // Admin exception - show coming soon toast
+                                    if (user?.role === 'admin') {
+                                        toast.info('Coming Soon', {
+                                            description: 'Admin profile settings are under development'
+                                        });
+                                        return;
+                                    }
+
                                     // Navigate based on user role
                                     if (user?.role === 'doctor') {
                                         navigate('/doctor/dashboard'); // Doctor dashboard has profile tab

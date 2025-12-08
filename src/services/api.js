@@ -51,7 +51,8 @@ export const profileAPI = {
     uploadProfileImage: (formData) => api.post('/profile/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    deleteProfileImage: () => api.delete('/profile/image')
+    deleteProfileImage: () => api.delete('/profile/image'),
+    submitForReview: () => api.post('/profile/submit-review')
 };
 
 // Medicine Reminders API
@@ -131,4 +132,13 @@ export const prescriptionsAPI = {
     }
 };
 
+export const adminAPI = {
+    getPendingProfiles: () => api.get('/admin/profiles/pending'),
+    getAllProfiles: (status) => api.get('/admin/profiles/all', { params: { status } }),
+    approveProfile: (id) => api.put(`/admin/profiles/${id}/approve`),
+    rejectProfile: (id, rejectionReason) => api.put(`/admin/profiles/${id}/reject`, { rejectionReason }),
+    getVerificationStats: () => api.get('/admin/stats/verification')
+};
+
 export default api;
+

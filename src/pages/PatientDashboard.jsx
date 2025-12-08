@@ -52,12 +52,21 @@ import { PaymentDialog } from '@/components/ui/payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
-import Header from '@/components/layout/Header';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI } from '@/services/api';
+import Header from '@/components/layout/Header';
 import { useReminders } from '@/contexts/RemindersContext';
-import { doctorsAPI, pharmaciesAPI, statsAPI, consultationsAPI, prescriptionsAPI } from '@/services/api';
+import { prescriptionsAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import PrescriptionPreview from '@/components/dashboard/PrescriptionPreview';
+
+// Helper function to get full image URL
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:5000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+};
 
 export function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -119,223 +128,46 @@ export function PatientDashboard() {
     const welcomeNotificationShown = useRef(false);
 
     // Helper function to get full image URL
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) return null;
-        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:5000${imagePath}`; // Prepend backend URL
-    };
-
-    // Mock doctors data
-    const mockDoctors = [
-        {
-            id: 'doc_001',
-            name: 'Dr. Rajesh Sharma',
-            specialty: 'Cardiology',
-            experience: 15,
-            experienceText: '15 years',
-            rating: 4.8,
-            consultationFee: 900,
-            patients: 1200,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Senior Cardiologist with expertise in interventional cardiology and heart disease prevention.',
-            location: 'Kathmandu Medical Center',
-            hours: 'Mon-Fri 8AM-5PM',
-            image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_002',
-            name: 'Dr. Sita Poudel',
-            specialty: 'Dermatology',
-            experience: 12,
-            experienceText: '12 years',
-            rating: 4.9,
-            consultationFee: 720,
-            patients: 800,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Dermatologist specializing in skin conditions, cosmetic procedures, and hair treatments.',
-            location: 'Bir Hospital',
-            hours: 'Tue-Sat 10AM-6PM',
-            image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_003',
-            name: 'Dr. Amit Thapa',
-            specialty: 'Orthopedics',
-            experience: 18,
-            experienceText: '18 years',
-            rating: 4.7,
-            consultationFee: 1050,
-            patients: 950,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Orthopedic surgeon with specialization in joint replacement and sports medicine.',
-            location: 'TUTH',
-            hours: 'Mon-Wed-Fri 8AM-4PM',
-            image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_004',
-            name: 'Dr. Priya Maharjan',
-            specialty: 'Pediatrics',
-            experience: 10,
-            experienceText: '10 years',
-            rating: 4.9,
-            consultationFee: 600,
-            patients: 1500,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Pediatrician with expertise in child development and pediatric emergency care.',
-            location: 'Kanti Children Hospital',
-            hours: 'Mon-Sat 9AM-5PM',
-            image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_005',
-            name: 'Dr. Bikash Adhikari',
-            specialty: 'Neurology',
-            experience: 20,
-            experienceText: '20 years',
-            rating: 4.9,
-            consultationFee: 1200,
-            patients: 850,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Neurologist specializing in stroke, epilepsy, and neurodegenerative diseases.',
-            location: 'Grande International Hospital',
-            hours: 'Mon-Thu 9AM-4PM',
-            image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_006',
-            name: 'Dr. Anjali Rai',
-            specialty: 'Psychiatry',
-            experience: 8,
-            experienceText: '8 years',
-            rating: 4.8,
-            consultationFee: 800,
-            patients: 650,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Psychiatrist with focus on anxiety, depression, and cognitive behavioral therapy.',
-            location: 'Mental Health Center',
-            hours: 'Tue-Sat 10AM-6PM',
-            image: 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_007',
-            name: 'Dr. Suresh Gurung',
-            specialty: 'General Medicine',
-            experience: 14,
-            experienceText: '14 years',
-            rating: 4.7,
-            consultationFee: 550,
-            patients: 2000,
-            availability: 'Available',
-            isOnline: true,
-            description: 'General Physician with broad experience in treating common medical conditions.',
-            location: 'Patan Hospital',
-            hours: 'Mon-Sat 8AM-6PM',
-            image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_008',
-            name: 'Dr. Meera Shrestha',
-            specialty: 'Gynecology',
-            experience: 16,
-            experienceText: '16 years',
-            rating: 4.9,
-            consultationFee: 850,
-            patients: 1100,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Gynecologist and Obstetrician specializing in high-risk pregnancies and women\'s health.',
-            location: 'Paropakar Maternity Hospital',
-            hours: 'Mon-Fri 9AM-5PM',
-            image: 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_009',
-            name: 'Dr. Ramesh Karki',
-            specialty: 'ENT',
-            experience: 11,
-            experienceText: '11 years',
-            rating: 4.6,
-            consultationFee: 700,
-            patients: 900,
-            availability: 'Available',
-            isOnline: true,
-            description: 'ENT specialist treating ear, nose, and throat disorders with modern techniques.',
-            location: 'Nepal ENT Hospital',
-            hours: 'Tue-Sat 10AM-5PM',
-            image: 'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_010',
-            name: 'Dr. Sunita Tamang',
-            specialty: 'Ophthalmology',
-            experience: 13,
-            experienceText: '13 years',
-            rating: 4.8,
-            consultationFee: 750,
-            patients: 1300,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Eye specialist with expertise in cataract surgery and laser vision correction.',
-            location: 'Tilganga Eye Hospital',
-            hours: 'Mon-Fri 8AM-4PM',
-            image: 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_011',
-            name: 'Dr. Prakash Bhandari',
-            specialty: 'Dentistry',
-            experience: 9,
-            experienceText: '9 years',
-            rating: 4.7,
-            consultationFee: 650,
-            patients: 1800,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Dentist specializing in cosmetic dentistry, implants, and orthodontics.',
-            location: 'Dental Care Center',
-            hours: 'Mon-Sat 9AM-6PM',
-            image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_012',
-            name: 'Dr. Kavita Joshi',
-            specialty: 'Gastroenterology',
-            experience: 17,
-            experienceText: '17 years',
-            rating: 4.8,
-            consultationFee: 950,
-            patients: 750,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Gastroenterologist with expertise in digestive disorders and endoscopic procedures.',
-            location: 'Norvic International Hospital',
-            hours: 'Mon-Wed-Fri 10AM-4PM',
-            image: 'https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=400&h=400&fit=crop'
-        }
-    ];
-
-
-    // Doctors are already filtered by API based on search and specialty
-    const sortedDoctors = doctors;
 
     // Get unique specialties for filter dropdown
     const uniqueSpecialties = ['all', ...new Set(doctors.map(d => d.specialty))];
+
+    // Doctors are already filtered by API based on search and specialty
+    const sortedDoctors = doctors;
 
     // Fetch data from API
     useEffect(() => {
         if (user) {
             fetchDoctors();
             fetchPharmacies();
-            // Don't call fetchDashboardStats here - it will be called after consultations load
+            fetchConsultations();
         }
     }, [user]);
+
+    const fetchConsultations = async () => {
+        try {
+            setLoadingConsultations(true);
+            const response = await consultationsAPI.getConsultations();
+            if (response.data.success) {
+                setConsultations(response.data.data);
+                // Calculate stats after consultations are loaded
+                await fetchDashboardStats();
+            }
+        } catch (error) {
+            console.error('Failed to fetch consultations:', error);
+            // Set empty stats on error
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'No data yet' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'No data yet' },
+                completedConsultations: { value: 0, change: 0, changeText: 'No data yet' },
+                totalSpent: { value: 0, change: 0, changeText: 'No data yet' }
+            });
+            setLoadingStats(false);
+        } finally {
+            setLoadingConsultations(false);
+        }
+    };
+
 
     const fetchDoctors = async () => {
         try {
@@ -471,20 +303,6 @@ export function PatientDashboard() {
         }
     }, [consultations.length]); // Only re-run when the length changes
 
-    // Fetch consultations from backend
-    const fetchConsultations = async () => {
-        try {
-            setLoadingConsultations(true);
-            const response = await consultationsAPI.getConsultations();
-            if (response.data.success) {
-                setConsultations(response.data.data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch consultations:', error);
-        } finally {
-            setLoadingConsultations(false);
-        }
-    };
 
     const handleBookConsultation = useCallback((doctor) => {
         setSelectedDoctor(doctor);
@@ -959,11 +777,8 @@ export function PatientDashboard() {
                             ];
 
                             return statsToDisplay.map((config, index) => {
-                                const stat = stats[config.key];
-                                if (!stat) {
-                                    console.warn(`Missing stat for ${config.key}`, stats);
-                                    return null;
-                                }
+                                // Use default values if stat is missing
+                                const stat = stats[config.key] || { value: 0, change: 0, changeText: 'No data yet' };
 
                                 const Icon = config.icon;
                                 const displayValue = config.key === 'totalSpent'
@@ -1247,9 +1062,9 @@ export function PatientDashboard() {
                                                 <div className="flex items-start space-x-4">
                                                     <div className="relative">
                                                         <Avatar className="h-16 w-16">
-                                                            <AvatarImage src={doctor.image} alt={doctor.name} />
+                                                            <AvatarImage src={getImageUrl(doctor.image)} alt={doctor.name} />
                                                             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl font-bold">
-                                                                {doctor.name.split(' ').map(n => n[0]).join('')}
+                                                                {doctor.name ? doctor.name.split(' ').map(n => n[0]).join('') : 'DR'}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         {doctor.isOnline && (
@@ -1257,7 +1072,7 @@ export function PatientDashboard() {
                                                         )}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <h4 className="font-semibold text-lg text-gray-900">{doctor.name}</h4>
+                                                        <h4 className="font-semibold text-lg text-gray-900">Dr. {doctor.name}</h4>
                                                         <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
                                                             {doctor.specialty}
                                                         </Badge>
@@ -1266,8 +1081,14 @@ export function PatientDashboard() {
                                                                 <Star className="h-4 w-4 text-yellow-400 fill-current" />
                                                                 <span>{doctor.rating}</span>
                                                             </div>
-                                                            <span>{doctor.experience} years</span>
-                                                            <span>{doctor.patients}+ patients</span>
+                                                            <div className="flex items-center space-x-1">
+                                                                <Activity className="h-4 w-4" />
+                                                                <span>{doctor.experience} years</span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-1">
+                                                                <Users className="h-4 w-4" />
+                                                                <span>{doctor.patients}+ patients</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1713,7 +1534,7 @@ export function PatientDashboard() {
                         try {
                             // Create consultation in database first
                             const consultationData = {
-                                doctorId: selectedDoctor._id,
+                                doctorId: selectedDoctor.userId || selectedDoctor._id, // Use userId for User ID, fallback to _id
                                 date: bookingData.date,
                                 time: bookingData.time,
                                 type: bookingData.type,

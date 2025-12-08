@@ -128,9 +128,13 @@ export default function LoginPage() {
           console.log('🚀 Navigating to saved location:', from);
           navigate(from, { replace: true });
         } else {
-          // Navigate based on the role from backend (not frontend selection)
+          // ADMIN EXCEPTION: Always redirect admin to admin dashboard
+          // regardless of selected role
           console.log('🚀 Navigating based on role:', userRole);
-          if (userRole === "patient") {
+          if (userRole === "admin") {
+            console.log('→ Admin detected! Going to /admin/dashboard');
+            navigate("/admin/dashboard", { replace: true });
+          } else if (userRole === "patient") {
             console.log('→ Going to /dashboard');
             navigate("/dashboard", { replace: true });
           } else if (userRole === "doctor") {
