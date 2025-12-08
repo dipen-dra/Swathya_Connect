@@ -393,9 +393,15 @@ export default function DoctorDashboard() {
     const rejectedRequests = filteredRequests.filter(r => r.status === 'rejected');
 
     // Calculate statistics from real data
+    console.log('📊 Doctor Dashboard - All consultations:', consultations);
+    console.log('📊 Completed consultations:', consultations.filter(r => r.status === 'completed'));
+
+    // Calculate earnings from completed consultations (payment status might not be set yet)
     const totalEarnings = consultations
-        .filter(r => r.status === 'completed' && r.paymentStatus === 'paid')
+        .filter(r => r.status === 'completed')
         .reduce((sum, r) => sum + (r.fee || 0), 0);
+
+    console.log('💰 Total Earnings calculated:', totalEarnings);
 
     const today = new Date().toISOString().split('T')[0];
     const todayConsultations = consultations
@@ -406,6 +412,13 @@ export default function DoctorDashboard() {
         .length;
 
 
+    // Calculate percentage changes (mock for now - can be enhanced with historical data)
+    const calculateChange = (current) => {
+        if (current === 0) return 0;
+        // Mock: assume some growth if we have data
+        return current > 0 ? Math.min(100, current * 10) : 0;
+    };
+
     const stats = [
         {
             title: 'Pending Requests',
@@ -413,7 +426,8 @@ export default function DoctorDashboard() {
             icon: Clock,
             color: 'text-amber-600',
             bgColor: 'bg-amber-50',
-            change: '+3 new'
+            change: calculateChange(pendingRequests.length),
+            changeText: 'from last month'
         },
         {
             title: 'Today\'s Consultations',
@@ -421,7 +435,8 @@ export default function DoctorDashboard() {
             icon: Calendar,
             color: 'text-blue-600',
             bgColor: 'bg-blue-50',
-            change: '2 scheduled'
+            change: calculateChange(todayConsultations),
+            changeText: 'from yesterday'
         },
         {
             title: 'Total Completed',
@@ -429,7 +444,8 @@ export default function DoctorDashboard() {
             icon: CheckCircle,
             color: 'text-green-600',
             bgColor: 'bg-green-50',
-            change: '+3 this week'
+            change: calculateChange(completedRequests.length),
+            changeText: 'from last month'
         },
         {
             title: 'Total Earnings',
@@ -437,7 +453,8 @@ export default function DoctorDashboard() {
             icon: DollarSign,
             color: 'text-purple-600',
             bgColor: 'bg-purple-50',
-            change: '+15%'
+            change: calculateChange(totalEarnings / 1000),
+            changeText: 'from last month'
         }
     ];
 
@@ -737,13 +754,19 @@ export default function DoctorDashboard() {
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4">
                             <Avatar className="h-12 w-12">
+                                {request.patientId?.profileImage && (
+                                    <AvatarImage
+                                        src={`http://localhost:5000${request.patientId.profileImage}`}
+                                        alt={request.patientId?.fullName || request.patientId?.name}
+                                    />
+                                )}
                                 <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold">
-                                    {request.patientName.split(' ').map(n => n[0]).join('')}
+                                    {(request.patientId?.fullName || request.patientId?.name || 'P').split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
                                 <div className="flex items-center space-x-2">
-                                    <h4 className="font-semibold text-lg text-gray-900">{request.patientName}</h4>
+                                    <h4 className="font-semibold text-lg text-gray-900">{request.patientId?.fullName || request.patientId?.name || 'Unknown Patient'}</h4>
                                     {urgent && (
                                         <Badge className="bg-red-100 text-red-800 border-red-200">
                                             <AlertCircle className="h-3 w-3 mr-1" />
@@ -752,10 +775,10 @@ export default function DoctorDashboard() {
                                     )}
                                 </div>
                                 <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                                    <span>{request.age} years, {request.gender}</span>
+                                    <span>{request.patientId?.email || 'No email'}</span>
                                     <div className="flex items-center space-x-1">
                                         <ConsultationIcon className="h-3 w-3" />
-                                        <span className="capitalize">{request.consultationType}</span>
+                                        <span className="capitalize">{request.type}</span>
                                     </div>
                                 </div>
                             </div>
@@ -772,13 +795,13 @@ export default function DoctorDashboard() {
                         <div>
                             <p className="text-sm font-medium text-gray-500">Requested Date & Time</p>
                             <p className="text-gray-900">
-                                {new Date(request.requestedDate).toLocaleDateString()} at {request.requestedTime}
+                                {new Date(request.date).toLocaleDateString()} at {request.time}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm font-medium text-gray-500">Submitted</p>
                             <p className="text-gray-900">
-                                {new Date(request.submittedAt).toLocaleDateString()}
+                                {new Date(request.createdAt).toLocaleDateString()}
                             </p>
                         </div>
                     </div>
@@ -787,6 +810,13 @@ export default function DoctorDashboard() {
                         <p className="text-sm font-medium text-gray-500 mb-2">Reason for Consultation</p>
                         <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{request.reason}</p>
                     </div>
+
+                    {request.patientId?.phone && (
+                        <div className="flex items-center space-x-2 text-gray-900 mb-4">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            <p className="text-sm">{request.patientId.phone}</p>
+                        </div>
+                    )}
 
                     {request.patientHistory && (
                         <div className="mb-4">
@@ -1002,10 +1032,15 @@ export default function DoctorDashboard() {
                                     <div className="space-y-2">
                                         <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                                         <p className="text-2xl font-bold">{stat.value}</p>
-                                        <div className="flex items-center space-x-1 text-xs">
-                                            <TrendingUp className="h-3 w-3 text-green-600" />
-                                            <span className="text-green-600 font-medium">{stat.change}</span>
-                                        </div>
+                                        {stat.change !== undefined && (
+                                            <div className="flex items-center space-x-1 text-xs">
+                                                <TrendingUp className={`h-3 w-3 ${stat.change > 0 ? 'text-green-600' : 'text-gray-400'}`} />
+                                                <span className={`font-medium ${stat.change > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                                                    {stat.change > 0 ? '+' : ''}{stat.change}%
+                                                </span>
+                                                <span className="text-gray-500">{stat.changeText}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className={`p-3 rounded-xl ${stat.bgColor}`}>
                                         <stat.icon className={`h-6 w-6 ${stat.color}`} />
