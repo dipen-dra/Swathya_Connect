@@ -389,6 +389,7 @@ export default function DoctorDashboard() {
 
     // Separate requests by status
     const pendingRequests = filteredRequests.filter(r => r.status === 'upcoming');
+    const approvedRequests = filteredRequests.filter(r => r.status === 'approved');
     const completedRequests = filteredRequests.filter(r => r.status === 'completed');
     const rejectedRequests = filteredRequests.filter(r => r.status === 'rejected');
 
@@ -709,7 +710,7 @@ export default function DoctorDashboard() {
     };
 
     const renderRequestCard = (request) => {
-        const ConsultationIcon = getConsultationTypeIcon(request.consultationType);
+        const ConsultationIcon = getConsultationTypeIcon(request.type);
 
         // Helper function to convert 12-hour time to 24-hour format
         const convertTo24Hour = (time12h) => {
@@ -730,8 +731,8 @@ export default function DoctorDashboard() {
         const isUrgent = () => {
             try {
                 const now = new Date();
-                const time24 = convertTo24Hour(request.requestedTime);
-                const consultationDateTime = new Date(`${request.requestedDate}T${time24}`);
+                const time24 = convertTo24Hour(request.time);
+                const consultationDateTime = new Date(`${request.date}T${time24}`);
                 const timeDiff = consultationDateTime - now;
                 const minutesUntil = Math.floor(timeDiff / (1000 * 60));
 
