@@ -146,7 +146,7 @@ export default function DoctorDocuments() {
     };
 
     const handleView = (doc) => {
-        const url = `http://localhost:5000/api/documents/${doc._id}/download`;
+        const url = `http://localhost:5000/api/documents/${doc._id}/view`;
         window.open(url, '_blank');
     };
 
