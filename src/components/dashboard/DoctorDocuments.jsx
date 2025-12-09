@@ -176,6 +176,7 @@ export default function DoctorDocuments() {
             license: 'Medical License',
             degree: 'Degree',
             certificate: 'Certificate',
+            verification: 'Verification Document',
             other: 'Other'
         };
         return labels[type] || type;
@@ -230,6 +231,11 @@ export default function DoctorDocuments() {
                                                         )}
                                                         {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                                                     </Badge>
+                                                    {doc.isVerificationDocument && (
+                                                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 border font-medium">
+                                                            Registration Document
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-gray-600 mb-2">{getDocumentTypeLabel(doc.documentType)}</p>
                                                 {doc.notes && (
@@ -267,24 +273,28 @@ export default function DoctorDocuments() {
                                                 <Download className="h-3 w-3 mr-1" />
                                                 Download
                                             </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => openEditDialog(doc)}
-                                                className="border-green-200 text-green-600 hover:bg-green-50"
-                                            >
-                                                <Edit3 className="h-3 w-3 mr-1" />
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => openDeleteDialog(doc)}
-                                                className="border-red-200 text-red-600 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="h-3 w-3 mr-1" />
-                                                Delete
-                                            </Button>
+                                            {!doc.isVerificationDocument && (
+                                                <>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => openEditDialog(doc)}
+                                                        className="border-green-200 text-green-600 hover:bg-green-50"
+                                                    >
+                                                        <Edit3 className="h-3 w-3 mr-1" />
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => openDeleteDialog(doc)}
+                                                        className="border-red-200 text-red-600 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="h-3 w-3 mr-1" />
+                                                        Delete
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </CardContent>
