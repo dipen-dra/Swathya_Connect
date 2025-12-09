@@ -3,11 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 /**
  * ProtectedRoute Component
- * Wraps routes that require authentication
+ * Wraps routes that require authentication and/or specific roles
  * Redirects to login if user is not authenticated
  * Redirects to dashboard if authenticated user tries to access auth pages
+ * Redirects to appropriate dashboard if user doesn't have required role
  */
-export function ProtectedRoute({ children, requireAuth = true }) {
+export function ProtectedRoute({ children, requireAuth = true, allowedRoles = null }) {
     const { user, isLoading } = useAuth();
     const location = useLocation();
 
@@ -29,6 +30,20 @@ export function ProtectedRoute({ children, requireAuth = true }) {
             // Save the location they were trying to access
             return <Navigate to="/login" state={{ from: location }} replace />;
         }
+
+        // Check if user has the required role
+        if (allowedRoles && !allowedRoles.includes(user.role)) {
+            // Redirect to user's role-specific dashboard
+            const dashboardPath = user.role === 'doctor'
+                ? '/doctor/dashboard'
+                : user.role === 'admin'
+                    ? '/admin/dashboard'
+                    : user.role === 'pharmacy'
+                        ? '/pharmacy-dashboard'
+                        : '/dashboard';
+            return <Navigate to={dashboardPath} replace />;
+        }
+
         return children;
     }
 
@@ -37,9 +52,11 @@ export function ProtectedRoute({ children, requireAuth = true }) {
         // Redirect authenticated users to their role-specific dashboard
         const dashboardPath = user.role === 'doctor'
             ? '/doctor/dashboard'
-            : user.role === 'pharmacy'
-                ? '/pharmacy-dashboard'
-                : '/dashboard';
+            : user.role === 'admin'
+                ? '/admin/dashboard'
+                : user.role === 'pharmacy'
+                    ? '/pharmacy-dashboard'
+                    : '/dashboard';
         return <Navigate to={dashboardPath} replace />;
     }
 

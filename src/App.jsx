@@ -7,6 +7,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { ConsultationProvider } from "./contexts/ConsultationContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicRoute } from "./components/PublicRoute";
 
 import Home from "./pages/Home";
 import LoginPage from './pages/LoginPage';
@@ -33,7 +34,15 @@ export default function App() {
 
               <BrowserRouter>
                 <Routes>
-                  <Route path="/" element={<Home />} />
+                  {/* Landing Page - Redirect authenticated users to dashboard */}
+                  <Route
+                    path="/"
+                    element={
+                      <PublicRoute>
+                        <Home />
+                      </PublicRoute>
+                    }
+                  />
 
                   {/* Auth Routes - Redirect to dashboard if already logged in */}
                   <Route
@@ -64,11 +73,11 @@ export default function App() {
                   {/* Forgot Password Route */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                  {/* Protected Dashboard Routes */}
+                  {/* Protected Dashboard Routes - Patient Only */}
                   <Route
                     path="/dashboard"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -76,7 +85,7 @@ export default function App() {
                   <Route
                     path="/dashboard/doctors"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -84,7 +93,7 @@ export default function App() {
                   <Route
                     path="/dashboard/consultations"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -92,7 +101,7 @@ export default function App() {
                   <Route
                     path="/dashboard/pharmacy"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -100,7 +109,7 @@ export default function App() {
                   <Route
                     path="/dashboard/profile"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -108,17 +117,17 @@ export default function App() {
                   <Route
                     path="/dashboard/health-records"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
                   />
 
-                  {/* Doctor Dashboard Routes */}
+                  {/* Doctor Dashboard Routes - Doctor Only */}
                   <Route
                     path="/doctor/dashboard"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorDashboard />
                       </ProtectedRoute>
                     }
@@ -126,7 +135,7 @@ export default function App() {
                   <Route
                     path="/doctor/dashboard/:tab"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorDashboard />
                       </ProtectedRoute>
                     }
@@ -134,27 +143,27 @@ export default function App() {
                   <Route
                     path="/doctor/profile"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorProfilePage />
                       </ProtectedRoute>
                     }
                   />
 
-                  {/* Admin Dashboard Routes */}
+                  {/* Admin Dashboard Routes - Admin Only */}
                   <Route
                     path="/admin/dashboard"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin']}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     }
                   />
 
-                  {/* Payment Callback Routes */}
+                  {/* Payment Callback Routes - Patient Only */}
                   <Route
                     path="/payment/esewa/success"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <EsewaSuccess />
                       </ProtectedRoute>
                     }
@@ -162,7 +171,7 @@ export default function App() {
                   <Route
                     path="/payment/esewa/failure"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <EsewaFailure />
                       </ProtectedRoute>
                     }
@@ -170,7 +179,7 @@ export default function App() {
                   <Route
                     path="/payment/khalti/success"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <KhaltiSuccess />
                       </ProtectedRoute>
                     }
