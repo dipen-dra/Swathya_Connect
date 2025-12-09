@@ -145,6 +145,11 @@ export default function DoctorDocuments() {
         document.body.removeChild(link);
     };
 
+    const handleView = (doc) => {
+        const url = `http://localhost:5000/api/documents/${doc._id}/download`;
+        window.open(url, '_blank');
+    };
+
     const openEditDialog = (doc) => {
         setSelectedDocument(doc);
         setEditForm({
@@ -306,14 +311,14 @@ export default function DoctorDocuments() {
 
             {/* Upload Dialog */}
             <Dialog open={uploadDialog} onOpenChange={setUploadDialog}>
-                <DialogContent className="bg-white max-w-md">
+                <DialogContent className="bg-white max-w-md overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>Upload Document</DialogTitle>
                         <DialogDescription>
                             Upload your professional documents for verification
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 overflow-y-auto max-h-[60vh]">
                         <div>
                             <Label htmlFor="documentType">Document Type *</Label>
                             <Select
@@ -365,17 +370,17 @@ export default function DoctorDocuments() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full justify-start"
+                                    className="w-full justify-start overflow-hidden"
                                 >
                                     <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
-                                    <span className="truncate">
+                                    <span className="truncate block">
                                         {uploadForm.file ? uploadForm.file.name : 'Choose File'}
                                     </span>
                                 </Button>
                             </div>
                         </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 pt-2 border-t">
                         <Button
                             variant="outline"
                             onClick={() => setUploadDialog(false)}
@@ -396,22 +401,22 @@ export default function DoctorDocuments() {
 
             {/* Edit Dialog */}
             <Dialog open={editDialog} onOpenChange={setEditDialog}>
-                <DialogContent className="bg-white max-w-md">
+                <DialogContent className="bg-white max-w-md overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>Edit Document</DialogTitle>
                         <DialogDescription>
                             Update document information
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 overflow-y-auto max-h-[60vh]">
                         {/* Show current document */}
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <FileText className="h-5 w-5 text-blue-600" />
-                                    <div>
+                                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                    <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-sm font-medium text-gray-900">Current Document</p>
-                                        <p className="text-xs text-gray-600">
+                                        <p className="text-xs text-gray-600 truncate">
                                             {selectedDocument?.documentUrl?.split('/').pop()}
                                         </p>
                                     </div>
@@ -419,8 +424,8 @@ export default function DoctorDocuments() {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleDownload(selectedDocument)}
-                                    className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                    onClick={() => handleView(selectedDocument)}
+                                    className="border-blue-200 text-blue-600 hover:bg-blue-50 flex-shrink-0 ml-2"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
                                     View
@@ -428,7 +433,7 @@ export default function DoctorDocuments() {
                             </div>
                             {selectedDocument?.status === 'verified' && (
                                 <p className="text-xs text-green-600 mt-2 flex items-center">
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    <CheckCircle2 className="h-3 w-3 mr-1 flex-shrink-0" />
                                     Document is verified. File cannot be changed.
                                 </p>
                             )}
@@ -476,7 +481,7 @@ export default function DoctorDocuments() {
                             />
                         </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 pt-2 border-t">
                         <Button
                             variant="outline"
                             onClick={() => setEditDialog(false)}
