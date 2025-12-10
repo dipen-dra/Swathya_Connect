@@ -585,12 +585,38 @@ export default function DoctorDashboard() {
         if (!selectedRequest) return;
 
         if (actionType === 'approve') {
-            // TODO: Implement approve API call
-            addNotification({
-                title: 'Consultation Approved',
-                message: `Consultation with ${selectedRequest.patientName} has been approved.`,
-                type: 'success',
-            });
+            try {
+                // Call approve API
+                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest._id}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addNotification({
+                        title: 'Consultation Approved',
+                        message: `Consultation with ${selectedRequest.patientId?.name || 'patient'} has been approved.`,
+                        type: 'success',
+                    });
+                    // Refresh consultations list
+                    await fetchConsultations();
+                } else {
+                    throw new Error(data.message || 'Failed to approve consultation');
+                }
+            } catch (error) {
+                console.error('Error approving consultation:', error);
+                addNotification({
+                    title: 'Error',
+                    message: error.message || 'Failed to approve consultation. Please try again.',
+                    type: 'error',
+                });
+                return;
+            }
         } else if (actionType === 'reject') {
             if (!rejectionReason.trim()) {
                 addNotification({
@@ -622,6 +648,8 @@ export default function DoctorDashboard() {
                         message: `Consultation rejected. Patient has been notified via email and refund is being processed.`,
                         type: 'success',
                     });
+                    // Refresh consultations list
+                    await fetchConsultations();
                 } else {
                     throw new Error(data.message || 'Failed to reject consultation');
                 }
@@ -812,13 +840,6 @@ export default function DoctorDashboard() {
                         <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{request.reason}</p>
                     </div>
 
-                    {request.patientId?.phone && (
-                        <div className="flex items-center space-x-2 text-gray-900 mb-4">
-                            <Phone className="h-4 w-4 text-gray-500" />
-                            <p className="text-sm">{request.patientId.phone}</p>
-                        </div>
-                    )}
-
                     {request.patientHistory && (
                         <div className="mb-4">
                             <p className="text-sm font-medium text-gray-500 mb-2">Patient History</p>
@@ -859,11 +880,11 @@ export default function DoctorDashboard() {
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <Phone className="h-4 w-4" />
-                            <span>{request.contactNumber}</span>
+                            <span>{request.patientId?.phone || 'N/A'}</span>
                         </div>
 
                         <div className="flex space-x-2">
-                            {request.status === 'pending' && (
+                            {request.status === 'upcoming' && (
                                 <>
                                     <Button
                                         size="sm"
@@ -885,10 +906,17 @@ export default function DoctorDashboard() {
                                 </>
                             )}
 
-                            {request.status === 'approved' && request.consultationLink && (
+                            {request.status === 'approved' && (
                                 <Button
                                     size="sm"
-                                    onClick={() => window.open(request.consultationLink, '_blank')}
+                                    onClick={() => {
+                                        // If consultation link exists, open it, otherwise show a message
+                                        if (request.consultationLink) {
+                                            window.open(request.consultationLink, '_blank');
+                                        } else {
+                                            toast.info('Consultation link will be available closer to the scheduled time');
+                                        }
+                                    }}
                                     className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm"
                                 >
                                     <ConsultationIcon className="h-3 w-3 mr-1" />
@@ -896,22 +924,18 @@ export default function DoctorDashboard() {
                                 </Button>
                             )}
 
-                            {request.status === 'completed' && (
-                                <>
-                                    {request.rating && (
-                                        <div className="flex items-center space-x-1">
-                                            <span className="text-sm text-gray-600">Rating:</span>
-                                            <div className="flex">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`h-4 w-4 ${i < request.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
+                            {request.status === 'completed' && request.rating && (
+                                <div className="flex items-center space-x-1">
+                                    <span className="text-sm text-gray-600">Rating:</span>
+                                    <div className="flex">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                className={`h-4 w-4 ${i < request.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
