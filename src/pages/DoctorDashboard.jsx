@@ -1491,6 +1491,7 @@ export default function DoctorDashboard() {
                                         </Button>
 
                                         <Button
+                                            onClick={() => navigate('/settings')}
                                             variant="outline"
                                             className="h-16 border-2 border-gray-200 hover:bg-gray-50 flex items-center justify-center space-x-3"
                                         >

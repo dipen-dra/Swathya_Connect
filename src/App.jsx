@@ -23,6 +23,7 @@ import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
 import ProfilePage from './pages/ProfilePage';
+import AccountSettings from './pages/AccountSettings';
 
 export default function App() {
   return (
@@ -76,6 +77,13 @@ export default function App() {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/verify-otp" element={<VerifyOTP />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
+
+                  {/* Account Settings */}
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <AccountSettings />
+                    </ProtectedRoute>
+                  } />
 
                   {/* Protected Dashboard Routes - Patient Only */}
                   <Route
