@@ -338,33 +338,50 @@ export default function PharmacyDashboard() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto p-6 max-w-7xl">
-                {/* Header Banner */}
-                <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-cyan-600 to-teal-400 rounded-2xl p-8 text-white shadow-xl mb-6">
-                    <div className="absolute inset-0 bg-black/10"></div>
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold mb-2">Welcome back, {profile?.firstName || user?.fullName || 'Pharmacy'}!</h1>
-                                <p className="text-blue-100">Manage your pharmacy operations efficiently</p>
+            <div className="container mx-auto p-6 space-y-8">
+                {/* Welcome Section */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+                    <div className="absolute inset-0 bg-black/20"></div>
+
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div className="space-y-4">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                    <Package className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold text-white">
+                                        Welcome back, {profile?.firstName || user?.fullName || 'Pharmacy'}!
+                                    </h1>
+                                    <p className="text-white/90 text-base">
+                                        Manage your pharmacy operations and customer orders
+                                    </p>
+                                </div>
                             </div>
-                            <div className="hidden md:block">
-                                <Package className="h-20 w-20 opacity-20" />
+
+                            <div className="flex items-center space-x-6 text-sm text-white/90">
+                                <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
+                                    <Shield className="h-4 w-4" />
+                                    <span className="font-medium">Licensed Pharmacy</span>
+                                </div>
+                                <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span className="font-medium">Verified Partner</span>
+                                </div>
+                                <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
+                                    <Users className="h-4 w-4" />
+                                    <span className="font-medium">500+ Customers</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
-                                <Shield className="h-4 w-4" />
-                                <span className="font-medium">Licensed Pharmacy</span>
-                            </div>
-                            <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
-                                <CheckCircle className="h-4 w-4" />
-                                <span className="font-medium">Verified Partner</span>
-                            </div>
-                            <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
-                                <Users className="h-4 w-4" />
-                                <span className="font-medium">500+ Customers</span>
-                            </div>
+
+                        <div className="flex items-center space-x-4">
+                            <Avatar className="h-16 w-16 border-4 border-white/30 shadow-lg">
+                                <AvatarImage src={profile?.profileImage} />
+                                <AvatarFallback className="text-blue-600 font-semibold text-xl bg-white">
+                                    {(profile?.firstName?.[0] || user?.fullName?.[0] || 'P')}
+                                </AvatarFallback>
+                            </Avatar>
                         </div>
                     </div>
                 </div>
@@ -454,36 +471,36 @@ export default function PharmacyDashboard() {
                         <div className="flex space-x-8 border-b border-gray-200">
                             <button
                                 onClick={() => handleTabChange('orders')}
-                                className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === 'orders'
-                                    ? 'border-blue-600 text-blue-600 font-semibold'
-                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders'
+                                    ? 'border-deep-blue text-deep-blue'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Orders
                             </button>
                             <button
                                 onClick={() => handleTabChange('inventory')}
-                                className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === 'inventory'
-                                    ? 'border-blue-600 text-blue-600 font-semibold'
-                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'inventory'
+                                    ? 'border-deep-blue text-deep-blue'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Inventory
                             </button>
                             <button
                                 onClick={() => handleTabChange('chat')}
-                                className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === 'chat'
-                                    ? 'border-blue-600 text-blue-600 font-semibold'
-                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'chat'
+                                    ? 'border-deep-blue text-deep-blue'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Customer Chat
                             </button>
                             <button
                                 onClick={() => handleTabChange('profile')}
-                                className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === 'profile'
-                                    ? 'border-blue-600 text-blue-600 font-semibold'
-                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
+                                    ? 'border-deep-blue text-deep-blue'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Profile
