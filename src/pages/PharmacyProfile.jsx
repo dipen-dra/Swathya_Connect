@@ -11,20 +11,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Shield, CheckCircle, Edit, Camera, MapPin } from 'lucide-react';
+import { User, Shield, CheckCircle, Edit, Camera, MapPin, Save, X, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PharmacyProfile() {
     const { user } = useAuth();
-    const { profile, updateProfile } = useProfile();
+    const { profile, updateProfile, uploadProfileImage } = useProfile();
     const navigate = useNavigate();
 
     const [isEditing, setIsEditing] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         email: user?.email || '',
         phone: '',
+        panNumber: '',
         dateOfBirth: '',
         gender: 'other',
         address: '',
@@ -32,7 +35,6 @@ export default function PharmacyProfile() {
         country: 'Nepal',
         pharmacyName: '',
         licenseNumber: '',
-        panNumber: '',
         registrationDate: ''
     });
 
@@ -52,6 +54,24 @@ export default function PharmacyProfile() {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (profile) {
+            setFormData(prev => ({
+                ...prev,
+                firstName: profile.firstName || prev.firstName,
+                lastName: profile.lastName || '',
+                email: profile.email || user?.email || '',
+                phone: profile.phoneNumber || '',
+                panNumber: profile.panNumber || '',
+                dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
+                gender: profile.gender || 'other',
+                address: profile.address || '',
+                city: profile.city || '',
+                country: profile.country || 'Nepal'
+            }));
+        }
+    }, [profile, user]);
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -59,17 +79,55 @@ export default function PharmacyProfile() {
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            // Here you would call your API to update pharmacy profile
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+            // Upload profile image if selected
+            if (selectedFile) {
+                await uploadProfileImage(selectedFile);
+            }
 
+            // Map 'phone' to 'phoneNumber' for backend
+            const dataToSave = {
+                ...formData,
+                phoneNumber: formData.phone
+            };
+            delete dataToSave.phone;
+
+            await updateProfile(dataToSave);
             toast.success('Profile updated successfully!');
             setIsEditing(false);
+            setSelectedFile(null);
+            setImagePreview(null);
         } catch (error) {
             console.error('Error updating profile:', error);
             toast.error('Failed to update profile');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            setSelectedFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath;
+        return `http://localhost:5000${imagePath}`;
+    };
+
+    const handleBackToDashboard = () => {
+        navigate('/pharmacy-dashboard/profile');
     };
 
     const getCurrentLocation = () => {
@@ -141,6 +199,16 @@ export default function PharmacyProfile() {
             <Header />
 
             <div className="container mx-auto p-6 max-w-7xl">
+                {/* Back Button */}
+                <Button
+                    onClick={handleBackToDashboard}
+                    variant="ghost"
+                    className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                </Button>
+
                 {/* Header Banner */}
                 <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-cyan-600 to-teal-400 rounded-2xl p-8 text-white shadow-xl mb-6">
                     <div className="absolute inset-0 bg-black/10"></div>
@@ -184,13 +252,24 @@ export default function PharmacyProfile() {
                                 <div className="flex flex-col items-center text-center">
                                     <div className="relative">
                                         <Avatar className="h-32 w-32 border-4 border-blue-100">
+                                            <AvatarImage src={imagePreview || getImageUrl(profile?.profileImage)} />
                                             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-4xl">
                                                 {formData.firstName?.[0] || 'P'}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <button className="absolute bottom-0 right-0 w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white hover:bg-teal-700 transition-colors shadow-lg">
+                                        <input
+                                            type="file"
+                                            id="pharmacy-profile-upload"
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                            className="hidden"
+                                        />
+                                        <label
+                                            htmlFor="pharmacy-profile-upload"
+                                            className="absolute bottom-0 right-0 w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white hover:bg-teal-700 transition-colors shadow-lg cursor-pointer"
+                                        >
                                             <Camera className="h-5 w-5" />
-                                        </button>
+                                        </label>
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mt-4">
                                         {formData.firstName || 'pharmacy'}
@@ -216,7 +295,7 @@ export default function PharmacyProfile() {
                                         <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
                                         <p className="text-sm text-gray-600 mt-1">Update your personal details and contact information</p>
                                     </div>
-                                    {!isEditing ? (
+                                    {!isEditing && (
                                         <Button
                                             onClick={() => setIsEditing(true)}
                                             variant="outline"
@@ -225,23 +304,6 @@ export default function PharmacyProfile() {
                                             <Edit className="h-4 w-4 mr-2" />
                                             Edit
                                         </Button>
-                                    ) : (
-                                        <div className="flex space-x-2">
-                                            <Button
-                                                onClick={() => setIsEditing(false)}
-                                                variant="outline"
-                                                className="border-gray-200"
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                onClick={handleSave}
-                                                className="bg-teal-600 hover:bg-teal-700 text-white"
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading ? 'Saving...' : 'Save'}
-                                            </Button>
-                                        </div>
                                     )}
                                 </div>
 
@@ -258,7 +320,11 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.firstName || 'pharmacy'}</p>
+                                                <Input
+                                                    value={formData.firstName || 'pharmacy'}
+                                                    disabled
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                         <div>
@@ -272,7 +338,12 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.lastName || '-'}</p>
+                                                <Input
+                                                    value={formData.lastName || ''}
+                                                    disabled
+                                                    placeholder="-"
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                     </div>
@@ -290,7 +361,11 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.email || 'pharmacy@demo.com'}</p>
+                                                <Input
+                                                    value={formData.email || 'pharmacy@demo.com'}
+                                                    disabled
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                         <div>
@@ -304,9 +379,35 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.phone || '-'}</p>
+                                                <Input
+                                                    value={formData.phone || ''}
+                                                    disabled
+                                                    placeholder="-"
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* PAN Number */}
+                                    <div>
+                                        <Label htmlFor="panNumber" className="text-sm font-medium text-gray-700">PAN Number</Label>
+                                        {isEditing ? (
+                                            <Input
+                                                id="panNumber"
+                                                value={formData.panNumber}
+                                                onChange={(e) => handleChange('panNumber', e.target.value)}
+                                                placeholder="Enter PAN number"
+                                                className="mt-1 border-gray-200"
+                                            />
+                                        ) : (
+                                            <Input
+                                                value={formData.panNumber || ''}
+                                                disabled
+                                                placeholder="-"
+                                                className="mt-1 border-gray-200 bg-gray-50"
+                                            />
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -321,7 +422,12 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.dateOfBirth || 'mm/dd/yyyy'}</p>
+                                                <Input
+                                                    value={formData.dateOfBirth || ''}
+                                                    disabled
+                                                    placeholder="mm/dd/yyyy"
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                         <div>
@@ -341,7 +447,11 @@ export default function PharmacyProfile() {
                                                     </SelectContent>
                                                 </Select>
                                             ) : (
-                                                <p className="mt-1 text-gray-900 capitalize">{formData.gender || 'Other'}</p>
+                                                <Input
+                                                    value={formData.gender || 'Other'}
+                                                    disabled
+                                                    className="mt-1 border-gray-200 bg-gray-50 capitalize"
+                                                />
                                             )}
                                         </div>
                                     </div>
@@ -368,7 +478,13 @@ export default function PharmacyProfile() {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <p className="mt-1 text-gray-900">{formData.address || '-'}</p>
+                                            <Textarea
+                                                value={formData.address || ''}
+                                                disabled
+                                                placeholder="-"
+                                                rows={3}
+                                                className="mt-1 border-gray-200 bg-gray-50"
+                                            />
                                         )}
                                     </div>
 
@@ -384,7 +500,12 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.city || '-'}</p>
+                                                <Input
+                                                    value={formData.city || ''}
+                                                    disabled
+                                                    placeholder="-"
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                         <div>
@@ -398,10 +519,36 @@ export default function PharmacyProfile() {
                                                     className="mt-1 border-gray-200"
                                                 />
                                             ) : (
-                                                <p className="mt-1 text-gray-900">{formData.country || 'Nepal'}</p>
+                                                <Input
+                                                    value={formData.country || 'Nepal'}
+                                                    disabled
+                                                    className="mt-1 border-gray-200 bg-gray-50"
+                                                />
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Action Buttons */}
+                                    {isEditing && (
+                                        <div className="flex items-center space-x-3 pt-4">
+                                            <Button
+                                                onClick={handleSave}
+                                                disabled={isLoading}
+                                                className="bg-teal-500 hover:bg-teal-600 text-white"
+                                            >
+                                                <Save className="h-4 w-4 mr-2" />
+                                                {isLoading ? 'Saving...' : 'Save Changes'}
+                                            </Button>
+                                            <Button
+                                                onClick={() => setIsEditing(false)}
+                                                variant="outline"
+                                                className="border-gray-200"
+                                            >
+                                                <X className="h-4 w-4 mr-2" />
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

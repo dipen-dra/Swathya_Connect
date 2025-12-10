@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import Header from '@/components/layout/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,7 +79,8 @@ const MOCK_ORDERS = [
 ];
 
 export default function PharmacyDashboard() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const { profile } = useProfile();
     const navigate = useNavigate();
     const { tab } = useParams();
 
@@ -96,6 +98,8 @@ export default function PharmacyDashboard() {
 
     // Inventory dialog states
     const [showInventoryDialog, setShowInventoryDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [inventoryForm, setInventoryForm] = useState({
         medicineName: '',
@@ -155,12 +159,48 @@ export default function PharmacyDashboard() {
         }
     };
 
+    const reduceInventoryStock = (medicines) => {
+        setInventory(prevInventory => {
+            return prevInventory.map(item => {
+                // Find if this medicine is in the order
+                const orderedMedicine = medicines.find(
+                    med => med.name.toLowerCase() === item.medicineName?.toLowerCase()
+                );
+
+                if (orderedMedicine) {
+                    const newStock = Math.max(0, item.quantity - orderedMedicine.quantity);
+
+                    // Show warning if stock is low
+                    if (newStock <= (item.lowStockThreshold || 10)) {
+                        toast.warning(`${item.medicineName} stock is low! Current: ${newStock}`);
+                    }
+
+                    return {
+                        ...item,
+                        quantity: newStock
+                    };
+                }
+                return item;
+            });
+        });
+    };
+
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
-        // Update mock data
-        setOrders(orders.map(order =>
-            order._id === orderId ? { ...order, status: newStatus } : order
+        // Find the order before updating
+        const order = orders.find(o => o._id === orderId);
+
+        // Update order status
+        setOrders(orders.map(o =>
+            o._id === orderId ? { ...o, status: newStatus } : o
         ));
-        toast.success(`Order ${newStatus}!`);
+
+        // If status is changed to 'delivered', reduce inventory stock
+        if (newStatus === 'delivered' && order && order.status !== 'delivered') {
+            reduceInventoryStock(order.medicines);
+            toast.success(`Order ${order.orderId} delivered! Inventory updated.`);
+        } else {
+            toast.success(`Order ${newStatus}!`);
+        }
     };
 
     const handleAddInventory = () => {
@@ -232,8 +272,6 @@ export default function PharmacyDashboard() {
     };
 
     const handleDeleteInventory = async (itemId) => {
-        if (!confirm('Are you sure you want to delete this medicine?')) return;
-
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:5000/api/pharmacies/dashboard/inventory/${itemId}`, {
@@ -246,7 +284,7 @@ export default function PharmacyDashboard() {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Medicine deleted!');
+                toast.success('Medicine deleted successfully!');
                 fetchInventory();
             } else {
                 toast.error(data.message);
@@ -254,7 +292,17 @@ export default function PharmacyDashboard() {
         } catch (error) {
             console.error('Error deleting inventory:', error);
             toast.error('Failed to delete medicine');
+        } finally {
+            setShowDeleteDialog(false);
+            setItemToDelete(null);
         }
+    };
+
+    const handleDeleteClick = (item) => {
+        console.log('Delete clicked for item:', item);
+        setItemToDelete(item);
+        setShowDeleteDialog(true);
+        console.log('Dialog should open now');
     };
 
     const filteredOrders = orders.filter(order =>
@@ -290,27 +338,21 @@ export default function PharmacyDashboard() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto p-6 space-y-8">
-                {/* Welcome Banner */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-cyan-600 to-teal-400 rounded-2xl p-8 text-white shadow-xl">
+            <div className="container mx-auto p-6 max-w-7xl">
+                {/* Header Banner */}
+                <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-cyan-600 to-teal-400 rounded-2xl p-8 text-white shadow-xl mb-6">
                     <div className="absolute inset-0 bg-black/10"></div>
-
                     <div className="relative z-10">
-                        <div className="flex items-center space-x-4 mb-4">
-                            <div className="w-14 h-14 bg-white/30 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Package className="h-7 w-7 text-white" />
-                            </div>
+                        <div className="flex items-center justify-between">
                             <div>
-                                <h1 className="text-3xl font-bold text-white">
-                                    Welcome back, pharmacy!
-                                </h1>
-                                <p className="text-white/90 text-base mt-1">
-                                    Manage your pharmacy operations and customer orders
-                                </p>
+                                <h1 className="text-3xl font-bold mb-2">Welcome back, {profile?.firstName || user?.fullName || 'Pharmacy'}!</h1>
+                                <p className="text-blue-100">Manage your pharmacy operations efficiently</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <Package className="h-20 w-20 opacity-20" />
                             </div>
                         </div>
-
-                        <div className="flex items-center space-x-6 text-sm text-white/90">
+                        <div className="mt-6 flex flex-wrap gap-3">
                             <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-lg">
                                 <Shield className="h-4 w-4" />
                                 <span className="font-medium">Licensed Pharmacy</span>
@@ -338,7 +380,7 @@ export default function PharmacyDashboard() {
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.totalOrders}</h3>
                                     <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
                                         <TrendingUp className="h-3 w-3" />
-                                        <span>+2% from last month</span>
+                                        <span>+12% from last month</span>
                                     </div>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -357,7 +399,7 @@ export default function PharmacyDashboard() {
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.pendingOrders}</h3>
                                     <div className="flex items-center space-x-1 mt-2 text-xs text-amber-600">
                                         <Clock className="h-3 w-3" />
-                                        <span>+3 from last month</span>
+                                        <span>Needs attention</span>
                                     </div>
                                 </div>
                                 <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -407,9 +449,9 @@ export default function PharmacyDashboard() {
                 </div>
 
                 {/* Tabs */}
-                <Card className="border-0 shadow-md">
+                <Card className="border-0 shadow-sm">
                     <CardHeader>
-                        <div className="flex items-center space-x-6">
+                        <div className="flex space-x-8 border-b border-gray-200">
                             <button
                                 onClick={() => handleTabChange('orders')}
                                 className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === 'orders'
@@ -656,10 +698,10 @@ export default function PharmacyDashboard() {
                                                                 <Edit className="h-4 w-4" />
                                                             </Button>
                                                             <Button
-                                                                onClick={() => handleDeleteInventory(item._id)}
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="text-red-600 hover:text-red-700"
+                                                                onClick={() => handleDeleteClick(item)}
+                                                                className="text-red-600 hover:text-white hover:bg-red-600 border-red-200 hover:border-red-600 transition-all"
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
@@ -685,26 +727,22 @@ export default function PharmacyDashboard() {
                         {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <div className="space-y-6">
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-900">Profile & Settings</h2>
-                                    <p className="text-sm text-gray-600 mt-1">Manage your pharmacy account and preferences</p>
-                                </div>
-
-                                {/* Profile Info Card */}
-                                <Card className="border border-gray-200">
+                                {/* Profile Header Card */}
+                                <Card className="border-0 shadow-sm">
                                     <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-4">
-                                                <Avatar className="h-16 w-16">
-                                                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-2xl">
-                                                        {user?.fullName?.[0] || 'P'}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-900">{user?.fullName || 'pharmacy'}</h3>
-                                                    <p className="text-sm text-teal-600 font-medium">Pharmacy Partner</p>
-                                                    <p className="text-sm text-gray-500">{user?.email}</p>
-                                                </div>
+                                        <div className="flex items-center space-x-4">
+                                            <Avatar className="h-20 w-20">
+                                                <AvatarImage src={profile?.profileImage ? `http://localhost:5000${profile.profileImage}` : undefined} />
+                                                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-2xl">
+                                                    {profile?.firstName?.[0] || user?.fullName?.[0] || 'P'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1">
+                                                <h3 className="text-xl font-bold text-gray-900">
+                                                    {profile?.firstName || user?.fullName || 'Pharmacy'}
+                                                </h3>
+                                                <p className="text-sm text-gray-600">Pharmacy Partner</p>
+                                                <p className="text-sm text-gray-500">{user?.email}</p>
                                             </div>
                                             <Badge className="bg-teal-100 text-teal-800 border-teal-200">
                                                 Licensed Pharmacy
@@ -765,11 +803,11 @@ export default function PharmacyDashboard() {
                             </div>
                         )}
                     </CardContent>
-                </Card>
-            </div>
+                </Card >
+            </div >
 
             {/* Inventory Dialog */}
-            <Dialog open={showInventoryDialog} onOpenChange={setShowInventoryDialog}>
+            < Dialog open={showInventoryDialog} onOpenChange={setShowInventoryDialog} >
                 <DialogContent className="max-w-2xl bg-white">
                     <DialogHeader>
                         <DialogTitle>{editingItem ? 'Edit Medicine' : 'Add New Medicine'}</DialogTitle>
@@ -886,10 +924,34 @@ export default function PharmacyDashboard() {
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
+            </Dialog >
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                            <Trash2 className="h-6 w-6 text-red-600" />
+                        </div>
+                        <AlertDialogTitle className="text-center">Delete Medicine?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center">
+                            Are you sure you want to delete <span className="font-semibold">{itemToDelete?.medicineName}</span>? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => handleDeleteInventory(itemToDelete?._id)}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* Sign Out Confirmation Dialog */}
-            <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+            < AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog} >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <div className="flex items-center space-x-2">
@@ -916,7 +978,7 @@ export default function PharmacyDashboard() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
-        </div>
+            </AlertDialog >
+        </div >
     );
 }
