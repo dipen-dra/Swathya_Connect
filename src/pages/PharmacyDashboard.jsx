@@ -28,9 +28,11 @@ import {
 import {
     ShoppingCart, Clock, DollarSign, Users, Search,
     MessageSquare, Package, User, Shield, CheckCircle,
-    TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut
+    TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut,
+    Upload, FileText, XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { profileAPI } from '@/services/api';
 
 // Mock data for testing
 const MOCK_ORDERS = [
@@ -115,6 +117,13 @@ export default function PharmacyDashboard() {
 
     // Sign out dialog state
     const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
+    // Verification state
+    const [verificationDocument, setVerificationDocument] = useState(null);
+    const [verificationDocPreview, setVerificationDocPreview] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pharmacyLicenseNumber, setPharmacyLicenseNumber] = useState('');
+    const [panNumber, setPanNumber] = useState('');
 
     // Update active tab when URL changes
     useEffect(() => {
@@ -315,6 +324,84 @@ export default function PharmacyDashboard() {
         (item.genericName && item.genericName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
+    // Verification handlers
+    const handleVerificationDocumentChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                toast.error('File size should be less than 10MB');
+                return;
+            }
+            setVerificationDocument(file);
+            setVerificationDocPreview(file.name);
+        }
+    };
+
+    const handleUploadVerificationDocument = async () => {
+        if (!verificationDocument) {
+            toast.error('Please select a document to upload');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('verificationDocument', verificationDocument);
+            formData.append('documentType', 'license');
+
+            const response = await profileAPI.uploadVerificationDocument(formData);
+
+            if (response.data.success) {
+                toast.success('Verification document uploaded successfully!');
+                setVerificationDocument(null);
+                setVerificationDocPreview(null);
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error uploading verification document:', error);
+            toast.error('Failed to upload verification document');
+        }
+    };
+
+    const handleSubmitForReview = async () => {
+        if (!profile?.verificationDocument) {
+            toast.error('Please upload a verification document first');
+            return;
+        }
+
+        const finalLicenseNumber = pharmacyLicenseNumber || profile?.pharmacyLicenseNumber;
+        const finalPanNumber = panNumber || profile?.panNumber;
+
+        if (!finalLicenseNumber || !finalPanNumber) {
+            toast.error('Please fill in pharmacy license number and PAN number');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            // First update profile with license and PAN if they were changed
+            if (pharmacyLicenseNumber || panNumber) {
+                const updateData = {};
+                if (pharmacyLicenseNumber) updateData.pharmacyLicenseNumber = pharmacyLicenseNumber;
+                if (panNumber) updateData.panNumber = panNumber;
+
+                await profileAPI.updateProfile(updateData);
+            }
+
+            // Then submit for review
+            const response = await profileAPI.submitForReview();
+
+            if (response.data.success) {
+                toast.success('Profile submitted for review successfully!');
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error submitting for review:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit for review');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -495,6 +582,15 @@ export default function PharmacyDashboard() {
                                     }`}
                             >
                                 Customer Chat
+                            </button>
+                            <button
+                                onClick={() => handleTabChange('verification')}
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
+                                    ? 'border-deep-blue text-deep-blue'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                Verification
                             </button>
                             <button
                                 onClick={() => handleTabChange('profile')}
@@ -814,6 +910,195 @@ export default function PharmacyDashboard() {
                                         <div className="flex items-center justify-center space-x-2 text-red-600">
                                             <LogOut className="h-5 w-5" />
                                             <span className="font-medium">Sign Out</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
+
+                        {/* Verification Tab */}
+                        {activeTab === 'verification' && (
+                            <div className="space-y-6">
+                                <Card className="border-gray-200 shadow-sm">
+                                    <CardContent className="p-6">
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <h2 className="text-xl font-bold text-gray-900">Pharmacy Verification</h2>
+                                                {profile?.verificationStatus === 'approved' && (
+                                                    <Badge className="bg-green-100 text-green-700 border-green-200">
+                                                        <CheckCircle className="h-3 w-3 mr-1" />
+                                                        Verified
+                                                    </Badge>
+                                                )}
+                                            </div>
+
+                                            {/* Verification Status Banners */}
+                                            {profile?.verificationStatus === 'pending' && !profile?.submittedForReview && (
+                                                <Card className="border-2 border-yellow-200 bg-yellow-50">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-start space-x-3">
+                                                            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                                                            <div>
+                                                                <h3 className="font-semibold text-yellow-900">Complete Verification</h3>
+                                                                <p className="text-sm text-yellow-800 mt-1">
+                                                                    Upload your pharmacy license document and submit for admin review to start serving customers.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+
+                                            {profile?.submittedForReview && profile?.verificationStatus === 'pending' && (
+                                                <Card className="border-2 border-blue-200 bg-blue-50">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-start space-x-3">
+                                                            <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+                                                            <div>
+                                                                <h3 className="font-semibold text-blue-900">Under Review</h3>
+                                                                <p className="text-sm text-blue-800 mt-1">
+                                                                    Your profile is currently being reviewed by our admin team. You'll be notified once approved.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+
+                                            {profile?.verificationStatus === 'rejected' && (
+                                                <Card className="border-2 border-red-200 bg-red-50">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-start space-x-3">
+                                                            <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                                                            <div>
+                                                                <h3 className="font-semibold text-red-900">Verification Rejected</h3>
+                                                                <p className="text-sm text-red-800 mt-1">
+                                                                    {profile?.rejectionReason || 'Your verification was rejected. Please update your documents and resubmit.'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+
+                                            {profile?.verificationStatus === 'approved' && (
+                                                <Card className="border-2 border-green-200 bg-green-50">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-start space-x-3">
+                                                            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                                                            <div>
+                                                                <h3 className="font-semibold text-green-900">Pharmacy Verified!</h3>
+                                                                <p className="text-sm text-green-800 mt-1">
+                                                                    Your pharmacy is verified and can now serve customers on the platform.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+
+                                            {/* Pharmacy License Number */}
+                                            <div>
+                                                <Label htmlFor="pharmacyLicenseNumber" className="text-sm font-medium text-gray-700">
+                                                    Pharmacy License Number *
+                                                </Label>
+                                                <Input
+                                                    id="pharmacyLicenseNumber"
+                                                    value={pharmacyLicenseNumber || profile?.pharmacyLicenseNumber || ''}
+                                                    onChange={(e) => setPharmacyLicenseNumber(e.target.value)}
+                                                    placeholder="Enter pharmacy license number"
+                                                    className="mt-1 border-gray-200"
+                                                />
+                                            </div>
+
+                                            {/* PAN Number */}
+                                            <div>
+                                                <Label htmlFor="panNumber" className="text-sm font-medium text-gray-700">
+                                                    PAN Number *
+                                                </Label>
+                                                <Input
+                                                    id="panNumber"
+                                                    value={panNumber || profile?.panNumber || ''}
+                                                    onChange={(e) => setPanNumber(e.target.value)}
+                                                    placeholder="Enter PAN number"
+                                                    className="mt-1 border-gray-200"
+                                                />
+                                            </div>
+
+                                            {/* Verification Document Upload */}
+                                            <div>
+                                                <Label className="text-sm font-medium text-gray-700">
+                                                    Verification Document *
+                                                </Label>
+                                                <p className="text-xs text-gray-500 mb-3">
+                                                    Upload your pharmacy license or registration certificate (PDF, JPG, PNG - Max 10MB)
+                                                </p>
+
+                                                {profile?.verificationDocument ? (
+                                                    <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                                <FileText className="h-5 w-5 text-green-600" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-green-900">Document uploaded successfully</p>
+                                                                <p className="text-xs text-green-700">Your verification document is ready for review</p>
+                                                            </div>
+                                                        </div>
+                                                        <a
+                                                            href={`http://localhost:5000${profile.verificationDocument}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm font-medium text-blue-600 hover:text-blue-800 underline"
+                                                        >
+                                                            View Document
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        <div className="relative">
+                                                            <input
+                                                                type="file"
+                                                                id="verificationDoc"
+                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                onChange={handleVerificationDocumentChange}
+                                                                className="hidden"
+                                                            />
+                                                            <label
+                                                                htmlFor="verificationDoc"
+                                                                className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                                                            >
+                                                                <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                                                                <p className="text-sm font-medium text-gray-700">
+                                                                    {verificationDocPreview || 'Click to upload or drag and drop'}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG up to 10MB</p>
+                                                            </label>
+                                                        </div>
+                                                        {verificationDocPreview && (
+                                                            <Button
+                                                                onClick={handleUploadVerificationDocument}
+                                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                                            >
+                                                                <Upload className="h-4 w-4 mr-2" />
+                                                                Upload Document
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Submit Button */}
+                                            {!profile?.submittedForReview && profile?.verificationDocument && (
+                                                <Button
+                                                    onClick={handleSubmitForReview}
+                                                    disabled={isSubmitting}
+                                                    className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold"
+                                                >
+                                                    <Shield className="h-5 w-5 mr-2" />
+                                                    {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
+                                                </Button>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
