@@ -44,15 +44,29 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
-import Header from '@/components/layout/Header';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI } from '@/services/api';
+import Header from '@/components/layout/Header';
 import { useReminders } from '@/contexts/RemindersContext';
-import { doctorsAPI, pharmaciesAPI, statsAPI, consultationsAPI } from '@/services/api';
+import { prescriptionsAPI } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
+import PrescriptionPreview from '@/components/dashboard/PrescriptionPreview';
+
+// Helper function to get full image URL
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:5000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+};
 
 export function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -61,6 +75,7 @@ export function PatientDashboard() {
     const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
     const location = useLocation();
+    const { toast } = useToast();
 
     // Determine active tab from URL
     const getTabFromPath = (pathname) => {
@@ -89,6 +104,12 @@ export function PatientDashboard() {
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [ratingDialog, setRatingDialog] = useState(false);
+    const [selectedConsultation, setSelectedConsultation] = useState(null);
+    const [rating, setRating] = useState(0);
+    const [review, setReview] = useState('');
+    const [prescriptionDialog, setPrescriptionDialog] = useState(false);
+    const [prescriptionConsultationId, setPrescriptionConsultationId] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -107,223 +128,46 @@ export function PatientDashboard() {
     const welcomeNotificationShown = useRef(false);
 
     // Helper function to get full image URL
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) return null;
-        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:5000${imagePath}`; // Prepend backend URL
-    };
-
-    // Mock doctors data
-    const mockDoctors = [
-        {
-            id: 'doc_001',
-            name: 'Dr. Rajesh Sharma',
-            specialty: 'Cardiology',
-            experience: 15,
-            experienceText: '15 years',
-            rating: 4.8,
-            consultationFee: 900,
-            patients: 1200,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Senior Cardiologist with expertise in interventional cardiology and heart disease prevention.',
-            location: 'Kathmandu Medical Center',
-            hours: 'Mon-Fri 8AM-5PM',
-            image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_002',
-            name: 'Dr. Sita Poudel',
-            specialty: 'Dermatology',
-            experience: 12,
-            experienceText: '12 years',
-            rating: 4.9,
-            consultationFee: 720,
-            patients: 800,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Dermatologist specializing in skin conditions, cosmetic procedures, and hair treatments.',
-            location: 'Bir Hospital',
-            hours: 'Tue-Sat 10AM-6PM',
-            image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_003',
-            name: 'Dr. Amit Thapa',
-            specialty: 'Orthopedics',
-            experience: 18,
-            experienceText: '18 years',
-            rating: 4.7,
-            consultationFee: 1050,
-            patients: 950,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Orthopedic surgeon with specialization in joint replacement and sports medicine.',
-            location: 'TUTH',
-            hours: 'Mon-Wed-Fri 8AM-4PM',
-            image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_004',
-            name: 'Dr. Priya Maharjan',
-            specialty: 'Pediatrics',
-            experience: 10,
-            experienceText: '10 years',
-            rating: 4.9,
-            consultationFee: 600,
-            patients: 1500,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Pediatrician with expertise in child development and pediatric emergency care.',
-            location: 'Kanti Children Hospital',
-            hours: 'Mon-Sat 9AM-5PM',
-            image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_005',
-            name: 'Dr. Bikash Adhikari',
-            specialty: 'Neurology',
-            experience: 20,
-            experienceText: '20 years',
-            rating: 4.9,
-            consultationFee: 1200,
-            patients: 850,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Neurologist specializing in stroke, epilepsy, and neurodegenerative diseases.',
-            location: 'Grande International Hospital',
-            hours: 'Mon-Thu 9AM-4PM',
-            image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_006',
-            name: 'Dr. Anjali Rai',
-            specialty: 'Psychiatry',
-            experience: 8,
-            experienceText: '8 years',
-            rating: 4.8,
-            consultationFee: 800,
-            patients: 650,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Psychiatrist with focus on anxiety, depression, and cognitive behavioral therapy.',
-            location: 'Mental Health Center',
-            hours: 'Tue-Sat 10AM-6PM',
-            image: 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_007',
-            name: 'Dr. Suresh Gurung',
-            specialty: 'General Medicine',
-            experience: 14,
-            experienceText: '14 years',
-            rating: 4.7,
-            consultationFee: 550,
-            patients: 2000,
-            availability: 'Available',
-            isOnline: true,
-            description: 'General Physician with broad experience in treating common medical conditions.',
-            location: 'Patan Hospital',
-            hours: 'Mon-Sat 8AM-6PM',
-            image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_008',
-            name: 'Dr. Meera Shrestha',
-            specialty: 'Gynecology',
-            experience: 16,
-            experienceText: '16 years',
-            rating: 4.9,
-            consultationFee: 850,
-            patients: 1100,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Gynecologist and Obstetrician specializing in high-risk pregnancies and women\'s health.',
-            location: 'Paropakar Maternity Hospital',
-            hours: 'Mon-Fri 9AM-5PM',
-            image: 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_009',
-            name: 'Dr. Ramesh Karki',
-            specialty: 'ENT',
-            experience: 11,
-            experienceText: '11 years',
-            rating: 4.6,
-            consultationFee: 700,
-            patients: 900,
-            availability: 'Available',
-            isOnline: true,
-            description: 'ENT specialist treating ear, nose, and throat disorders with modern techniques.',
-            location: 'Nepal ENT Hospital',
-            hours: 'Tue-Sat 10AM-5PM',
-            image: 'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_010',
-            name: 'Dr. Sunita Tamang',
-            specialty: 'Ophthalmology',
-            experience: 13,
-            experienceText: '13 years',
-            rating: 4.8,
-            consultationFee: 750,
-            patients: 1300,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Eye specialist with expertise in cataract surgery and laser vision correction.',
-            location: 'Tilganga Eye Hospital',
-            hours: 'Mon-Fri 8AM-4PM',
-            image: 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_011',
-            name: 'Dr. Prakash Bhandari',
-            specialty: 'Dentistry',
-            experience: 9,
-            experienceText: '9 years',
-            rating: 4.7,
-            consultationFee: 650,
-            patients: 1800,
-            availability: 'Available',
-            isOnline: false,
-            description: 'Dentist specializing in cosmetic dentistry, implants, and orthodontics.',
-            location: 'Dental Care Center',
-            hours: 'Mon-Sat 9AM-6PM',
-            image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'doc_012',
-            name: 'Dr. Kavita Joshi',
-            specialty: 'Gastroenterology',
-            experience: 17,
-            experienceText: '17 years',
-            rating: 4.8,
-            consultationFee: 950,
-            patients: 750,
-            availability: 'Available',
-            isOnline: true,
-            description: 'Gastroenterologist with expertise in digestive disorders and endoscopic procedures.',
-            location: 'Norvic International Hospital',
-            hours: 'Mon-Wed-Fri 10AM-4PM',
-            image: 'https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=400&h=400&fit=crop'
-        }
-    ];
-
-
-    // Doctors are already filtered by API based on search and specialty
-    const sortedDoctors = doctors;
 
     // Get unique specialties for filter dropdown
     const uniqueSpecialties = ['all', ...new Set(doctors.map(d => d.specialty))];
+
+    // Doctors are already filtered by API based on search and specialty
+    const sortedDoctors = doctors;
 
     // Fetch data from API
     useEffect(() => {
         if (user) {
             fetchDoctors();
             fetchPharmacies();
-            fetchDashboardStats();
+            fetchConsultations();
         }
     }, [user]);
+
+    const fetchConsultations = async () => {
+        try {
+            setLoadingConsultations(true);
+            const response = await consultationsAPI.getConsultations();
+            if (response.data.success) {
+                setConsultations(response.data.data);
+                // Calculate stats after consultations are loaded
+                await fetchDashboardStats();
+            }
+        } catch (error) {
+            console.error('Failed to fetch consultations:', error);
+            // Set empty stats on error
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'No data yet' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'No data yet' },
+                completedConsultations: { value: 0, change: 0, changeText: 'No data yet' },
+                totalSpent: { value: 0, change: 0, changeText: 'No data yet' }
+            });
+            setLoadingStats(false);
+        } finally {
+            setLoadingConsultations(false);
+        }
+    };
+
 
     const fetchDoctors = async () => {
         try {
@@ -355,10 +199,63 @@ export function PatientDashboard() {
     const fetchDashboardStats = async () => {
         try {
             setLoadingStats(true);
-            const response = await statsAPI.getDashboardStats();
-            setStats(response.data.data);
+
+            // Calculate stats from consultations data
+            if (consultations && consultations.length > 0) {
+                console.log('📊 Calculating stats from consultations:', consultations);
+                const upcoming = consultations.filter(c => c.status === 'upcoming').length;
+                const completed = consultations.filter(c => c.status === 'completed').length;
+                const total = consultations.length;
+                const totalSpent = consultations
+                    .filter(c => c.paymentStatus === 'paid')
+                    .reduce((sum, c) => sum + (c.fee || 0), 0);
+
+                console.log('📊 Stats calculated:', { total, upcoming, completed, totalSpent });
+
+                // Calculate percentage changes (mock data for now - you can calculate real changes later)
+                const calculateChange = (current) => {
+                    if (current === 0) return 0;
+                    // Mock: assume 100% growth if we have data
+                    return current > 0 ? 100 : 0;
+                };
+
+                setStats({
+                    totalConsultations: {
+                        value: total,
+                        change: calculateChange(total),
+                        changeText: 'from last month'
+                    },
+                    upcomingAppointments: {
+                        value: upcoming,
+                        change: calculateChange(upcoming),
+                        changeText: 'from last month'
+                    },
+                    completedConsultations: {
+                        value: completed,
+                        change: calculateChange(completed),
+                        changeText: 'from last month'
+                    },
+                    totalSpent: {
+                        value: totalSpent,
+                        change: calculateChange(totalSpent),
+                        changeText: 'from last month'
+                    }
+                });
+            } else {
+                console.log('📊 No consultations data, using API fallback');
+                // Fallback to API if no consultations loaded yet
+                const response = await statsAPI.getDashboardStats();
+                setStats(response.data.data);
+            }
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error);
+            // Set default stats on error
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+            });
         } finally {
             setLoadingStats(false);
         }
@@ -389,20 +286,23 @@ export function PatientDashboard() {
         }
     }, [user]);
 
-    // Fetch consultations from backend
-    const fetchConsultations = async () => {
-        try {
-            setLoadingConsultations(true);
-            const response = await consultationsAPI.getConsultations();
-            if (response.data.success) {
-                setConsultations(response.data.data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch consultations:', error);
-        } finally {
-            setLoadingConsultations(false);
+    // Recalculate stats when consultations change
+    useEffect(() => {
+        if (consultations && consultations.length > 0) {
+            console.log('🔄 Consultations loaded, recalculating stats...');
+            fetchDashboardStats();
+        } else if (consultations && consultations.length === 0) {
+            // If consultations array is empty (not undefined), set stats to 0
+            console.log('📊 No consultations found, setting stats to 0');
+            setStats({
+                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+            });
         }
-    };
+    }, [consultations.length]); // Only re-run when the length changes
+
 
     const handleBookConsultation = useCallback((doctor) => {
         setSelectedDoctor(doctor);
@@ -453,6 +353,76 @@ export function PatientDashboard() {
             console.log('✅ PatientDashboard: Dialog closed, reminder should now appear in list');
         } catch (error) {
             console.error('❌ PatientDashboard: Failed to save reminder:', error);
+        }
+    };
+
+    const handleSubmitRating = async () => {
+        if (!selectedConsultation || rating === 0) {
+            toast({
+                title: "Rating required",
+                description: "Please select a rating",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        console.log('🔑 Token from localStorage:', token);
+        console.log('🔑 Token type:', typeof token);
+        console.log('🔑 All localStorage keys:', Object.keys(localStorage));
+
+        if (!token || token === 'undefined') {
+            toast({
+                title: "Authentication required",
+                description: "Please log in again to rate consultations",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/consultations/${selectedConsultation._id}/rate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    rating,
+                    review: review.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast({
+                    title: "Success!",
+                    description: "Rating submitted successfully"
+                });
+
+                // Update local consultation data
+                setConsultations(prev => prev.map(c =>
+                    c._id === selectedConsultation._id
+                        ? { ...c, rating, review, ratedAt: new Date() }
+                        : c
+                ));
+
+                // Reset and close dialog
+                setRatingDialog(false);
+                setSelectedConsultation(null);
+                setRating(0);
+                setReview('');
+            } else {
+                throw new Error(data.message || 'Failed to submit rating');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            toast({
+                title: "Error",
+                description: error.message || 'Failed to submit rating. Please try again.',
+                variant: "destructive"
+            });
         }
     };
 
@@ -590,6 +560,36 @@ export function PatientDashboard() {
                                 >
                                     <ConsultationIcon className="h-4 w-4 mr-2" />
                                     {consultation.type === 'chat' ? 'Join Chat' : 'Join Call'}
+                                </Button>
+                            )}
+
+                            {/* Rate Button - Only for completed without rating */}
+                            {consultation.status === 'completed' && !consultation.rating && (
+                                <Button
+                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white mt-2 shadow-sm"
+                                    size="default"
+                                    onClick={() => {
+                                        setSelectedConsultation(consultation);
+                                        setRatingDialog(true);
+                                    }}
+                                >
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Rate Doctor
+                                </Button>
+                            )}
+
+                            {/* Prescription Badge and Button - Only for completed */}
+                            {consultation.status === 'completed' && consultation.prescriptionId && (
+                                <Button
+                                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white mt-2 shadow-sm"
+                                    size="default"
+                                    onClick={() => {
+                                        setPrescriptionConsultationId(consultation._id);
+                                        setPrescriptionDialog(true);
+                                    }}
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    View Prescription
                                 </Button>
                             )}
                         </div>
@@ -777,13 +777,13 @@ export function PatientDashboard() {
                             ];
 
                             return statsToDisplay.map((config, index) => {
-                                const stat = stats[config.key];
-                                if (!stat) return null;
+                                // Use default values if stat is missing
+                                const stat = stats[config.key] || { value: 0, change: 0, changeText: 'No data yet' };
 
                                 const Icon = config.icon;
                                 const displayValue = config.key === 'totalSpent'
-                                    ? `NPR ${stat.value.toLocaleString()}`
-                                    : stat.value;
+                                    ? `NPR ${(stat.value || 0).toLocaleString()}`
+                                    : (stat.value !== undefined ? stat.value : 0);
 
                                 return (
                                     <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-all duration-200">
@@ -1062,9 +1062,9 @@ export function PatientDashboard() {
                                                 <div className="flex items-start space-x-4">
                                                     <div className="relative">
                                                         <Avatar className="h-16 w-16">
-                                                            <AvatarImage src={doctor.image} alt={doctor.name} />
+                                                            <AvatarImage src={getImageUrl(doctor.image)} alt={doctor.name} />
                                                             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl font-bold">
-                                                                {doctor.name.split(' ').map(n => n[0]).join('')}
+                                                                {doctor.name ? doctor.name.split(' ').map(n => n[0]).join('') : 'DR'}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         {doctor.isOnline && (
@@ -1072,7 +1072,7 @@ export function PatientDashboard() {
                                                         )}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <h4 className="font-semibold text-lg text-gray-900">{doctor.name}</h4>
+                                                        <h4 className="font-semibold text-lg text-gray-900">Dr. {doctor.name}</h4>
                                                         <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
                                                             {doctor.specialty}
                                                         </Badge>
@@ -1081,8 +1081,14 @@ export function PatientDashboard() {
                                                                 <Star className="h-4 w-4 text-yellow-400 fill-current" />
                                                                 <span>{doctor.rating}</span>
                                                             </div>
-                                                            <span>{doctor.experience} years</span>
-                                                            <span>{doctor.patients}+ patients</span>
+                                                            <div className="flex items-center space-x-1">
+                                                                <Activity className="h-4 w-4" />
+                                                                <span>{doctor.experience} years</span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-1">
+                                                                <Users className="h-4 w-4" />
+                                                                <span>{doctor.patients}+ patients</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1507,7 +1513,7 @@ export function PatientDashboard() {
                             </div>
 
                             {/* Sign Out */}
-                            <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={handleLogout}>
+                            <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={() => setShowLogoutDialog(true)}>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-center space-x-2 text-red-600">
                                         <LogOut className="h-5 w-5" />
@@ -1528,7 +1534,7 @@ export function PatientDashboard() {
                         try {
                             // Create consultation in database first
                             const consultationData = {
-                                doctorId: selectedDoctor._id,
+                                doctorId: selectedDoctor.userId || selectedDoctor._id, // Use userId for User ID, fallback to _id
                                 date: bookingData.date,
                                 time: bookingData.time,
                                 type: bookingData.type,
@@ -1604,6 +1610,97 @@ export function PatientDashboard() {
                     onOpenChange={setMedicineReminderDialog}
                     onSave={handleSaveMedicineReminder}
                     editingReminder={editingReminder}
+                />
+
+                {/* Rating Dialog */}
+                <Dialog open={ratingDialog} onOpenChange={setRatingDialog}>
+                    <DialogContent className="sm:max-w-md bg-white">
+                        <DialogHeader>
+                            <DialogTitle>Rate Your Consultation</DialogTitle>
+                            <DialogDescription>
+                                How was your consultation with {selectedConsultation?.doctorName}?
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-6 py-4">
+                            {/* Star Rating */}
+                            <div className="space-y-3">
+                                <Label className="text-center block">Rating</Label>
+                                <div className="flex items-center justify-center space-x-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            className="focus:outline-none transition-transform hover:scale-110"
+                                        >
+                                            <Star
+                                                className={`h-12 w-12 ${star <= rating
+                                                    ? 'text-yellow-400 fill-yellow-400'
+                                                    : 'text-gray-300'
+                                                    }`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                {rating > 0 && (
+                                    <p className="text-center text-sm font-medium text-gray-700">
+                                        {rating} {rating === 1 ? 'star' : 'stars'}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setRatingDialog(false);
+                                    setRating(0);
+                                    setReview('');
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSubmitRating}
+                                disabled={rating === 0}
+                                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                            >
+                                Submit Rating
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Logout Confirmation Dialog */}
+                <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                    <LogOut className="h-6 w-6 text-red-600" />
+                                </div>
+                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription>
+                                Are you sure you want to sign out? You'll need to sign in again to access your account.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-200">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white">
+                                Sign Out
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Prescription Preview Dialog */}
+                <PrescriptionPreview
+                    open={prescriptionDialog}
+                    onOpenChange={setPrescriptionDialog}
+                    consultationId={prescriptionConsultationId}
                 />
             </div >
         </div >

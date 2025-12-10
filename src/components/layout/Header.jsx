@@ -231,7 +231,27 @@ export default function Header() {
                         <DropdownMenuContent align="end" className="w-56 bg-white">
                             <DropdownMenuLabel className="text-gray-900">My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                            <DropdownMenuItem
+                                onClick={() => {
+                                    // Admin exception - show coming soon toast
+                                    if (user?.role === 'admin') {
+                                        toast.info('Coming Soon', {
+                                            description: 'Admin profile settings are under development'
+                                        });
+                                        return;
+                                    }
+
+                                    // Navigate based on user role
+                                    if (user?.role === 'doctor') {
+                                        navigate('/doctor/dashboard'); // Doctor dashboard has profile tab
+                                    } else if (user?.role === 'pharmacy') {
+                                        navigate('/pharmacy-dashboard');
+                                    } else {
+                                        navigate('/dashboard/profile'); // Patient profile
+                                    }
+                                }}
+                                className="cursor-pointer"
+                            >
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Profile Settings</span>
                             </DropdownMenuItem>

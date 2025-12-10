@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { paymentAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 export default function EsewaSuccess() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { addNotification } = useNotifications();
     const [status, setStatus] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('Verifying your payment...');
+    const hasVerified = useRef(false); // Prevent duplicate verification calls
 
     useEffect(() => {
         const verifyPayment = async () => {
+            // Prevent duplicate calls (React StrictMode runs effects twice in dev)
+            if (hasVerified.current) return;
+            hasVerified.current = true;
+
             try {
                 const data = searchParams.get('data');
 
@@ -30,6 +37,13 @@ export default function EsewaSuccess() {
 
                     // Show success toast
                     toast.success('Payment completed successfully!');
+
+                    // Add notification
+                    addNotification({
+                        type: 'success',
+                        title: 'Consultation Booked!',
+                        message: 'Your consultation has been successfully booked and paid via eSewa.'
+                    });
 
                     // Redirect to consultations after 3 seconds
                     setTimeout(() => {
@@ -80,8 +94,8 @@ export default function EsewaSuccess() {
                 {/* Status Message */}
                 <div className="text-center mb-8">
                     <h1 className={`text-2xl font-bold mb-2 ${status === 'verifying' ? 'text-blue-900' :
-                            status === 'success' ? 'text-green-900' :
-                                'text-red-900'
+                        status === 'success' ? 'text-green-900' :
+                            'text-red-900'
                         }`}>
                         {status === 'verifying' && 'Verifying Payment'}
                         {status === 'success' && 'Payment Successful!'}
@@ -116,8 +130,8 @@ export default function EsewaSuccess() {
                         <button
                             onClick={handleReturnToDashboard}
                             className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${status === 'success'
-                                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                ? 'bg-green-600 hover:bg-green-700 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
                                 }`}
                         >
                             {status === 'success' ? 'View My Consultations' : 'Return to Dashboard'}

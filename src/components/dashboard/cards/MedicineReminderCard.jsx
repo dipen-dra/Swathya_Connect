@@ -9,7 +9,7 @@ export function MedicineReminderCard({ reminder, onEdit, onToggle, onDelete }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const handleDelete = () => {
-        onDelete(reminder.id);
+        onDelete(reminder._id);
         setShowDeleteDialog(false);
     };
 
@@ -81,7 +81,7 @@ export function MedicineReminderCard({ reminder, onEdit, onToggle, onDelete }) {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => onToggle(reminder.id)}
+                                onClick={() => onToggle(reminder._id)}
                                 className={reminder.isActive ? 'border-orange-200 text-orange-600 hover:bg-orange-50' : 'border-green-200 text-green-600 hover:bg-green-50'}
                             >
                                 {reminder.isActive ? 'Pause' : 'Activate'}

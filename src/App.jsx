@@ -7,16 +7,20 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { ConsultationProvider } from "./contexts/ConsultationContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicRoute } from "./components/PublicRoute";
 
 import Home from "./pages/Home";
-import Login from "./pages/LoginPage";
-import Register from "./pages/RegisterPage";
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from "./pages/ForgotPassword";
-import { PatientDashboard } from "./pages/PatientDashboard";
-import ProfilePage from "./pages/ProfilePage";
-import EsewaSuccess from "./pages/EsewaSuccess";
+import PatientDashboard from './pages/PatientDashboard';
+import DoctorDashboard from './pages/DoctorDashboard';
+import DoctorProfilePage from './pages/DoctorProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
+import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from "./pages/EsewaFailure";
-import KhaltiSuccess from "./pages/KhaltiSuccess";
+import KhaltiSuccess from './pages/KhaltiSuccess';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   return (
@@ -30,14 +34,22 @@ export default function App() {
 
               <BrowserRouter>
                 <Routes>
-                  <Route path="/" element={<Home />} />
+                  {/* Landing Page - Redirect authenticated users to dashboard */}
+                  <Route
+                    path="/"
+                    element={
+                      <PublicRoute>
+                        <Home />
+                      </PublicRoute>
+                    }
+                  />
 
                   {/* Auth Routes - Redirect to dashboard if already logged in */}
                   <Route
                     path="/login"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Login />
+                        <LoginPage />
                       </ProtectedRoute>
                     }
                   />
@@ -45,7 +57,7 @@ export default function App() {
                     path="/register"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Register />
+                        <RegisterPage />
                       </ProtectedRoute>
                     }
                   />
@@ -53,7 +65,7 @@ export default function App() {
                     path="/auth"
                     element={
                       <ProtectedRoute requireAuth={false}>
-                        <Login />
+                        <LoginPage />
                       </ProtectedRoute>
                     }
                   />
@@ -61,11 +73,11 @@ export default function App() {
                   {/* Forgot Password Route */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                  {/* Protected Dashboard Routes */}
+                  {/* Protected Dashboard Routes - Patient Only */}
                   <Route
                     path="/dashboard"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -73,7 +85,7 @@ export default function App() {
                   <Route
                     path="/dashboard/doctors"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -81,7 +93,7 @@ export default function App() {
                   <Route
                     path="/dashboard/consultations"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -89,7 +101,7 @@ export default function App() {
                   <Route
                     path="/dashboard/pharmacy"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -97,7 +109,7 @@ export default function App() {
                   <Route
                     path="/dashboard/profile"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -105,17 +117,53 @@ export default function App() {
                   <Route
                     path="/dashboard/health-records"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
                   />
 
-                  {/* Payment Callback Routes */}
+                  {/* Doctor Dashboard Routes - Doctor Only */}
+                  <Route
+                    path="/doctor/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['doctor']}>
+                        <DoctorDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/doctor/dashboard/:tab"
+                    element={
+                      <ProtectedRoute allowedRoles={['doctor']}>
+                        <DoctorDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/doctor/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={['doctor']}>
+                        <DoctorProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin Dashboard Routes - Admin Only */}
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Payment Callback Routes - Patient Only */}
                   <Route
                     path="/payment/esewa/success"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <EsewaSuccess />
                       </ProtectedRoute>
                     }
@@ -123,7 +171,7 @@ export default function App() {
                   <Route
                     path="/payment/esewa/failure"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <EsewaFailure />
                       </ProtectedRoute>
                     }
@@ -131,7 +179,7 @@ export default function App() {
                   <Route
                     path="/payment/khalti/success"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['patient']}>
                         <KhaltiSuccess />
                       </ProtectedRoute>
                     }

@@ -51,7 +51,8 @@ export const profileAPI = {
     uploadProfileImage: (formData) => api.post('/profile/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    deleteProfileImage: () => api.delete('/profile/image')
+    deleteProfileImage: () => api.delete('/profile/image'),
+    submitForReview: () => api.post('/profile/submit-review')
 };
 
 // Medicine Reminders API
@@ -106,4 +107,38 @@ export const paymentAPI = {
     verifyKhalti: (token, amount, consultationId) => api.post('/payment/khalti/verify', { token, amount, consultationId })
 };
 
+// Documents API
+export const documentsAPI = {
+    uploadDocument: (formData) => api.post('/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    getMyDocuments: () => api.get('/documents/my-documents'),
+    updateDocument: (id, data) => api.put(`/documents/${id}`, data),
+    deleteDocument: (id) => api.delete(`/documents/${id}`),
+    // Admin endpoints (for future use)
+    getAllDocuments: (status) => api.get('/documents/all', { params: { status } }),
+    verifyDocument: (id) => api.put(`/documents/${id}/verify`),
+    rejectDocument: (id, reason) => api.put(`/documents/${id}/reject`, { reason })
+};
+
+export const prescriptionsAPI = {
+    create: (data) => api.post('/prescriptions/create', data),
+    getByConsultation: (consultationId) => api.get(`/prescriptions/consultation/${consultationId}`),
+    update: (id, data) => api.put(`/prescriptions/${id}`, data),
+    downloadPDF: (id) => {
+        return api.get(`/prescriptions/${id}/pdf`, {
+            responseType: 'blob'
+        });
+    }
+};
+
+export const adminAPI = {
+    getPendingProfiles: () => api.get('/admin/profiles/pending'),
+    getAllProfiles: (status) => api.get('/admin/profiles/all', { params: { status } }),
+    approveProfile: (id) => api.put(`/admin/profiles/${id}/approve`),
+    rejectProfile: (id, rejectionReason) => api.put(`/admin/profiles/${id}/reject`, { rejectionReason }),
+    getVerificationStats: () => api.get('/admin/stats/verification')
+};
+
 export default api;
+
