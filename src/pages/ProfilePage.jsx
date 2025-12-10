@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Check, Shield, Heart, Edit, Save, X, ArrowLeft, Camera } from 'lucide-react';
+import { User, Check, Shield, Heart, Edit, Save, X, ArrowLeft, Camera, MapPin } from 'lucide-react';
 import Header from '@/components/layout/Header';
 
 export function ProfilePage() {
@@ -125,6 +125,53 @@ export function ProfilePage() {
 
     const handleBackToDashboard = () => {
         navigate('/dashboard/profile');
+    };
+
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.address) {
+                        const address = data.address;
+                        const fullAddress = data.display_name || '';
+                        const city = address.city || address.town || address.village || address.county || '';
+
+                        setFormData(prev => ({
+                            ...prev,
+                            address: fullAddress,
+                            city: city
+                        }));
+
+                        alert('Location retrieved successfully!');
+                    } else {
+                        alert('Could not retrieve address from location');
+                    }
+                } catch (error) {
+                    console.error('Error getting address:', error);
+                    alert('Failed to get address from location');
+                }
+            },
+            (error) => {
+                if (error.code === error.PERMISSION_DENIED) {
+                    alert('Location permission denied. Please enable location services.');
+                } else {
+                    alert('Failed to get your location.');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     };
 
     return (
@@ -386,12 +433,24 @@ export function ProfilePage() {
                                     {/* Address */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                                        <Textarea
-                                            value={formData.address}
-                                            onChange={(e) => handleChange('address', e.target.value)}
-                                            disabled={!isEditing}
-                                            className="min-h-[70px] border-gray-200"
-                                        />
+                                        <div className="relative">
+                                            <Textarea
+                                                value={formData.address}
+                                                onChange={(e) => handleChange('address', e.target.value)}
+                                                disabled={!isEditing}
+                                                className="min-h-[70px] border-gray-200 pr-12"
+                                            />
+                                            {isEditing && (
+                                                <button
+                                                    type="button"
+                                                    onClick={getCurrentLocation}
+                                                    className="absolute right-2 top-2 p-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+                                                    title="Use current location"
+                                                >
+                                                    <MapPin className="h-5 w-5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* City and Country */}
