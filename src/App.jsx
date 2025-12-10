@@ -24,6 +24,7 @@ import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
 import ProfilePage from './pages/ProfilePage';
 import AccountSettings from './pages/AccountSettings';
+import PharmacyDashboard from './pages/PharmacyDashboard';
 
 export default function App() {
   return (
@@ -157,6 +158,16 @@ export default function App() {
                     element={
                       <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Pharmacy Dashboard Route */}
+                  <Route
+                    path="/pharmacy-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyDashboard />
                       </ProtectedRoute>
                     }
                   />
