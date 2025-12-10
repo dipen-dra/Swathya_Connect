@@ -150,8 +150,7 @@ export function PatientDashboard() {
             const response = await consultationsAPI.getConsultations();
             if (response.data.success) {
                 setConsultations(response.data.data);
-                // Calculate stats after consultations are loaded
-                await fetchDashboardStats();
+                // Stats will be calculated by the useEffect that watches consultations
             }
         } catch (error) {
             console.error('Failed to fetch consultations:', error);
@@ -203,7 +202,10 @@ export function PatientDashboard() {
             // Calculate stats from consultations data
             if (consultations && consultations.length > 0) {
                 console.log('📊 Calculating stats from consultations:', consultations);
-                const upcoming = consultations.filter(c => c.status === 'upcoming').length;
+                console.log('📊 Consultation statuses:', consultations.map(c => ({ id: c._id, status: c.status, doctor: c.doctorName })));
+
+                // Count both 'upcoming' (pending approval) and 'approved' (doctor approved) as upcoming
+                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'approved').length;
                 const completed = consultations.filter(c => c.status === 'completed').length;
                 const total = consultations.length;
                 const totalSpent = consultations
@@ -243,9 +245,23 @@ export function PatientDashboard() {
                 });
             } else {
                 console.log('📊 No consultations data, using API fallback');
-                // Fallback to API if no consultations loaded yet
-                const response = await statsAPI.getDashboardStats();
-                setStats(response.data.data);
+                // Only use API fallback if we're sure there are no consultations
+                // Don't call API if consultations is just undefined (still loading)
+                if (consultations && consultations.length === 0) {
+                    try {
+                        const response = await statsAPI.getDashboardStats();
+                        setStats(response.data.data);
+                    } catch (apiError) {
+                        console.error('API fallback failed:', apiError);
+                        // Set default stats
+                        setStats({
+                            totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                            upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                            completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                            totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+                        });
+                    }
+                }
             }
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error);
@@ -436,7 +452,10 @@ export function PatientDashboard() {
     };
 
     // Filter consultations by status
-    const upcomingConsultations = consultations.filter(c => c.status === 'upcoming');
+    // Show both 'upcoming' (pending approval) and 'approved' (doctor approved) in upcoming section
+    const upcomingConsultations = consultations.filter(c =>
+        c.status === 'upcoming' || c.status === 'approved'
+    );
     const completedConsultations = consultations.filter(c => c.status === 'completed');
     const sortedConsultations = [...consultations].sort((a, b) => new Date(b.date) - new Date(a.date));
 

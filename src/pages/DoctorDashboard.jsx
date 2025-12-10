@@ -1165,11 +1165,13 @@ export default function DoctorDashboard() {
                                 </div>
                             )}
 
-                            {filteredRequests.length === 0 && (
-                                <div className="text-center py-12">
-                                    <Stethoscope className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                                    <p className="text-gray-600 font-medium">No consultation requests found</p>
-                                    <p className="text-sm text-gray-500 mt-1">Requests will appear here when patients book consultations</p>
+                            {pendingRequests.length === 0 && (
+                                <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                    <Stethoscope className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                                    <p className="text-gray-700 font-semibold text-lg mb-2">No Pending Consultation Requests</p>
+                                    <p className="text-sm text-gray-500 max-w-md mx-auto">
+                                        You don't have any pending requests at the moment. New consultation requests from patients will appear here.
+                                    </p>
                                 </div>
                             )}
                         </div>
