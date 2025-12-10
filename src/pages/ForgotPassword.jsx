@@ -3,11 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Logo from "@/assets/swasthyalogo.png";
-import { 
-  Heart, 
-  Mail, 
-  ArrowLeft, 
-  CheckCircle, 
+import {
+  Heart,
+  Mail,
+  ArrowLeft,
+  CheckCircle,
   Shield,
   Clock,
   Send
@@ -30,7 +30,7 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast.error("Email required", {
         description: "Please enter your email address.",
@@ -39,32 +39,79 @@ export default function ForgotPassword() {
     }
 
     setIsLoading(true);
-    
-    // Simulate API
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsEmailSent(true);
 
-      toast.success("Reset link sent!", {
-        description: "Check your inbox and spam folder.",
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
-    }, 1500);
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsEmailSent(true);
+        toast.success("Reset OTP sent!", {
+          description: "Check your inbox and spam folder.",
+        });
+
+        // Navigate to OTP verification page after a short delay
+        setTimeout(() => {
+          navigate('/verify-otp', { state: { email } });
+        }, 2000);
+      } else {
+        toast.error("Error", {
+          description: data.message || "Failed to send OTP. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error("Error", {
+        description: "Failed to send OTP. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResendEmail = () => {
+  const handleResendEmail = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
 
-      toast.info("Email sent again", {
-        description: "We've resent the password reset instructions.",
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
-    }, 1000);
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.info("Email sent again", {
+          description: "We've resent the password reset OTP.",
+        });
+      } else {
+        toast.error("Error", {
+          description: "Failed to resend OTP. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      toast.error("Error", {
+        description: "Failed to resend OTP. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-teal-50/20 flex items-center justify-center p-4 font-sans relative">
-      
+
       {/* Back Button */}
       <Button
         variant="ghost"
@@ -78,14 +125,14 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-  <div className="flex items-center justify-center space-x-3 mb-3">
-    <img 
-      src={Logo} 
-      alt="Swasthya Connect Logo" 
-      className="h-30 w-auto object-contain"
-    />
-  </div>
-        {/* <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-3 mb-3">
+            <img
+              src={Logo}
+              alt="Swasthya Connect Logo"
+              className="h-30 w-auto object-contain"
+            />
+          </div>
+          {/* <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-teal-500 rounded-lg flex items-center justify-center shadow-lg">
               <Heart className="h-6 w-6 text-white" />
@@ -102,13 +149,13 @@ export default function ForgotPassword() {
             </CardTitle>
 
             <CardDescription className="text-gray-600 text-base mt-2">
-              {isEmailSent 
+              {isEmailSent
                 ? "We've sent reset instructions to your email."
                 : "Enter your email and we'll send you a reset link."
               }
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-8">
             {!isEmailSent ? (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -153,7 +200,7 @@ export default function ForgotPassword() {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  
+
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-left">
                     <div className="flex items-start space-x-3">
                       <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -168,7 +215,7 @@ export default function ForgotPassword() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Buttons */}
                 <div className="space-y-3">
                   <Button
@@ -179,7 +226,7 @@ export default function ForgotPassword() {
                   >
                     {isLoading ? "Resending..." : "Resend Email"}
                   </Button>
-                  
+
                   <Button
                     onClick={() => navigate('/login')}
                     className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"

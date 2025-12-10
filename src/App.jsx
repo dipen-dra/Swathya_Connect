@@ -13,6 +13,8 @@ import Home from "./pages/Home";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/DoctorProfilePage';
@@ -70,8 +72,10 @@ export default function App() {
                     }
                   />
 
-                  {/* Forgot Password Route */}
+                  {/* Password Reset Routes */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
 
                   {/* Protected Dashboard Routes - Patient Only */}
                   <Route
