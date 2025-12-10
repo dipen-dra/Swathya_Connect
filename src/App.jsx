@@ -25,6 +25,7 @@ import KhaltiSuccess from './pages/KhaltiSuccess';
 import ProfilePage from './pages/ProfilePage';
 import AccountSettings from './pages/AccountSettings';
 import PharmacyDashboard from './pages/PharmacyDashboard';
+import PharmacyProfile from './pages/PharmacyProfile';
 
 export default function App() {
   return (
@@ -168,6 +169,22 @@ export default function App() {
                     element={
                       <ProtectedRoute allowedRoles={['pharmacy']}>
                         <PharmacyDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/pharmacy-dashboard/:tab"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/pharmacy/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyProfile />
                       </ProtectedRoute>
                     }
                   />
