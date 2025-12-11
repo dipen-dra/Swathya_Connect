@@ -82,7 +82,7 @@ const MOCK_ORDERS = [
 
 export default function PharmacyDashboard() {
     const { user, logout } = useAuth();
-    const { profile } = useProfile();
+    const { profile, refreshProfile } = useProfile();
     const navigate = useNavigate();
     const { tab } = useParams();
 
@@ -354,7 +354,8 @@ export default function PharmacyDashboard() {
                 toast.success('Verification document uploaded successfully!');
                 setVerificationDocument(null);
                 setVerificationDocPreview(null);
-                window.location.reload();
+                // Refresh profile to show updated document
+                await refreshProfile();
             }
         } catch (error) {
             console.error('Error uploading verification document:', error);
@@ -392,7 +393,8 @@ export default function PharmacyDashboard() {
 
             if (response.data.success) {
                 toast.success('Profile submitted for review successfully!');
-                window.location.reload();
+                // Refresh profile to show updated status
+                await refreshProfile();
             }
         } catch (error) {
             console.error('Error submitting for review:', error);
@@ -933,7 +935,26 @@ export default function PharmacyDashboard() {
                                             </div>
 
                                             {/* Verification Status Banners */}
-                                            {profile?.verificationStatus === 'pending' && !profile?.submittedForReview && (
+                                            {profile?.accountSuspended && (
+                                                <Card className="border-2 border-red-200 bg-red-50">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-start space-x-3">
+                                                            <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                                                            <div>
+                                                                <h3 className="font-semibold text-red-900">Account Suspended</h3>
+                                                                <p className="text-sm text-red-800 mt-1">
+                                                                    Your account has been suspended due to multiple rejections ({profile.rejectionCount || 0} times).
+                                                                    {profile.suspensionExpiresAt && (
+                                                                        <> Suspension will be lifted on {new Date(profile.suspensionExpiresAt).toLocaleDateString()}.</>
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+
+                                            {!profile?.accountSuspended && profile?.verificationStatus === 'pending' && !profile?.submittedForReview && (
                                                 <Card className="border-2 border-yellow-200 bg-yellow-50">
                                                     <CardContent className="p-4">
                                                         <div className="flex items-start space-x-3">
@@ -965,7 +986,7 @@ export default function PharmacyDashboard() {
                                                 </Card>
                                             )}
 
-                                            {profile?.verificationStatus === 'rejected' && (
+                                            {!profile?.accountSuspended && profile?.verificationStatus === 'rejected' && (
                                                 <Card className="border-2 border-red-200 bg-red-50">
                                                     <CardContent className="p-4">
                                                         <div className="flex items-start space-x-3">
@@ -1035,24 +1056,63 @@ export default function PharmacyDashboard() {
                                                 </p>
 
                                                 {profile?.verificationDocument ? (
-                                                    <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                                                <FileText className="h-5 w-5 text-green-600" />
+                                                    <div className="space-y-3">
+                                                        {/* Current Document Display */}
+                                                        <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                                                            <div className="flex items-center space-x-3">
+                                                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                                    <FileText className="h-5 w-5 text-green-600" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-green-900">Document uploaded</p>
+                                                                    <p className="text-xs text-green-700">
+                                                                        {profile.verificationDocument.split('/').pop()}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-sm font-medium text-green-900">Document uploaded successfully</p>
-                                                                <p className="text-xs text-green-700">Your verification document is ready for review</p>
-                                                            </div>
+                                                            <a
+                                                                href={`http://localhost:5000${profile.verificationDocument}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-sm font-medium text-blue-600 hover:text-blue-800 underline"
+                                                            >
+                                                                View Document
+                                                            </a>
                                                         </div>
-                                                        <a
-                                                            href={`http://localhost:5000${profile.verificationDocument}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-sm font-medium text-blue-600 hover:text-blue-800 underline"
-                                                        >
-                                                            View Document
-                                                        </a>
+
+                                                        {/* Replace Document Option (only for rejected) */}
+                                                        {profile?.verificationStatus === 'rejected' && !profile?.accountSuspended && (
+                                                            <div className="space-y-2">
+                                                                <p className="text-xs text-gray-600 font-medium">Want to upload a different document?</p>
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="file"
+                                                                        id="verificationDocReplace"
+                                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                                        onChange={handleVerificationDocumentChange}
+                                                                        className="hidden"
+                                                                    />
+                                                                    <label
+                                                                        htmlFor="verificationDocReplace"
+                                                                        className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                                                                    >
+                                                                        <Upload className="h-8 w-8 text-gray-400 mb-1" />
+                                                                        <p className="text-xs font-medium text-gray-700">
+                                                                            {verificationDocPreview || 'Click to replace document'}
+                                                                        </p>
+                                                                    </label>
+                                                                </div>
+                                                                {verificationDocPreview && (
+                                                                    <Button
+                                                                        onClick={handleUploadVerificationDocument}
+                                                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    >
+                                                                        <Upload className="h-4 w-4 mr-2" />
+                                                                        Upload New Document
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-3">
@@ -1089,14 +1149,14 @@ export default function PharmacyDashboard() {
                                             </div>
 
                                             {/* Submit Button */}
-                                            {!profile?.submittedForReview && profile?.verificationDocument && (
+                                            {!profile?.accountSuspended && (!profile?.submittedForReview || profile?.verificationStatus === 'rejected') && profile?.verificationDocument && (
                                                 <Button
                                                     onClick={handleSubmitForReview}
                                                     disabled={isSubmitting}
                                                     className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold"
                                                 >
                                                     <Shield className="h-5 w-5 mr-2" />
-                                                    {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
+                                                    {isSubmitting ? 'Submitting...' : (profile?.verificationStatus === 'rejected' ? 'Resubmit for Verification' : 'Submit for Verification')}
                                                 </Button>
                                             )}
                                         </div>

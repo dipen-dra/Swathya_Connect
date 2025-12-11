@@ -186,10 +186,23 @@ export function PatientDashboard() {
     const fetchPharmacies = async () => {
         try {
             setLoadingPharmacies(true);
-            const response = await pharmaciesAPI.getPharmacies();
-            setPharmacies(response.data.data);
+
+            // Get user's location from profile or use Kathmandu default
+            const userLat = profile?.latitude || 27.7172;
+            const userLon = profile?.longitude || 85.3240;
+
+            const response = await pharmaciesAPI.getPharmacies({
+                userLat,
+                userLon
+            });
+
+            if (response.data.success) {
+                setPharmacies(response.data.data || []);
+            }
         } catch (error) {
-            console.error('Failed to fetch pharmacies:', error);
+            console.error('Error fetching pharmacies:', error);
+            toast.error('Failed to load pharmacies');
+            setPharmacies([]);
         } finally {
             setLoadingPharmacies(false);
         }
@@ -1194,221 +1207,93 @@ export function PatientDashboard() {
 
                                 {/* Pharmacy Cards */}
                                 <div className="space-y-4">
-                                    {/* MediCare Pharmacy */}
-                                    <Card className="border border-gray-200 hover:shadow-md transition-all duration-200">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start space-x-4 flex-1">
-                                                    {/* Pharmacy Avatar */}
-                                                    <div className="relative">
-                                                        <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                            MP
-                                                        </div>
-                                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                                                            <Check className="h-3 w-3 text-white" />
-                                                        </div>
-                                                    </div>
+                                    {loadingPharmacies ? (
+                                        <div className="flex justify-center items-center py-12">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                            <span className="ml-3 text-gray-600">Loading pharmacies...</span>
+                                        </div>
+                                    ) : pharmacies.length > 0 ? (
+                                        pharmacies.map((pharmacy, index) => {
+                                            const initials = pharmacy.name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 3);
+                                            const gradients = ['from-teal-500 to-cyan-500', 'from-purple-500 to-pink-500', 'from-blue-500 to-indigo-500', 'from-orange-500 to-red-500'];
+                                            const gradient = gradients[index % gradients.length];
 
-                                                    {/* Pharmacy Info */}
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center space-x-2 mb-1">
-                                                            <h4 className="font-semibold text-lg text-gray-900">MediCare Pharmacy</h4>
-                                                            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                                                                Online
-                                                            </Badge>
+                                            return (
+                                                <Card key={pharmacy.id} className="border border-gray-200 hover:shadow-md transition-all duration-200">
+                                                    <CardContent className="p-6">
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex items-start space-x-4 flex-1">
+                                                                <div className="relative">
+                                                                    <div className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
+                                                                        {initials}
+                                                                    </div>
+                                                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                                                                        <Check className="h-3 w-3 text-white" />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center space-x-2 mb-1">
+                                                                        <h4 className="font-semibold text-lg text-gray-900">{pharmacy.name}</h4>
+                                                                        {pharmacy.isOpen && (
+                                                                            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Online</Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                                                                        <div className="flex items-center space-x-1">
+                                                                            <MapPin className="h-4 w-4" />
+                                                                            <span>{pharmacy.city}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center space-x-1">
+                                                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                                                            <span className="font-medium">{pharmacy.rating}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                                                                        <div className="flex items-center space-x-1">
+                                                                            <TrendingUp className="h-4 w-4" />
+                                                                            <span>{pharmacy.distance} km away</span>
+                                                                        </div>
+                                                                        <div className="flex items-center space-x-1">
+                                                                            <Clock className="h-4 w-4" />
+                                                                            <span>{pharmacy.deliveryTime}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-600 mb-2">Specialties:</p>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {pharmacy.specialties.map((specialty, idx) => (
+                                                                                <Badge key={idx} variant="outline" className="text-xs border-gray-300 text-gray-700">{specialty}</Badge>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col space-y-2 ml-4">
+                                                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                                                    Start Chat
+                                                                </Button>
+                                                                <Button variant="outline" className="border-gray-200">
+                                                                    <Phone className="h-4 w-4 mr-2" />
+                                                                    Call
+                                                                </Button>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                </svg>
-                                                                <span>Kathmandu, Thamel</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                                <span className="font-medium">4.8</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                                </svg>
-                                                                <span>0.5 km away</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Clock className="h-4 w-4" />
-                                                                <span>30-45 mins</span>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-600 mb-2">Specialties:</p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">General Medicine</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Prescription Drugs</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Health Supplements</Badge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Action Buttons */}
-                                                <div className="flex flex-col space-y-2 ml-4">
-                                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                                        <MessageCircle className="h-4 w-4 mr-2" />
-                                                        Start Chat
-                                                    </Button>
-                                                    <Button variant="outline" className="border-gray-200">
-                                                        <Phone className="h-4 w-4 mr-2" />
-                                                        Call
-                                                    </Button>
-                                                </div>
+                                                    </CardContent>
+                                                </Card>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                                                <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
                                             </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Health Plus Pharmacy */}
-                                    <Card className="border border-gray-200 hover:shadow-md transition-all duration-200">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start space-x-4 flex-1">
-                                                    <div className="relative">
-                                                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                            HPP
-                                                        </div>
-                                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                                                            <Check className="h-3 w-3 text-white" />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center space-x-2 mb-1">
-                                                            <h4 className="font-semibold text-lg text-gray-900">Health Plus Pharmacy</h4>
-                                                            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                                                                Online
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                </svg>
-                                                                <span>Lalitpur, Patan</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                                <span className="font-medium">4.6</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                                </svg>
-                                                                <span>1.2 km away</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Clock className="h-4 w-4" />
-                                                                <span>45-60 mins</span>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-600 mb-2">Specialties:</p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Ayurvedic Medicine</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Baby Care</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Diabetic Care</Badge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-col space-y-2 ml-4">
-                                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                                        <MessageCircle className="h-4 w-4 mr-2" />
-                                                        Start Chat
-                                                    </Button>
-                                                    <Button variant="outline" className="border-gray-200">
-                                                        <Phone className="h-4 w-4 mr-2" />
-                                                        Call
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* City Pharmacy */}
-                                    <Card className="border border-gray-200 hover:shadow-md transition-all duration-200">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start space-x-4 flex-1">
-                                                    <div className="relative">
-                                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                            CP
-                                                        </div>
-                                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                                                            <Check className="h-3 w-3 text-white" />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center space-x-2 mb-1">
-                                                            <h4 className="font-semibold text-lg text-gray-900">City Pharmacy</h4>
-                                                            <Badge className="bg-gray-100 text-gray-700 border-gray-200 text-xs">
-                                                                Offline
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                </svg>
-                                                                <span>Bhaktapur, Durbar Square</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                                <span className="font-medium">4.7</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                                                            <div className="flex items-center space-x-1">
-                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                                </svg>
-                                                                <span>2.1 km away</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Clock className="h-4 w-4" />
-                                                                <span>60-75 mins</span>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-600 mb-2">Specialties:</p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Emergency Medicine</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Surgical Supplies</Badge>
-                                                                <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">Medical Equipment</Badge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-col space-y-2 ml-4">
-                                                    <Button className="bg-blue-400 hover:bg-blue-500 text-white" disabled>
-                                                        <MessageCircle className="h-4 w-4 mr-2" />
-                                                        Start Chat
-                                                    </Button>
-                                                    <Button variant="outline" className="border-gray-200">
-                                                        <Phone className="h-4 w-4 mr-2" />
-                                                        Call
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Verified Pharmacies Found</h3>
+                                            <p className="text-gray-600">There are currently no verified pharmacies in your area.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Info Note */}
@@ -1425,127 +1310,111 @@ export function PatientDashboard() {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                            </div >
+                        </div >
+                    )
+                    }
 
                     {/* Health Records Tab */}
-                    {activeTab === 'health-records' && (
-                        <HealthRecordsTab
-                            profile={profile}
-                            medicineReminders={reminders}
-                            onAddReminder={() => setMedicineReminderDialog(true)}
-                            onEditReminder={(reminder) => {
-                                setEditingReminder(reminder);
-                                setMedicineReminderDialog(true);
-                            }}
-                            onToggleReminder={(id) => toggleReminder(id)}
-                            onDeleteReminder={(id) => deleteReminder(id)}
-                        />
-                    )}
-
-                    {/* Pharmacy Tab */}
-                    {activeTab === 'pharmacy' && (
-                        <Card className="border-0 shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Pharmacy Services</CardTitle>
-                                <CardDescription>Order medicines and consult with pharmacists</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-center py-8">
-                                    <Button
-                                        onClick={() => setPharmacyDialog(true)}
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        <MessageCircle className="h-4 w-4 mr-2" />
-                                        Chat with Pharmacist
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {
+                        activeTab === 'health-records' && (
+                            <HealthRecordsTab
+                                profile={profile}
+                                medicineReminders={reminders}
+                                onAddReminder={() => setMedicineReminderDialog(true)}
+                                onEditReminder={(reminder) => {
+                                    setEditingReminder(reminder);
+                                    setMedicineReminderDialog(true);
+                                }}
+                                onToggleReminder={(id) => toggleReminder(id)}
+                                onDeleteReminder={(id) => deleteReminder(id)}
+                            />
+                        )
+                    }
 
                     {/* Profile Tab */}
-                    {activeTab === 'profile' && (
-                        <div className="space-y-6">
-                            {/* Header */}
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Profile & Settings</h2>
-                                <p className="text-sm text-gray-600 mt-1">Manage your account and preferences</p>
-                            </div>
+                    {
+                        activeTab === 'profile' && (
+                            <div className="space-y-6">
+                                {/* Header */}
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Profile & Settings</h2>
+                                    <p className="text-sm text-gray-600 mt-1">Manage your account and preferences</p>
+                                </div>
 
-                            {/* Profile Card */}
-                            <Card className="border border-gray-200">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4">
-                                            <Avatar className="h-16 w-16">
-                                                <AvatarImage src={getImageUrl(profile?.profileImage)} />
-                                                <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl font-bold">
-                                                    {(profile?.firstName?.[0] || user?.name?.[0] || 'P')}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <h3 className="text-xl font-semibold text-gray-900">
-                                                    {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : (user?.name || 'patient')}
-                                                </h3>
-                                                <p className="text-sm text-gray-600">Patient</p>
-                                                <p className="text-sm text-gray-500">{user?.email}</p>
-                                            </div>
-                                        </div>
-                                        <Badge className="bg-blue-100 text-blue-600 border-blue-200">
-                                            Verified Patient
-                                        </Badge>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Action Buttons */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Card className="border border-gray-200 hover:shadow-md transition-all cursor-pointer" onClick={() => navigate('/profile')}>
+                                {/* Profile Card */}
+                                <Card className="border border-gray-200">
                                     <CardContent className="p-6">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <User className="h-6 w-6 text-blue-600" />
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <Avatar className="h-16 w-16">
+                                                    <AvatarImage src={getImageUrl(profile?.profileImage)} />
+                                                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl font-bold">
+                                                        {(profile?.firstName?.[0] || user?.name?.[0] || 'P')}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <h3 className="text-xl font-semibold text-gray-900">
+                                                        {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : (user?.name || 'patient')}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">Patient</p>
+                                                    <p className="text-sm text-gray-500">{user?.email}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">Edit Profile</h4>
-                                                <p className="text-sm text-gray-600">Update your information</p>
-                                            </div>
+                                            <Badge className="bg-blue-100 text-blue-600 border-blue-200">
+                                                Verified Patient
+                                            </Badge>
                                         </div>
                                     </CardContent>
                                 </Card>
 
-                                <Card className="border border-gray-200 hover:shadow-md transition-all cursor-pointer" onClick={() => navigate('/settings')}>
+                                {/* Action Buttons */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <Card className="border border-gray-200 hover:shadow-md transition-all cursor-pointer" onClick={() => navigate('/profile')}>
+                                        <CardContent className="p-6">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <User className="h-6 w-6 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900">Edit Profile</h4>
+                                                    <p className="text-sm text-gray-600">Update your information</p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="border border-gray-200 hover:shadow-md transition-all cursor-pointer" onClick={() => navigate('/settings')}>
+                                        <CardContent className="p-6">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                    <Settings className="h-6 w-6 text-gray-600" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900">Settings</h4>
+                                                    <p className="text-sm text-gray-600">Preferences & privacy</p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Sign Out */}
+                                <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={() => setShowLogoutDialog(true)}>
                                     <CardContent className="p-6">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <Settings className="h-6 w-6 text-gray-600" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">Settings</h4>
-                                                <p className="text-sm text-gray-600">Preferences & privacy</p>
-                                            </div>
+                                        <div className="flex items-center justify-center space-x-2 text-red-600">
+                                            <LogOut className="h-5 w-5" />
+                                            <span className="font-medium">Sign Out</span>
                                         </div>
                                     </CardContent>
                                 </Card>
                             </div>
-
-                            {/* Sign Out */}
-                            <Card className="border border-red-200 hover:shadow-md transition-all cursor-pointer" onClick={() => setShowLogoutDialog(true)}>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-center space-x-2 text-red-600">
-                                        <LogOut className="h-5 w-5" />
-                                        <span className="font-medium">Sign Out</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-                </div>
+                        )
+                    }
+                </div >
 
                 {/* Dialogs */}
-                <ConsultationTypeDialog
+                < ConsultationTypeDialog
                     open={consultationDialog}
                     onOpenChange={setConsultationDialog}
                     doctor={selectedDoctor}
@@ -1589,7 +1458,7 @@ export function PatientDashboard() {
                     }}
                 />
 
-                <PaymentDialog
+                < PaymentDialog
                     open={paymentDialog}
                     onOpenChange={async (isOpen) => {
                         // If dialog is being closed and there's a pending booking, delete the consultation
@@ -1646,7 +1515,7 @@ export function PatientDashboard() {
                     }}
                 />
 
-                <PharmacyChat
+                < PharmacyChat
                     open={pharmacyDialog}
                     onOpenChange={setPharmacyDialog}
                 />
