@@ -1224,9 +1224,12 @@ export function PatientDashboard() {
                                                         <div className="flex items-start justify-between">
                                                             <div className="flex items-start space-x-4 flex-1">
                                                                 <div className="relative">
-                                                                    <div className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
-                                                                        {initials}
-                                                                    </div>
+                                                                    <Avatar className="h-14 w-14">
+                                                                        <AvatarImage src={pharmacy.profileImage ? `http://localhost:5000${pharmacy.profileImage}` : undefined} />
+                                                                        <AvatarFallback className={`bg-gradient-to-br ${gradient} text-white font-bold text-lg`}>
+                                                                            {initials}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
                                                                     <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                                                                         <Check className="h-3 w-3 text-white" />
                                                                     </div>
