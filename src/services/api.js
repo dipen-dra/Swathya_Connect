@@ -141,7 +141,8 @@ export const adminAPI = {
     getApprovedProfiles: () => api.get('/admin/approved-profiles'),
     getRejectedProfiles: () => api.get('/admin/rejected-profiles'),
     approveProfile: (profileId) => api.put(`/admin/approve/${profileId}`),
-    rejectProfile: (profileId, reason) => api.put(`/admin/reject/${profileId}`, { reason })
+    rejectProfile: (profileId, reason) => api.put(`/admin/reject/${profileId}`, { reason }),
+    getAllUsers: (params) => api.get('/admin/users', { params })
 };
 
 export default api;

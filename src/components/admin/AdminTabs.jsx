@@ -6,7 +6,8 @@ export default function AdminTabs({ activeTab, onTabChange, counts = {} }) {
         { id: 'overview', label: 'Overview', count: null },
         { id: 'pending', label: 'Pending', count: counts.pending || 0, color: 'yellow' },
         { id: 'approved', label: 'Approved', count: counts.approved || 0, color: 'green' },
-        { id: 'rejected', label: 'Rejected', count: counts.rejected || 0, color: 'red' }
+        { id: 'rejected', label: 'Rejected', count: counts.rejected || 0, color: 'red' },
+        { id: 'users', label: 'All Users', count: counts.total || 0, color: 'blue' }
     ];
 
     const getTabStyles = (tab) => {

@@ -4,12 +4,13 @@ import { adminAPI } from '@/services/api';
 import { toast } from 'sonner';
 
 // Import modular components
-import AdminStats from '@/components/admin/AdminStats';
-import AdminTabs from '@/components/admin/AdminTabs';
-import PendingVerifications from '@/components/admin/PendingVerifications';
-import ApprovedProfiles from '@/components/admin/ApprovedProfiles';
-import RejectedProfiles from '@/components/admin/RejectedProfiles';
-import RejectDialog from '@/components/admin/RejectDialog';
+import AdminStats from '../components/admin/AdminStats';
+import AdminTabs from '../components/admin/AdminTabs';
+import PendingVerifications from '../components/admin/PendingVerifications';
+import ApprovedProfiles from '../components/admin/ApprovedProfiles';
+import RejectedProfiles from '../components/admin/RejectedProfiles';
+import RejectDialog from '../components/admin/RejectDialog';
+import AllUsers from '../components/admin/AllUsers';
 
 export default function AdminDashboard() {
     // State management
@@ -149,6 +150,18 @@ export default function AdminDashboard() {
         window.open(url, '_blank');
     };
 
+    // Fetch users with pagination and filters
+    const handleFetchUsers = async (params) => {
+        try {
+            const response = await adminAPI.getAllUsers(params);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            toast.error('Failed to load users');
+            return null;
+        }
+    };
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'pending':
@@ -179,7 +192,13 @@ export default function AdminDashboard() {
                         loading={loading}
                     />
                 );
-
+            case 'users':
+                return (
+                    <AllUsers
+                        onFetchUsers={handleFetchUsers}
+                        loading={loading}
+                    />
+                );
             case 'overview':
             default:
                 return (
@@ -215,7 +234,8 @@ export default function AdminDashboard() {
                     counts={{
                         pending: stats.pending,
                         approved: stats.approved,
-                        rejected: stats.rejected
+                        rejected: stats.rejected,
+                        total: stats.total
                     }}
                 />
 
