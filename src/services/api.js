@@ -136,12 +136,12 @@ export const prescriptionsAPI = {
 };
 
 export const adminAPI = {
-    getPendingProfiles: () => api.get('/admin/profiles/pending'),
-    getAllProfiles: (status) => api.get('/admin/profiles/all', { params: { status } }),
-    approveProfile: (id) => api.put(`/admin/profiles/${id}/approve`),
-    rejectProfile: (id, rejectionReason) => api.put(`/admin/profiles/${id}/reject`, { rejectionReason }),
-    getVerificationStats: () => api.get('/admin/stats/verification')
+    getVerificationStats: () => api.get('/admin/stats'),
+    getPendingProfiles: () => api.get('/admin/pending-profiles'),
+    getApprovedProfiles: () => api.get('/admin/approved-profiles'),
+    getRejectedProfiles: () => api.get('/admin/rejected-profiles'),
+    approveProfile: (profileId) => api.put(`/admin/approve/${profileId}`),
+    rejectProfile: (profileId, reason) => api.put(`/admin/reject/${profileId}`, { reason })
 };
 
 export default api;
-
