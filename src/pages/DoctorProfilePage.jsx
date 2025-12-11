@@ -20,7 +20,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut } from 'lucide-react';
+import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import { profileAPI } from '@/services/api';
@@ -157,6 +157,59 @@ export default function DoctorProfilePage() {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
         return `http://localhost:5000${imagePath}`;
+    };
+
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser');
+            return;
+        }
+
+        toast.loading('Getting your location...');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.address) {
+                        const address = data.address;
+                        const fullAddress = data.display_name || '';
+                        const city = address.city || address.town || address.village || address.county || '';
+
+                        setFormData(prev => ({
+                            ...prev,
+                            address: fullAddress,
+                            city: city
+                        }));
+
+                        toast.dismiss();
+                        toast.success('Location retrieved successfully!');
+                    } else {
+                        toast.dismiss();
+                        toast.error('Could not retrieve address from location');
+                    }
+                } catch (error) {
+                    console.error('Error getting address:', error);
+                    toast.dismiss();
+                    toast.error('Failed to get address from location');
+                }
+            },
+            (error) => {
+                toast.dismiss();
+                if (error.code === error.PERMISSION_DENIED) {
+                    toast.error('Location permission denied. Please enable location services.');
+                } else {
+                    toast.error('Failed to get your location.');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     };
 
     return (
@@ -440,14 +493,26 @@ export default function DoctorProfilePage() {
                                     {/* Address */}
                                     <div>
                                         <Label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">Address</Label>
-                                        <Textarea
-                                            id="address"
-                                            name="address"
-                                            value={formData.address}
-                                            onChange={handleInputChange}
-                                            disabled={!isEditing}
-                                            className="min-h-[70px] border-gray-200"
-                                        />
+                                        <div className="relative">
+                                            <Textarea
+                                                id="address"
+                                                name="address"
+                                                value={formData.address}
+                                                onChange={handleInputChange}
+                                                disabled={!isEditing}
+                                                className="min-h-[70px] border-gray-200 pr-12"
+                                            />
+                                            {isEditing && (
+                                                <button
+                                                    type="button"
+                                                    onClick={getCurrentLocation}
+                                                    className="absolute right-2 top-2 p-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+                                                    title="Use current location"
+                                                >
+                                                    <MapPin className="h-5 w-5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* City and Country */}

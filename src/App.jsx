@@ -13,6 +13,8 @@ import Home from "./pages/Home";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/DoctorProfilePage';
@@ -21,6 +23,9 @@ import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
 import ProfilePage from './pages/ProfilePage';
+import AccountSettings from './pages/AccountSettings';
+import PharmacyDashboard from './pages/PharmacyDashboard';
+import PharmacyProfile from './pages/PharmacyProfile';
 
 export default function App() {
   return (
@@ -70,8 +75,17 @@ export default function App() {
                     }
                   />
 
-                  {/* Forgot Password Route */}
+                  {/* Password Reset Routes */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+
+                  {/* Account Settings */}
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <AccountSettings />
+                    </ProtectedRoute>
+                  } />
 
                   {/* Protected Dashboard Routes - Patient Only */}
                   <Route
@@ -145,6 +159,32 @@ export default function App() {
                     element={
                       <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Pharmacy Dashboard Route */}
+                  <Route
+                    path="/pharmacy-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/pharmacy-dashboard/:tab"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/pharmacy/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={['pharmacy']}>
+                        <PharmacyProfile />
                       </ProtectedRoute>
                     }
                   />

@@ -52,6 +52,9 @@ export const profileAPI = {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
     deleteProfileImage: () => api.delete('/profile/image'),
+    uploadVerificationDocument: (formData) => api.post('/profile/verification-document', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     submitForReview: () => api.post('/profile/submit-review')
 };
 

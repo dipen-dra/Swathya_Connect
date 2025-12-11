@@ -55,26 +55,23 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
             // Temporarily hide the payment dialog to prevent z-index conflicts
             onOpenChange(false);
 
+            // Generate temporary booking ID for payment tracking
+            const tempBookingId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
             const khaltiConfig = {
                 publicKey: "test_public_key_617c4c6fe77c441d88451ec1408a0c0e",
-                productIdentity: bookingDetails.consultationId,
+                productIdentity: tempBookingId,
                 productName: `Consultation with ${bookingDetails.doctorName}`,
                 productUrl: window.location.href,
                 eventHandler: {
                     async onSuccess(payload) {
                         try {
-                            const response = await paymentAPI.verifyKhalti(
-                                payload.token,
-                                payload.amount,
-                                bookingDetails.consultationId
-                            );
-
-                            if (response.data.success) {
-                                // Navigate to Khalti success page
-                                navigate('/payment/khalti/success');
-                            } else {
-                                onPaymentError('Payment verification failed');
-                            }
+                            // Payment successful - notify parent to create consultation
+                            onPaymentSuccess('Khalti', {
+                                paymentToken: payload.token,
+                                amount: payload.amount,
+                                tempBookingId: tempBookingId
+                            });
                         } catch (error) {
                             console.error('Khalti verification error:', error);
                             onPaymentError(error.response?.data?.message || 'Payment verification failed');
@@ -113,6 +110,13 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
     const handleEsewaPayment = async () => {
         try {
             setIsProcessing(true);
+
+            // eSewa requires a consultation ID, so we need it from bookingDetails
+            if (!bookingDetails.consultationId) {
+                onPaymentError('Consultation ID is required for eSewa payment');
+                setIsProcessing(false);
+                return;
+            }
 
             const response = await paymentAPI.initiateEsewa(bookingDetails.consultationId);
 
@@ -257,10 +261,10 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                             <p>Your payment information is encrypted and secure. You will be redirected to the payment gateway.</p>
                         </div>
                     </div>
-                </div>
+                </div >
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                < div className="flex justify-end space-x-4 pt-6 border-t border-gray-200" >
                     <Button
                         variant="outline"
                         onClick={() => !isProcessing && onOpenChange(false)}
@@ -277,8 +281,8 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                         {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         {!isProcessing && <ArrowRight className="h-4 w-4 ml-2" />}
                     </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </div >
+            </DialogContent >
+        </Dialog >
     );
 }
