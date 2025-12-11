@@ -76,9 +76,19 @@ export default function ProfileCard({ profile, onApprove, onReject, onViewDocume
                                             <span className="text-gray-600">Experience:</span>
                                             <span className="ml-2 font-medium">{profile.yearsOfExperience || 0} years</span>
                                         </div>
-                                        <div>
-                                            <span className="text-gray-600">Fee:</span>
-                                            <span className="ml-2 font-medium">NPR {profile.consultationFee || 0}</span>
+                                        <div className="col-span-2">
+                                            <span className="text-gray-600">Consultation Fees:</span>
+                                            <div className="ml-2 font-medium flex flex-wrap gap-2 mt-1">
+                                                <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                                                    💬 Chat: NPR {profile.chatFee || profile.consultationFee || 0}
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
+                                                    🎙️ Audio: NPR {profile.audioFee || profile.consultationFee || 0}
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs">
+                                                    📹 Video: NPR {profile.videoFee || profile.consultationFee || 0}
+                                                </span>
+                                            </div>
                                         </div>
                                     </>
                                 )}
@@ -104,7 +114,7 @@ export default function ProfileCard({ profile, onApprove, onReject, onViewDocume
                                 </div>
                             </div>
 
-                            {/* Documents Badge */}
+                            {/* Documents Badge - Show for both doctors and pharmacies */}
                             {profile.verificationDocument && (
                                 <div className="mt-3">
                                     <Button

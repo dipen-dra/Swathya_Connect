@@ -30,8 +30,8 @@ export default function AdminTabs({ activeTab, onTabChange, counts = {} }) {
     };
 
     return (
-        <div className="border-b border-gray-200 bg-white rounded-t-lg">
-            <div className="flex space-x-1 px-6">
+        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm rounded-t-lg">
+            <div className="flex justify-center space-x-1 px-6">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
