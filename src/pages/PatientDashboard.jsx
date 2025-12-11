@@ -1243,10 +1243,6 @@ export function PatientDashboard() {
                                                                             <MapPin className="h-4 w-4" />
                                                                             <span>{pharmacy.city}</span>
                                                                         </div>
-                                                                        <div className="flex items-center space-x-1">
-                                                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                                            <span className="font-medium">{pharmacy.rating}</span>
-                                                                        </div>
                                                                     </div>
                                                                     <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
                                                                         <div className="flex items-center space-x-1">
