@@ -183,16 +183,13 @@ export default function AdminDashboard() {
             case 'overview':
             default:
                 return (
-                    <div className="space-y-6">
-                        <AdminStats stats={stats} />
-                        <PendingVerifications
-                            profiles={pendingProfiles.slice(0, 3)}
-                            onApprove={handleApprove}
-                            onReject={handleRejectClick}
-                            onViewDocument={handleViewDocument}
-                            loading={loading}
-                        />
-                    </div>
+                    <PendingVerifications
+                        profiles={pendingProfiles.slice(0, 3)}
+                        onApprove={handleApprove}
+                        onReject={handleRejectClick}
+                        onViewDocument={handleViewDocument}
+                        loading={loading}
+                    />
                 );
         }
     };
@@ -208,8 +205,8 @@ export default function AdminDashboard() {
                     <p className="text-white/90 text-lg">Manage profile verifications and system oversight</p>
                 </div>
 
-                {/* Stats - Always visible */}
-                {activeTab !== 'overview' && <AdminStats stats={stats} />}
+                {/* Stats - Always visible at top */}
+                <AdminStats stats={stats} />
 
                 {/* Tabs */}
                 <AdminTabs
