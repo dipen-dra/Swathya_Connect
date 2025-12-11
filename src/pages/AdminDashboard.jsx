@@ -15,7 +15,7 @@ import AllUsers from '../components/admin/AllUsers';
 export default function AdminDashboard() {
     // State management
     const [activeTab, setActiveTab] = useState('pending');
-    const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
+    const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0, totalUsers: 0 });
     const [pendingProfiles, setPendingProfiles] = useState([]);
     const [approvedProfiles, setApprovedProfiles] = useState([]);
     const [rejectedProfiles, setRejectedProfiles] = useState([]);
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                         pending: stats.pending,
                         approved: stats.approved,
                         rejected: stats.rejected,
-                        total: stats.total
+                        total: stats.totalUsers
                     }}
                 />
 
