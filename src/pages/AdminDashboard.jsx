@@ -202,21 +202,7 @@ export default function AdminDashboard() {
                 );
             case 'overview':
             default:
-                return (
-                    <div className="space-y-6">
-                        <AnalyticsOverview />
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Pending Verifications</h3>
-                            <PendingVerifications
-                                profiles={pendingProfiles.slice(0, 3)}
-                                onApprove={handleApprove}
-                                onReject={handleRejectClick}
-                                onViewDocument={handleViewDocument}
-                                loading={loading}
-                            />
-                        </div>
-                    </div>
-                );
+                return <AnalyticsOverview />;
         }
     };
 

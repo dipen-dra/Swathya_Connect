@@ -100,7 +100,7 @@ export default function AnalyticsOverview() {
     const userDistributionData = [
         { name: 'Patients', value: analytics.users.byRole.patients, color: '#3b82f6' },
         { name: 'Doctors', value: analytics.users.byRole.doctors, color: '#10b981' },
-        { name: 'Pharmacies', value: analytics.users.byRole.pharmacies, color: '#f59e0b' }
+        { name: 'Pharmacies', value: analytics.users.byRole.pharmacies, color: '#a855f7' }
     ];
 
     const consultationStatusData = [
@@ -141,7 +141,7 @@ export default function AnalyticsOverview() {
                         <Activity className="h-4 w-4 mr-2" />
                         Consultations
                     </TabsTrigger>
-                    <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-amber-600 data-[state=active]:text-white">
+                    <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white">
                         <Users className="h-4 w-4 mr-2" />
                         Users
                     </TabsTrigger>
@@ -272,8 +272,8 @@ export default function AnalyticsOverview() {
                                             <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="colorPharmacies" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -292,7 +292,7 @@ export default function AnalyticsOverview() {
                                     <Area
                                         type="monotone"
                                         dataKey="pharmacies"
-                                        stroke="#f59e0b"
+                                        stroke="#a855f7"
                                         fillOpacity={1}
                                         fill="url(#colorPharmacies)"
                                         name="Pharmacy Sales"
@@ -340,10 +340,10 @@ export default function AnalyticsOverview() {
                         </Card>
 
                         {/* Pharmacy Revenue */}
-                        <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg">
+                        <Card className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center space-x-3 mb-4">
-                                    <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg">
+                                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
                                         <Building2 className="h-6 w-6 text-white" />
                                     </div>
                                     <div>
@@ -354,26 +354,26 @@ export default function AnalyticsOverview() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
                                         <span className="text-sm font-medium text-gray-700">Total Revenue</span>
-                                        <span className="text-lg font-bold text-orange-600">
+                                        <span className="text-lg font-bold text-purple-600">
                                             NPR {analytics.revenue.pharmacies.total.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
                                         <span className="text-sm font-medium text-gray-700">This Month</span>
-                                        <span className="text-lg font-bold text-orange-600">
+                                        <span className="text-lg font-bold text-purple-600">
                                             NPR {analytics.revenue.pharmacies.monthly.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
                                         <span className="text-sm font-medium text-gray-700">Medicines Sold</span>
-                                        <span className="text-lg font-bold text-orange-600">
+                                        <span className="text-lg font-bold text-purple-600">
                                             {analytics.revenue.pharmacies.medicinesSold}
                                         </span>
                                     </div>
                                 </div>
                                 {analytics.revenue.pharmacies.total === 0 && (
-                                    <div className="mt-3 p-2 bg-amber-100 border border-amber-200 rounded-lg">
-                                        <p className="text-xs text-amber-800 text-center">
+                                    <div className="mt-3 p-2 bg-purple-100 border border-purple-200 rounded-lg">
+                                        <p className="text-xs text-purple-800 text-center">
                                             Pharmacy orders coming soon
                                         </p>
                                     </div>
@@ -485,7 +485,7 @@ export default function AnalyticsOverview() {
                             title="Pharmacies"
                             value={analytics.users.byRole.pharmacies}
                             icon={Building2}
-                            gradient="orange"
+                            gradient="purple"
                         />
                     </div>
 
@@ -500,7 +500,7 @@ export default function AnalyticsOverview() {
                             title="Verified Pharmacies"
                             value={analytics.pharmacies.verified}
                             icon={UserCheck}
-                            gradient="teal"
+                            gradient="purple"
                         />
                     </div>
                 </TabsContent>
