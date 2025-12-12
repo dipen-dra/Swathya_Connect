@@ -256,6 +256,131 @@ export default function AnalyticsOverview() {
                             format="currency"
                         />
                     </div>
+
+                    {/* Monthly Revenue Trend Chart */}
+                    <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-lg">
+                        <CardContent className="p-6">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center">
+                                <LineChart className="h-5 w-5 mr-2 text-blue-600" />
+                                Monthly Revenue Trend (Last 6 Months)
+                            </h3>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <AreaChart data={analytics.revenue.monthlyTrend}>
+                                    <defs>
+                                        <linearGradient id="colorDoctors" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorPharmacies" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis dataKey="month" stroke="#6b7280" />
+                                    <YAxis stroke="#6b7280" />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="doctors"
+                                        stroke="#10b981"
+                                        fillOpacity={1}
+                                        fill="url(#colorDoctors)"
+                                        name="Doctor Consultations"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="pharmacies"
+                                        stroke="#f59e0b"
+                                        fillOpacity={1}
+                                        fill="url(#colorPharmacies)"
+                                        name="Pharmacy Sales"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Revenue Breakdown */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Doctor Revenue */}
+                        <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg">
+                            <CardContent className="p-6">
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                                        <Stethoscope className="h-6 w-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">Doctor Consultations</h3>
+                                        <p className="text-sm text-gray-600">Revenue from medical consultations</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Total Revenue</span>
+                                        <span className="text-lg font-bold text-green-600">
+                                            NPR {analytics.revenue.doctors.total.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">This Month</span>
+                                        <span className="text-lg font-bold text-green-600">
+                                            NPR {analytics.revenue.doctors.monthly.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Consultations</span>
+                                        <span className="text-lg font-bold text-green-600">
+                                            {analytics.consultations.completed}
+                                        </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Pharmacy Revenue */}
+                        <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg">
+                            <CardContent className="p-6">
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg">
+                                        <Building2 className="h-6 w-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">Pharmacy Sales</h3>
+                                        <p className="text-sm text-gray-600">Revenue from medicine orders</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Total Revenue</span>
+                                        <span className="text-lg font-bold text-orange-600">
+                                            NPR {analytics.revenue.pharmacies.total.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">This Month</span>
+                                        <span className="text-lg font-bold text-orange-600">
+                                            NPR {analytics.revenue.pharmacies.monthly.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Medicines Sold</span>
+                                        <span className="text-lg font-bold text-orange-600">
+                                            {analytics.revenue.pharmacies.medicinesSold}
+                                        </span>
+                                    </div>
+                                </div>
+                                {analytics.revenue.pharmacies.total === 0 && (
+                                    <div className="mt-3 p-2 bg-amber-100 border border-amber-200 rounded-lg">
+                                        <p className="text-xs text-amber-800 text-center">
+                                            Pharmacy orders coming soon
+                                        </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
 
                 {/* Consultations Tab */}
