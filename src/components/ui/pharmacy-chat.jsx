@@ -1,67 +1,157 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageCircle, Send, User, Bot } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageCircle, Send, Loader2 } from 'lucide-react';
+import { useSocket } from '@/contexts/SocketContext';
+import { chatAPI } from '@/services/api';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
-export function PharmacyChat({ open, onOpenChange }) {
-    const [messages, setMessages] = useState([
-        {
-            id: '1',
-            text: 'Hello! I\'m Dr. Sarah, your pharmacist. How can I help you with your medication needs today?',
-            sender: 'pharmacist',
-            timestamp: new Date()
-        }
-    ]);
+export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pharmacyImage }) {
+    const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [chatId, setChatId] = useState(null);
+    const [typing, setTyping] = useState(false);
+    const { socket, connected } = useSocket();
+    const { user } = useAuth();
+    const scrollRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
 
-    const handleSendMessage = () => {
-        if (newMessage.trim()) {
-            const userMessage = {
-                id: Date.now().toString(),
-                text: newMessage,
-                sender: 'user',
-                timestamp: new Date()
-            };
+    // Helper function to get full image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath;
+        return `http://localhost:5000${imagePath}`;
+    };
 
-            setMessages(prev => [...prev, userMessage]);
-            setNewMessage('');
+    // Initialize or get existing chat
+    useEffect(() => {
+        if (open && pharmacyId) {
+            initializeChat();
+        }
+    }, [open, pharmacyId]);
 
-            // Simulate pharmacist response
-            setTimeout(() => {
-                const pharmacistResponse = {
-                    id: (Date.now() + 1).toString(),
-                    text: getPharmacistResponse(newMessage),
-                    sender: 'pharmacist',
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, pharmacistResponse]);
-            }, 1000);
+    const initializeChat = async () => {
+        try {
+            setLoading(true);
+
+            // Create or get existing chat
+            const response = await chatAPI.createChat(pharmacyId);
+            const chat = response.data.chat;
+            setChatId(chat._id);
+
+            // Load messages
+            const messagesResponse = await chatAPI.getChatMessages(chat._id);
+            setMessages(messagesResponse.data.messages);
+
+            // Join chat room via socket
+            if (socket && connected) {
+                socket.emit('chat:join', chat._id);
+            }
+
+            // Mark messages as read
+            await chatAPI.markAsRead(chat._id);
+
+        } catch (error) {
+            console.error('Error initializing chat:', error);
+            toast.error('Failed to load chat');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const getPharmacistResponse = (userMessage) => {
-        const message = userMessage.toLowerCase();
+    // Socket event listeners
+    useEffect(() => {
+        if (!socket || !chatId) return;
 
-        if (message.includes('side effect') || message.includes('reaction')) {
-            return 'I understand your concern about side effects. Can you tell me which medication you\'re taking and what symptoms you\'re experiencing? This will help me provide better guidance.';
+        // Listen for new messages
+        const handleMessageReceived = (message) => {
+            setMessages(prev => [...prev, message]);
+            scrollToBottom();
+
+            // Mark as read if chat is open
+            if (open) {
+                chatAPI.markAsRead(chatId);
+            }
+        };
+
+        // Listen for typing indicators
+        const handleUserTyping = () => {
+            setTyping(true);
+        };
+
+        const handleUserStoppedTyping = () => {
+            setTyping(false);
+        };
+
+        socket.on('message:received', handleMessageReceived);
+        socket.on('user:typing', handleUserTyping);
+        socket.on('user:stoppedTyping', handleUserStoppedTyping);
+
+        return () => {
+            socket.off('message:received', handleMessageReceived);
+            socket.off('user:typing', handleUserTyping);
+            socket.off('user:stoppedTyping', handleUserStoppedTyping);
+        };
+    }, [socket, chatId, open]);
+
+    // Leave chat room when dialog closes
+    useEffect(() => {
+        if (!open && socket && chatId) {
+            socket.emit('chat:leave', chatId);
+        }
+    }, [open, socket, chatId]);
+
+    // Auto scroll to bottom
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    const handleSendMessage = () => {
+        if (!newMessage.trim() || !socket || !chatId) return;
+
+        // Emit message via socket
+        socket.emit('message:send', {
+            chatId,
+            content: newMessage.trim()
+        });
+
+        setNewMessage('');
+
+        // Stop typing indicator
+        socket.emit('typing:stop', { chatId });
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+    };
+
+    const handleTyping = (e) => {
+        setNewMessage(e.target.value);
+
+        if (!socket || !chatId) return;
+
+        // Emit typing start
+        socket.emit('typing:start', { chatId });
+
+        // Clear existing timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
         }
 
-        if (message.includes('dosage') || message.includes('dose')) {
-            return 'For dosage questions, it\'s important to follow your doctor\'s prescription exactly. If you have concerns about your current dosage, I recommend consulting with your prescribing physician.';
-        }
-
-        if (message.includes('interaction') || message.includes('together')) {
-            return 'Drug interactions are important to consider. Please list all medications, supplements, and vitamins you\'re currently taking so I can check for any potential interactions.';
-        }
-
-        if (message.includes('generic') || message.includes('brand')) {
-            return 'Generic medications contain the same active ingredients as brand-name drugs and are equally effective. They\'re often more affordable. Would you like me to check if a generic version is available for your medication?';
-        }
-
-        return 'Thank you for your question. For specific medical advice, I recommend consulting with your doctor. However, I can help with general medication information, storage instructions, or direct you to appropriate resources.';
+        // Set timeout to emit typing stop
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit('typing:stop', { chatId });
+        }, 1000);
     };
 
     const handleKeyPress = (e) => {
@@ -71,80 +161,136 @@ export function PharmacyChat({ open, onOpenChange }) {
         }
     };
 
+    const formatTime = (date) => {
+        return new Date(date).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md h-[600px] flex flex-col bg-white">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center space-x-2">
-                        <MessageCircle className="h-5 w-5 text-green-600" />
-                        <span>Pharmacy Chat</span>
-                    </DialogTitle>
-                    <DialogDescription>
-                        Chat with our licensed pharmacist for medication guidance and support.
-                    </DialogDescription>
+            <DialogContent className="max-w-2xl h-[700px] flex flex-col bg-white p-0">
+                <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                    <div className="flex items-center space-x-3">
+                        <Avatar className="h-12 w-12">
+                            <AvatarImage src={getImageUrl(pharmacyImage)} />
+                            <AvatarFallback className="bg-purple-100 text-purple-600 text-lg font-semibold">
+                                {pharmacyName?.charAt(0) || 'P'}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                            <DialogTitle className="flex items-center space-x-2 text-xl">
+                                <MessageCircle className="h-5 w-5 text-purple-600" />
+                                <span>{pharmacyName || 'Pharmacy Chat'}</span>
+                            </DialogTitle>
+                            <DialogDescription className="mt-1">
+                                {connected ? (
+                                    <span className="flex items-center space-x-2 text-green-600">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                        <span>Connected</span>
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center space-x-2 text-gray-500">
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                        <span>Connecting...</span>
+                                    </span>
+                                )}
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1 pr-4">
-                    <div className="space-y-4">
-                        {messages.map((message) => (
-                            <div
-                                key={message.id}
-                                className={`flex items-start space-x-3 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                                    }`}
-                            >
-                                <Avatar className="h-8 w-8">
-                                    <AvatarFallback className={`${message.sender === 'user'
-                                        ? 'bg-blue-100 text-blue-600'
-                                        : 'bg-green-100 text-green-600'
-                                        }`}>
-                                        {message.sender === 'user' ? (
-                                            <User className="h-4 w-4" />
-                                        ) : (
-                                            <Bot className="h-4 w-4" />
-                                        )}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div
-                                    className={`max-w-[80%] p-3 rounded-lg ${message.sender === 'user'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-900'
-                                        }`}
-                                >
-                                    <p className="text-sm">{message.text}</p>
-                                    <p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                                        }`}>
-                                        {message.timestamp.toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                {loading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
                     </div>
-                </ScrollArea>
+                ) : (
+                    <>
+                        <ScrollArea className="flex-1 px-6">
+                            <div className="space-y-4 pb-4">
+                                {messages.length === 0 ? (
+                                    <div className="text-center text-gray-500 mt-8">
+                                        <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                        <p>No messages yet. Start the conversation!</p>
+                                    </div>
+                                ) : (
+                                    messages.map((message) => {
+                                        const isOwnMessage = message.sender._id === user?.id;
+                                        return (
+                                            <div
+                                                key={message._id}
+                                                className={`flex items-start space-x-3 ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
+                                                    }`}
+                                            >
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarFallback
+                                                        className={`${isOwnMessage
+                                                                ? 'bg-blue-100 text-blue-600'
+                                                                : 'bg-purple-100 text-purple-600'
+                                                            }`}
+                                                    >
+                                                        {isOwnMessage ? 'You' : pharmacyName?.charAt(0) || 'P'}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div
+                                                    className={`flex-1 max-w-[70%] ${isOwnMessage ? 'text-right' : 'text-left'
+                                                        }`}
+                                                >
+                                                    <div
+                                                        className={`inline-block px-4 py-2 rounded-lg ${isOwnMessage
+                                                                ? 'bg-blue-600 text-white'
+                                                                : 'bg-gray-100 text-gray-900'
+                                                            }`}
+                                                    >
+                                                        <p className="text-sm break-words">{message.content}</p>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1 px-1">
+                                                        {formatTime(message.createdAt)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                                {typing && (
+                                    <div className="flex items-center space-x-2 text-gray-500 text-sm">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback className="bg-purple-100 text-purple-600">
+                                                {pharmacyName?.charAt(0) || 'P'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex space-x-1 bg-gray-100 px-4 py-2 rounded-lg">
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={scrollRef} />
+                            </div>
+                        </ScrollArea>
 
-                <div className="flex items-center space-x-2 pt-4 border-t">
-                    <Input
-                        placeholder="Type your message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="flex-1"
-                    />
-                    <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                    >
-                        <Send className="h-4 w-4" />
-                    </Button>
-                </div>
-
-                <div className="text-xs text-gray-500 text-center mt-2">
-                    This is a simulated chat for demonstration purposes.
-                </div>
+                        <div className="flex items-center space-x-2 px-6 py-4 border-t bg-gray-50">
+                            <Input
+                                placeholder="Type your message..."
+                                value={newMessage}
+                                onChange={handleTyping}
+                                onKeyPress={handleKeyPress}
+                                disabled={!connected}
+                                className="flex-1 bg-white"
+                            />
+                            <Button
+                                onClick={handleSendMessage}
+                                disabled={!newMessage.trim() || !connected}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                size="icon"
+                            >
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );

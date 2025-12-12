@@ -48,93 +48,91 @@ api.interceptors.response.use(
 export const profileAPI = {
     getProfile: () => api.get('/profile'),
     updateProfile: (data) => api.post('/profile', data),
-    uploadProfileImage: (formData) => api.post('/profile/image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    deleteProfileImage: () => api.delete('/profile/image'),
-    uploadVerificationDocument: (formData) => api.post('/profile/verification-document', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    submitForReview: () => api.post('/profile/submit-review')
+    uploadProfileImage: (formData) => api.post('/profile/upload-image', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 };
 
-// Medicine Reminders API
+// Auth API
+export const authAPI = {
+    login: (credentials) => api.post('/auth/login', credentials),
+    register: (userData) => api.post('/auth/register', userData),
+    logout: () => api.post('/auth/logout'),
+    forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+    verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp }),
+    resetPassword: (email, otp, newPassword) => api.post('/auth/reset-password', { email, otp, newPassword })
+};
+
+// Reminders API
 export const remindersAPI = {
     getReminders: () => api.get('/reminders'),
-    getReminder: (id) => api.get(`/reminders/${id}`),
-    createReminder: (data) => api.post('/reminders', data),
-    updateReminder: (id, data) => api.put(`/reminders/${id}`, data),
-    deleteReminder: (id) => api.delete(`/reminders/${id}`),
-    toggleReminder: (id) => api.patch(`/reminders/${id}/toggle`)
+    createReminder: (reminderData) => api.post('/reminders', reminderData),
+    updateReminder: (id, reminderData) => api.put(`/reminders/${id}`, reminderData),
+    deleteReminder: (id) => api.delete(`/reminders/${id}`)
 };
 
 // Consultations API
 export const consultationsAPI = {
-    getConsultations: (status = 'all') => api.get('/consultations', { params: { status } }),
-    getConsultation: (id) => api.get(`/consultations/${id}`),
-    bookConsultation: (data) => api.post('/consultations', data),
-    updateConsultation: (id, data) => api.put(`/consultations/${id}`, data),
-    cancelConsultation: (id) => api.delete(`/consultations/${id}`),
-    rateConsultation: (id, rating) => api.post(`/consultations/${id}/rate`, { rating })
+    getConsultations: () => api.get('/consultations'),
+    createConsultation: (consultationData) => api.post('/consultations', consultationData),
+    updateConsultation: (id, updateData) => api.put(`/consultations/${id}`, updateData),
+    cancelConsultation: (id, reason) => api.put(`/consultations/${id}/cancel`, { reason }),
+    rateConsultation: (id, rating) => api.put(`/consultations/${id}/rate`, { rating })
 };
 
 // Doctors API
 export const doctorsAPI = {
-    getDoctors: (params = {}) => api.get('/doctors', { params }),
-    getDoctor: (id) => api.get(`/doctors/${id}`),
-    getSpecialties: () => api.get('/doctors/specialties')
+    getDoctors: () => api.get('/doctors'),
+    getDoctorById: (id) => api.get(`/doctors/${id}`),
+    getConsultationRequests: () => api.get('/doctors/consultation-requests'),
+    updateConsultationStatus: (id, status, rejectionReason = '') =>
+        api.put(`/doctors/consultations/${id}/status`, { status, rejectionReason }),
+    getEarnings: () => api.get('/doctors/earnings'),
+    submitForReview: () => api.post('/profile/submit-for-review')
 };
 
 // Pharmacies API
 export const pharmaciesAPI = {
-    getPharmacies: (params = {}) => api.get('/pharmacies', { params }),
-    getPharmacy: (id) => api.get(`/pharmacies/${id}`)
+    getPharmacies: () => api.get('/pharmacies'),
+    getPharmacyById: (id) => api.get(`/pharmacies/${id}`)
 };
 
 // Stats API
 export const statsAPI = {
-    getDashboardStats: () => api.get('/stats/dashboard')
-};
-
-// Auth API (if not already exists)
-export const authAPI = {
-    register: (data) => api.post('/auth/register', data),
-    login: (data) => api.post('/auth/login', data),
-    logout: () => api.post('/auth/logout')
+    getPatientStats: () => api.get('/stats/patient'),
+    getDoctorStats: () => api.get('/stats/doctor')
 };
 
 // Payment API
 export const paymentAPI = {
-    initiateEsewa: (consultationId) => api.post('/payment/esewa/initiate', { consultationId }),
-    verifyEsewa: (data) => api.post(`/payment/esewa/verify?data=${data}`),
-    verifyKhalti: (token, amount, consultationId) => api.post('/payment/khalti/verify', { token, amount, consultationId })
+    initiateKhaltiPayment: (consultationId) => api.post('/payment/khalti/initiate', { consultationId }),
+    verifyKhaltiPayment: (pidx, consultationId) => api.post('/payment/khalti/verify', { pidx, consultationId }),
+    initiateEsewaPayment: (consultationId) => api.post('/payment/esewa/initiate', { consultationId }),
+    verifyEsewaPayment: (data) => api.post('/payment/esewa/verify', data)
 };
 
 // Documents API
 export const documentsAPI = {
     uploadDocument: (formData) => api.post('/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
     }),
-    getMyDocuments: () => api.get('/documents/my-documents'),
-    updateDocument: (id, data) => api.put(`/documents/${id}`, data),
-    deleteDocument: (id) => api.delete(`/documents/${id}`),
-    // Admin endpoints (for future use)
-    getAllDocuments: (status) => api.get('/documents/all', { params: { status } }),
-    verifyDocument: (id) => api.put(`/documents/${id}/verify`),
-    rejectDocument: (id, reason) => api.put(`/documents/${id}/reject`, { reason })
+    getDocuments: () => api.get('/documents'),
+    deleteDocument: (id) => api.delete(`/documents/${id}`)
 };
 
+// Prescriptions API
 export const prescriptionsAPI = {
-    create: (data) => api.post('/prescriptions/create', data),
-    getByConsultation: (consultationId) => api.get(`/prescriptions/consultation/${consultationId}`),
-    update: (id, data) => api.put(`/prescriptions/${id}`, data),
-    downloadPDF: (id) => {
-        return api.get(`/prescriptions/${id}/pdf`, {
-            responseType: 'blob'
-        });
-    }
+    getPrescriptions: () => api.get('/prescriptions'),
+    createPrescription: (prescriptionData) => api.post('/prescriptions', prescriptionData),
+    updatePrescription: (id, prescriptionData) => api.put(`/prescriptions/${id}`, prescriptionData),
+    deletePrescription: (id) => api.delete(`/prescriptions/${id}`)
 };
 
+// Admin API
 export const adminAPI = {
     getVerificationStats: () => api.get('/admin/stats'),
     getPendingProfiles: () => api.get('/admin/pending-profiles'),
@@ -144,6 +142,14 @@ export const adminAPI = {
     rejectProfile: (profileId, reason) => api.put(`/admin/reject/${profileId}`, { reason }),
     getAllUsers: (params) => api.get('/admin/users', { params }),
     getAnalytics: () => api.get('/admin/analytics')
+};
+
+// Chat API
+export const chatAPI = {
+    getChats: () => api.get('/chats'),
+    getChatMessages: (chatId) => api.get(`/chats/${chatId}/messages`),
+    createChat: (pharmacyId) => api.post('/chats', { pharmacyId }),
+    markAsRead: (chatId) => api.put(`/chats/${chatId}/read`)
 };
 
 export default api;

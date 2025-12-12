@@ -101,6 +101,7 @@ export function PatientDashboard() {
     const [paymentDialog, setPaymentDialog] = useState(false);
     const [pendingBooking, setPendingBooking] = useState(null);
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
+    const [selectedPharmacy, setSelectedPharmacy] = useState(null);
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -1268,7 +1269,13 @@ export function PatientDashboard() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex flex-col space-y-2 ml-4">
-                                                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                                                <Button
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    onClick={() => {
+                                                                        setSelectedPharmacy(pharmacy);
+                                                                        setPharmacyDialog(true);
+                                                                    }}
+                                                                >
                                                                     <MessageCircle className="h-4 w-4 mr-2" />
                                                                     Start Chat
                                                                 </Button>
@@ -1514,9 +1521,12 @@ export function PatientDashboard() {
                     }}
                 />
 
-                < PharmacyChat
+                <PharmacyChat
                     open={pharmacyDialog}
                     onOpenChange={setPharmacyDialog}
+                    pharmacyId={selectedPharmacy?.userId?._id}
+                    pharmacyName={selectedPharmacy?.name}
+                    pharmacyImage={selectedPharmacy?.profileImage}
                 />
 
                 <MedicineReminderDialog

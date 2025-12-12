@@ -6,6 +6,7 @@ import { ProfileProvider } from "./contexts/ProfileContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ConsultationProvider } from "./contexts/ConsultationContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
+import { SocketProvider } from "./contexts/SocketContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicRoute } from "./components/PublicRoute";
 
@@ -34,207 +35,209 @@ export default function App() {
         <NotificationProvider>
           <ConsultationProvider>
             <RemindersProvider>
-              {/* GLOBAL TOAST SYSTEM */}
-              <Toaster position="top-right" richColors expand theme="light" />
+              <SocketProvider>
+                {/* GLOBAL TOAST SYSTEM */}
+                <Toaster position="top-right" richColors expand theme="light" />
 
-              <BrowserRouter>
-                <Routes>
-                  {/* Landing Page - Redirect authenticated users to dashboard */}
-                  <Route
-                    path="/"
-                    element={
-                      <PublicRoute>
-                        <Home />
-                      </PublicRoute>
-                    }
-                  />
+                <BrowserRouter>
+                  <Routes>
+                    {/* Landing Page - Redirect authenticated users to dashboard */}
+                    <Route
+                      path="/"
+                      element={
+                        <PublicRoute>
+                          <Home />
+                        </PublicRoute>
+                      }
+                    />
 
-                  {/* Auth Routes - Redirect to dashboard if already logged in */}
-                  <Route
-                    path="/login"
-                    element={
-                      <ProtectedRoute requireAuth={false}>
-                        <LoginPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <ProtectedRoute requireAuth={false}>
-                        <RegisterPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/auth"
-                    element={
-                      <ProtectedRoute requireAuth={false}>
-                        <LoginPage />
-                      </ProtectedRoute>
-                    }
-                  />
+                    {/* Auth Routes - Redirect to dashboard if already logged in */}
+                    <Route
+                      path="/login"
+                      element={
+                        <ProtectedRoute requireAuth={false}>
+                          <LoginPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <ProtectedRoute requireAuth={false}>
+                          <RegisterPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/auth"
+                      element={
+                        <ProtectedRoute requireAuth={false}>
+                          <LoginPage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* Password Reset Routes */}
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/verify-otp" element={<VerifyOTP />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
+                    {/* Password Reset Routes */}
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/verify-otp" element={<VerifyOTP />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
-                  {/* Account Settings */}
-                  <Route path="/settings" element={
-                    <ProtectedRoute>
-                      <AccountSettings />
-                    </ProtectedRoute>
-                  } />
-
-                  {/* Protected Dashboard Routes - Patient Only */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard/doctors"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard/consultations"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard/pharmacy"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard/profile"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard/health-records"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <PatientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Doctor Dashboard Routes - Doctor Only */}
-                  <Route
-                    path="/doctor/dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['doctor']}>
-                        <DoctorDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/doctor/dashboard/:tab"
-                    element={
-                      <ProtectedRoute allowedRoles={['doctor']}>
-                        <DoctorDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/doctor/profile"
-                    element={
-                      <ProtectedRoute allowedRoles={['doctor']}>
-                        <DoctorProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Pharmacy Dashboard Route */}
-                  <Route
-                    path="/pharmacy-dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['pharmacy']}>
-                        <PharmacyDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/pharmacy-dashboard/:tab"
-                    element={
-                      <ProtectedRoute allowedRoles={['pharmacy']}>
-                        <PharmacyDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/pharmacy/profile"
-                    element={
-                      <ProtectedRoute allowedRoles={['pharmacy']}>
-                        <PharmacyProfile />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Admin Dashboard Routes - Admin Only */}
-                  <Route
-                    path="/admin/dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Payment Callback Routes - Patient Only */}
-                  <Route
-                    path="/payment/esewa/success"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <EsewaSuccess />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/payment/esewa/failure"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <EsewaFailure />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/payment/khalti/success"
-                    element={
-                      <ProtectedRoute allowedRoles={['patient']}>
-                        <KhaltiSuccess />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/profile"
-                    element={
+                    {/* Account Settings */}
+                    <Route path="/settings" element={
                       <ProtectedRoute>
-                        <ProfilePage />
+                        <AccountSettings />
                       </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </BrowserRouter>
+                    } />
+
+                    {/* Protected Dashboard Routes - Patient Only */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard/doctors"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard/consultations"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard/pharmacy"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard/profile"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard/health-records"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Doctor Dashboard Routes - Doctor Only */}
+                    <Route
+                      path="/doctor/dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['doctor']}>
+                          <DoctorDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/doctor/dashboard/:tab"
+                      element={
+                        <ProtectedRoute allowedRoles={['doctor']}>
+                          <DoctorDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/doctor/profile"
+                      element={
+                        <ProtectedRoute allowedRoles={['doctor']}>
+                          <DoctorProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Pharmacy Dashboard Route */}
+                    <Route
+                      path="/pharmacy-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['pharmacy']}>
+                          <PharmacyDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/pharmacy-dashboard/:tab"
+                      element={
+                        <ProtectedRoute allowedRoles={['pharmacy']}>
+                          <PharmacyDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/pharmacy/profile"
+                      element={
+                        <ProtectedRoute allowedRoles={['pharmacy']}>
+                          <PharmacyProfile />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Admin Dashboard Routes - Admin Only */}
+                    <Route
+                      path="/admin/dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Payment Callback Routes - Patient Only */}
+                    <Route
+                      path="/payment/esewa/success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <EsewaSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/payment/esewa/failure"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <EsewaFailure />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/payment/khalti/success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <KhaltiSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </BrowserRouter>
+              </SocketProvider>
             </RemindersProvider>
           </ConsultationProvider>
         </NotificationProvider>
