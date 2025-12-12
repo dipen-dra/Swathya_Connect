@@ -100,7 +100,7 @@ export function PharmacyChatList() {
 
     return (
         <>
-            <Card>
+            <Card className="border-gray-100">
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -121,7 +121,7 @@ export function PharmacyChatList() {
                                 placeholder="Search patients..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
+                                className="pl-10 border-gray-100"
                             />
                         </div>
                     </div>
@@ -152,7 +152,7 @@ export function PharmacyChatList() {
                                         <div
                                             key={chat._id}
                                             onClick={() => handleChatClick(chat)}
-                                            className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            className="flex items-start space-x-3 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                                         >
                                             <Avatar className="h-12 w-12">
                                                 <AvatarImage src={getImageUrl(patient?.image)} />
