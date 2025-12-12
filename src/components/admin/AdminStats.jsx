@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, XCircle, Clock, Users } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
 
 export default function AdminStats({ stats }) {
     const statCards = [
@@ -32,9 +32,9 @@ export default function AdminStats({ stats }) {
             iconColor: 'text-red-600'
         },
         {
-            label: 'Total',
+            label: 'Total Requests',
             value: stats.total || 0,
-            icon: Users,
+            icon: FileText,
             color: 'blue',
             bgColor: 'bg-blue-50',
             textColor: 'text-blue-600',
