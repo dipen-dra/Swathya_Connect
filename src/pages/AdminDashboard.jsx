@@ -15,7 +15,7 @@ import AnalyticsOverview from '../components/admin/AnalyticsOverview';
 
 export default function AdminDashboard() {
     // State management
-    const [activeTab, setActiveTab] = useState('pending');
+    const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0, totalUsers: 0 });
     const [pendingProfiles, setPendingProfiles] = useState([]);
     const [approvedProfiles, setApprovedProfiles] = useState([]);
