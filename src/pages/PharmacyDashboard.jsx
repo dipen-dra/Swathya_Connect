@@ -32,8 +32,11 @@ import {
     Upload, FileText, XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { profileAPI } from '@/services/api';
+import { profileAPI, medicineOrderAPI } from '@/services/api';
 import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
+import { VerifyPrescriptionDialog } from '@/components/pharmacy/VerifyPrescriptionDialog';
+import { RejectPrescriptionDialog } from '@/components/pharmacy/RejectPrescriptionDialog';
+
 
 export default function PharmacyDashboard() {
     const { user, logout } = useAuth();
@@ -80,6 +83,14 @@ export default function PharmacyDashboard() {
     const [pharmacyLicenseNumber, setPharmacyLicenseNumber] = useState('');
     const [panNumber, setPanNumber] = useState('');
 
+    // Medicine Orders state
+    const [medicineOrders, setMedicineOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [verifyDialog, setVerifyDialog] = useState(false);
+    const [rejectDialog, setRejectDialog] = useState(false);
+
+
     // Update active tab when URL changes
     useEffect(() => {
         if (tab) {
@@ -98,6 +109,8 @@ export default function PharmacyDashboard() {
     useEffect(() => {
         if (activeTab === 'inventory') {
             fetchInventory();
+        } else if (activeTab === 'orders') {
+            fetchMedicineOrders();
         }
     }, [activeTab]);
 
@@ -120,6 +133,21 @@ export default function PharmacyDashboard() {
             toast.error('Failed to fetch inventory');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchMedicineOrders = async (status = null) => {
+        try {
+            setLoadingOrders(true);
+            const response = await medicineOrderAPI.getPharmacyOrders(status);
+            if (response.data.success) {
+                setMedicineOrders(response.data.orders || []);
+            }
+        } catch (error) {
+            console.error('Error fetching medicine orders:', error);
+            toast.error('Failed to load medicine orders');
+        } finally {
+            setLoadingOrders(false);
         }
     };
 
@@ -550,120 +578,190 @@ export default function PharmacyDashboard() {
                     </CardHeader>
 
                     <CardContent className="p-6">
-                        {/* Orders Tab */}
+                        {/* Orders Tab - Medicine Orders */}
                         {activeTab === 'orders' && (
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-1">Medicine Orders</h3>
-                                    <p className="text-sm text-gray-600">Manage prescription and over-the-counter medicine orders</p>
+                                    <p className="text-sm text-gray-600">Manage prescription orders from patients</p>
                                 </div>
 
-                                {/* Search */}
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <Input
-                                        placeholder="Search orders..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 border-gray-200"
-                                    />
+                                {/* Filter Buttons */}
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        onClick={() => fetchMedicineOrders()}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        All Orders
+                                    </Button>
+                                    <Button
+                                        onClick={() => fetchMedicineOrders('pending_verification')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                                    >
+                                        Pending Verification
+                                    </Button>
+                                    <Button
+                                        onClick={() => fetchMedicineOrders('awaiting_payment')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                    >
+                                        Awaiting Payment
+                                    </Button>
+                                    <Button
+                                        onClick={() => fetchMedicineOrders('paid')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                                    >
+                                        Paid
+                                    </Button>
+                                    <Button
+                                        onClick={() => fetchMedicineOrders('delivered')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-green-300 text-green-700 hover:bg-green-50"
+                                    >
+                                        Delivered
+                                    </Button>
                                 </div>
 
-                                {/* Order Cards */}
-                                <div className="space-y-4">
-                                    {filteredOrders.length === 0 ? (
-                                        <div className="text-center py-12">
-                                            <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                                            <p className="text-gray-600 font-medium">No orders found</p>
-                                            <p className="text-sm text-gray-500 mt-1">Orders from patients will appear here</p>
-                                        </div>
-                                    ) : (
-                                        filteredOrders.map((order) => (
+                                {/* Orders List */}
+                                {loadingOrders ? (
+                                    <div className="flex justify-center items-center py-12">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                        <span className="ml-3 text-gray-600">Loading orders...</span>
+                                    </div>
+                                ) : medicineOrders.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {medicineOrders.map((order) => (
                                             <Card key={order._id} className="border border-gray-200 hover:shadow-md transition-shadow">
                                                 <CardContent className="p-6">
                                                     <div className="flex items-start justify-between">
-                                                        <div className="flex items-start space-x-4 flex-1">
-                                                            <Avatar className="h-12 w-12">
-                                                                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white">
-                                                                    {order.patientName?.[0] || 'P'}
-                                                                </AvatarFallback>
-                                                            </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-3 mb-2">
+                                                                <h4 className="font-semibold text-gray-900">
+                                                                    Order #{order._id.slice(-6)}
+                                                                </h4>
+                                                                <Badge className={
+                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                                        order.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                            order.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-700' :
+                                                                                order.status === 'paid' || order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
+                                                                                    'bg-yellow-100 text-yellow-700'
+                                                                }>
+                                                                    {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                </Badge>
+                                                            </div>
 
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-3 mb-2">
-                                                                    <h4 className="font-semibold text-gray-900">{order.patientName}</h4>
-                                                                    <span className="text-sm text-gray-500">Order ID: {order.orderId}</span>
-                                                                    {order.prescriptionRequired && (
-                                                                        <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                                                                            Prescription
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
+                                                            <p className="text-sm text-gray-600 mb-1">
+                                                                Patient: <span className="font-medium">{order.patientId?.fullName || 'Unknown'}</span>
+                                                            </p>
 
-                                                                <div className="mb-3">
-                                                                    <p className="text-sm text-gray-600 font-medium mb-1">Medicines:</p>
-                                                                    <ul className="space-y-1">
-                                                                        {order.medicines.map((med, idx) => (
-                                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                                • {med.name} {med.dosage && `${med.dosage}`} {med.quantity > 1 && `x${med.quantity}`}
-                                                                            </li>
+                                                            <p className="text-sm text-gray-600 mb-2">
+                                                                Delivery: {order.deliveryAddress}
+                                                            </p>
+
+                                                            {order.medicines && order.medicines.length > 0 && (
+                                                                <div className="mb-2">
+                                                                    <p className="text-xs text-gray-500 mb-1">Medicines:</p>
+                                                                    <div className="flex flex-wrap gap-1">
+                                                                        {order.medicines.slice(0, 3).map((med, idx) => (
+                                                                            <Badge key={idx} variant="outline" className="text-xs">
+                                                                                {med.name} {med.dosage}
+                                                                            </Badge>
                                                                         ))}
-                                                                    </ul>
+                                                                        {order.medicines.length > 3 && (
+                                                                            <Badge variant="outline" className="text-xs">
+                                                                                +{order.medicines.length - 3} more
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
+                                                            )}
 
-                                                                <div className="flex items-center space-x-6 text-sm text-gray-600">
-                                                                    <div>
-                                                                        <span className="font-medium text-gray-700">Order Date:</span>
-                                                                        <span className="ml-2">{new Date(order.orderDate).toLocaleDateString()}</span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="font-medium text-gray-700">Total Amount:</span>
-                                                                        <span className="ml-2 text-teal-600 font-semibold">NPR {order.totalAmount}</span>
-                                                                    </div>
-                                                                </div>
+                                                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                                <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                                {order.totalAmount > 0 && (
+                                                                    <span className="font-semibold text-purple-600">
+                                                                        NPR {order.totalAmount}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-col items-end space-y-3">
-                                                            <Badge className={getStatusColor(order.status)}>
-                                                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                                            </Badge>
-
-                                                            <div className="flex items-center space-x-2">
-                                                                {order.status === 'pending' && (
+                                                        <div className="flex flex-col space-y-2 ml-4">
+                                                            {order.status === 'pending_verification' && (
+                                                                <>
                                                                     <Button
-                                                                        onClick={() => handleUpdateOrderStatus(order._id, 'processing')}
-                                                                        className="bg-teal-600 hover:bg-teal-700 text-white"
                                                                         size="sm"
+                                                                        className="bg-green-600 hover:bg-green-700"
+                                                                        onClick={() => {
+                                                                            setSelectedOrder(order);
+                                                                            setVerifyDialog(true);
+                                                                        }}
                                                                     >
-                                                                        Process Order
+                                                                        Verify & Bill
                                                                     </Button>
-                                                                )}
-                                                                {order.status === 'processing' && (
                                                                     <Button
-                                                                        onClick={() => handleUpdateOrderStatus(order._id, 'completed')}
-                                                                        className="bg-green-600 hover:bg-green-700 text-white"
                                                                         size="sm"
+                                                                        variant="outline"
+                                                                        className="border-red-300 text-red-600 hover:bg-red-50"
+                                                                        onClick={() => {
+                                                                            setSelectedOrder(order);
+                                                                            setRejectDialog(true);
+                                                                        }}
                                                                     >
-                                                                        Complete
+                                                                        Reject
                                                                     </Button>
-                                                                )}
+                                                                </>
+                                                            )}
+                                                            {(order.status === 'paid' || order.status === 'preparing' || order.status === 'ready_for_delivery') && (
                                                                 <Button
-                                                                    variant="outline"
                                                                     size="sm"
-                                                                    className="border-gray-300"
+                                                                    className="bg-blue-600 hover:bg-blue-700"
+                                                                    onClick={async () => {
+                                                                        const nextStatus =
+                                                                            order.status === 'paid' ? 'preparing' :
+                                                                                order.status === 'preparing' ? 'ready_for_delivery' :
+                                                                                    'out_for_delivery';
+                                                                        try {
+                                                                            await medicineOrderAPI.updateOrderStatus(order._id, nextStatus, 'Status updated');
+                                                                            toast.success('Order status updated');
+                                                                            fetchMedicineOrders();
+                                                                        } catch (error) {
+                                                                            toast.error('Failed to update status');
+                                                                        }
+                                                                    }}
                                                                 >
-                                                                    <MessageSquare className="h-4 w-4 mr-1" />
-                                                                    Chat
+                                                                    {order.status === 'paid' ? 'Start Preparing' :
+                                                                        order.status === 'preparing' ? 'Ready for Delivery' :
+                                                                            'Out for Delivery'}
                                                                 </Button>
-                                                            </div>
+                                                            )}
+                                                            <Button variant="outline" size="sm">
+                                                                View Details
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                 </CardContent>
                                             </Card>
-                                        ))
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <Card className="border border-gray-200">
+                                        <CardContent className="p-12 text-center">
+                                            <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Medicine Orders Yet</h3>
+                                            <p className="text-gray-600">
+                                                Orders from patients will appear here
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
                         )}
 
@@ -1279,7 +1377,28 @@ export default function PharmacyDashboard() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog >
+            </AlertDialog>
+
+            {/* Medicine Order Dialogs */}
+            <VerifyPrescriptionDialog
+                open={verifyDialog}
+                onOpenChange={setVerifyDialog}
+                order={selectedOrder}
+                onVerified={() => {
+                    fetchMedicineOrders();
+                    setSelectedOrder(null);
+                }}
+            />
+
+            <RejectPrescriptionDialog
+                open={rejectDialog}
+                onOpenChange={setRejectDialog}
+                order={selectedOrder}
+                onRejected={() => {
+                    fetchMedicineOrders();
+                    setSelectedOrder(null);
+                }}
+            />
         </div >
     );
 }
