@@ -36,6 +36,7 @@ export default function Header() {
     const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
     const navigate = useNavigate();
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
     const handleLogout = async () => {
         setShowLogoutDialog(false);
@@ -204,7 +205,7 @@ export default function Header() {
                     </DropdownMenu>
 
                     {/* User Menu */}
-                    <DropdownMenu>
+                    <DropdownMenu onOpenChange={setIsDropdownOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2 h-auto">
                                 <Avatar className="h-8 w-8">
@@ -225,10 +226,10 @@ export default function Header() {
                                         </span>
                                     </Badge>
                                 </div>
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 bg-white">
+                        <DropdownMenuContent align="end" alignOffset={-10} className="w-56 bg-white">
                             <DropdownMenuLabel className="text-gray-900">My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -255,14 +256,24 @@ export default function Header() {
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Profile Settings</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => navigate('/settings')}
-                                className="cursor-pointer"
-                            >
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Account Settings</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+
+                            {/* Hide Account Settings for admin */}
+                            {user?.role !== 'admin' && (
+                                <>
+                                    <DropdownMenuItem
+                                        onClick={() => navigate('/settings')}
+                                        className="cursor-pointer"
+                                    >
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>Account Settings</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
+
+                            {/* Show separator for admin before Sign Out */}
+                            {user?.role === 'admin' && <DropdownMenuSeparator />}
+
                             <DropdownMenuItem
                                 onClick={() => setShowLogoutDialog(true)}
                                 className="cursor-pointer text-red-600 focus:text-red-600"
