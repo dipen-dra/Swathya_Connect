@@ -6,8 +6,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { chatAPI } from '@/services/api';
+import { profileAPI } from '@/services/api';
 import { useSocket } from '@/contexts/SocketContext';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
+import { PatientProfileDialog } from '@/components/pharmacy/PatientProfileDialog';
 import { toast } from 'sonner';
 
 export function PharmacyChatList() {
@@ -16,6 +18,9 @@ export function PharmacyChatList() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedChat, setSelectedChat] = useState(null);
     const [chatDialogOpen, setChatDialogOpen] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState(null);
+    const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+    const [loadingProfile, setLoadingProfile] = useState(false);
     const { socket, connected } = useSocket();
 
     // Fetch chats on mount
@@ -64,6 +69,58 @@ export function PharmacyChatList() {
         console.log('💬 Opening chat:', chat);
         setSelectedChat(chat);
         setChatDialogOpen(true);
+    };
+
+
+    const handleAvatarClick = async (e, patient) => {
+        e.stopPropagation(); // Prevent chat from opening
+        try {
+            setLoadingProfile(true);
+            const response = await profileAPI.getUserProfile(patient._id); // Changed to getUserProfile
+
+            console.log('📋 Full Profile response:', response.data);
+            console.log('📋 Profile object:', response.data.data); // Changed from .profile to .data
+
+            if (response.data.success && response.data.data) {
+                const profile = response.data.data; // Changed from .profile to .data
+
+                // Log individual fields to debug
+                console.log('Email:', profile.userId?.email || profile.email);
+                console.log('Phone:', profile.phone || profile.phoneNumber);
+                console.log('Address:', profile.address);
+
+                // Combine patient basic info with profile details
+                setSelectedPatient({
+                    name: patient.name,
+                    image: patient.image,
+                    email: profile.userId?.email || profile.email || patient.email,
+                    phone: profile.phone || profile.phoneNumber || profile.contactNumber,
+                    address: profile.address || profile.location,
+                });
+                setProfileDialogOpen(true);
+            } else {
+                console.log('⚠️ No profile data, showing basic info');
+                // If no detailed profile, show basic info
+                setSelectedPatient({
+                    name: patient.name,
+                    image: patient.image,
+                    email: patient.email
+                });
+                setProfileDialogOpen(true);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching patient profile:', error);
+            console.error('Error details:', error.response?.data);
+            // Show basic info even if profile fetch fails
+            setSelectedPatient({
+                name: patient.name,
+                image: patient.image,
+                email: patient.email
+            });
+            setProfileDialogOpen(true);
+        } finally {
+            setLoadingProfile(false);
+        }
     };
 
     const getImageUrl = (imagePath) => {
@@ -154,7 +211,10 @@ export function PharmacyChatList() {
                                             onClick={() => handleChatClick(chat)}
                                             className="flex items-start space-x-3 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                                         >
-                                            <Avatar className="h-12 w-12">
+                                            <Avatar
+                                                className="h-12 w-12 cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                                                onClick={(e) => handleAvatarClick(e, patient)}
+                                            >
                                                 <AvatarImage src={getImageUrl(patient?.image)} />
                                                 <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                                                     {patient?.name?.charAt(0) || 'P'}
@@ -205,6 +265,13 @@ export function PharmacyChatList() {
                     pharmacyImage={selectedChat.patient?.image}
                 />
             )}
+
+            {/* Patient Profile Dialog */}
+            <PatientProfileDialog
+                open={profileDialogOpen}
+                onOpenChange={setProfileDialogOpen}
+                patient={selectedPatient}
+            />
         </>
     );
 }

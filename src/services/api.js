@@ -47,6 +47,7 @@ api.interceptors.response.use(
 // Profile API
 export const profileAPI = {
     getProfile: () => api.get('/profile'),
+    getUserProfile: (userId) => api.get(`/profile/${userId}`),
     updateProfile: (data) => api.post('/profile', data),
     uploadProfileImage: (formData) => api.post('/profile/upload-image', formData, {
         headers: {

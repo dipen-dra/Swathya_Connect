@@ -312,7 +312,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl h-[700px] flex flex-col bg-white p-0">
-                <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
                     <div className="flex items-center space-x-3">
                         <Avatar className="h-12 w-12">
                             <AvatarImage src={getImageUrl(pharmacyImage)} />
@@ -445,7 +445,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
 
                         {/* File Preview */}
                         {selectedFile && (
-                            <div className="px-6 py-3 border-t bg-gray-50">
+                            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
                                 <div className="flex items-center justify-between bg-white border rounded-lg p-3">
                                     <div className="flex items-center space-x-3">
                                         {filePreview ? (
@@ -473,7 +473,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                         )}
 
                         {/* Input Area */}
-                        <div className="flex items-center space-x-2 px-6 py-4 border-t bg-gray-50">
+                        <div className="flex items-center space-x-2 px-6 py-4 border-t border-gray-100 bg-gray-50">
                             {/* Hidden File Input */}
                             <input
                                 ref={fileInputRef}
