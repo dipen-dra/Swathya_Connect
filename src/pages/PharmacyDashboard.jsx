@@ -35,52 +35,6 @@ import { toast } from 'sonner';
 import { profileAPI } from '@/services/api';
 import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
 
-// Mock data for testing
-const MOCK_ORDERS = [
-    {
-        _id: '1',
-        orderId: 'ORD-001',
-        patientName: 'Ram Sharma',
-        patientId: { fullName: 'Ram Sharma' },
-        medicines: [
-            { name: 'Paracetamol', dosage: '500mg', quantity: 2 },
-            { name: 'Vitamin C', dosage: '25', quantity: 1 }
-        ],
-        prescriptionRequired: true,
-        totalAmount: 450,
-        status: 'pending',
-        orderDate: new Date().toISOString()
-    },
-    {
-        _id: '2',
-        orderId: 'ORD-002',
-        patientName: 'Sita Poudel',
-        patientId: { fullName: 'Sita Poudel' },
-        medicines: [
-            { name: 'Amoxicillin', dosage: '250mg', quantity: 3 },
-            { name: 'Cough Syrup', quantity: 1 }
-        ],
-        prescriptionRequired: true,
-        totalAmount: 680,
-        status: 'processing',
-        orderDate: new Date(Date.now() - 86400000).toISOString()
-    },
-    {
-        _id: '3',
-        orderId: 'ORD-003',
-        patientName: 'Hari Thapa',
-        patientId: { fullName: 'Hari Thapa' },
-        medicines: [
-            { name: 'Aspirin', dosage: '75mg', quantity: 1 }
-        ],
-        prescriptionRequired: false,
-        totalAmount: 120,
-        status: 'completed',
-        orderDate: new Date(Date.now() - 172800000).toISOString(),
-        completedDate: new Date(Date.now() - 86400000).toISOString()
-    }
-];
-
 export default function PharmacyDashboard() {
     const { user, logout } = useAuth();
     const { profile, refreshProfile } = useProfile();
@@ -88,13 +42,13 @@ export default function PharmacyDashboard() {
     const { tab } = useParams();
 
     const [activeTab, setActiveTab] = useState(tab || 'orders');
-    const [orders, setOrders] = useState(MOCK_ORDERS); // Use mock data
+    const [orders, setOrders] = useState([]); // Empty - no backend integration yet
     const [inventory, setInventory] = useState([]);
     const [stats, setStats] = useState({
-        totalOrders: 156,
-        pendingOrders: 8,
-        thisMonthRevenue: 45000,
-        activeCustomers: 89
+        totalOrders: 0,
+        pendingOrders: 0,
+        thisMonthRevenue: 0,
+        activeCustomers: 0
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -485,10 +439,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Total Orders</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.totalOrders}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+12% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                     <ShoppingCart className="h-6 w-6 text-blue-600" />
@@ -504,10 +454,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Pending Orders</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.pendingOrders}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-amber-600">
-                                        <Clock className="h-3 w-3" />
-                                        <span>Needs attention</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
                                     <Clock className="h-6 w-6 text-amber-600" />
@@ -523,10 +469,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">This Month Revenue</p>
                                     <h3 className="text-3xl font-bold text-gray-900">NPR {stats.thisMonthRevenue.toLocaleString()}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+18% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                                     <DollarSign className="h-6 w-6 text-green-600" />
@@ -542,10 +484,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Active Customers</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.activeCustomers}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+5% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
                                     <Users className="h-6 w-6 text-teal-600" />
