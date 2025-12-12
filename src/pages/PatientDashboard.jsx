@@ -52,10 +52,11 @@ import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog
 import { PaymentDialog } from '@/components/ui/payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
+import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI } from '@/services/api';
+import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI, medicineOrderAPI } from '@/services/api';
 import Header from '@/components/layout/Header';
 import { useReminders } from '@/contexts/RemindersContext';
 import { prescriptionsAPI } from '@/services/api';
@@ -107,6 +108,8 @@ export function PatientDashboard() {
     const [chats, setChats] = useState([]); // Store all patient chats
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
+    const [requestMedicineDialog, setRequestMedicineDialog] = useState(false);
+    const [selectedPharmacyForMedicine, setSelectedPharmacyForMedicine] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [ratingDialog, setRatingDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
@@ -114,6 +117,8 @@ export function PatientDashboard() {
     const [review, setReview] = useState('');
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [prescriptionConsultationId, setPrescriptionConsultationId] = useState(null);
+    const [medicineOrders, setMedicineOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -136,6 +141,21 @@ export function PatientDashboard() {
             setChats(response.data.chats || []);
         } catch (error) {
             console.error('Error fetching chats:', error);
+        }
+    };
+
+    const fetchMedicineOrders = async () => {
+        try {
+            setLoadingOrders(true);
+            const response = await medicineOrderAPI.getPatientOrders();
+            if (response.data.success) {
+                setMedicineOrders(response.data.orders || []);
+            }
+        } catch (error) {
+            console.error('Error fetching medicine orders:', error);
+            toast.error('Failed to load medicine orders');
+        } finally {
+            setLoadingOrders(false);
         }
     };
 
@@ -187,6 +207,13 @@ export function PatientDashboard() {
             socket.off('chat:updated', handleChatUpdated);
         };
     }, [socket, connected]);
+
+    // Fetch medicine orders when on medicine-orders tab
+    useEffect(() => {
+        if (activeTab === 'medicine-orders') {
+            fetchMedicineOrders();
+        }
+    }, [activeTab]);
 
     const fetchConsultations = async () => {
         try {
@@ -1026,6 +1053,15 @@ export function PatientDashboard() {
                                 })()}
                             </button>
                             <button
+                                onClick={() => navigate('/dashboard/medicine-orders')}
+                                className={`inline-flex items-center whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'medicine-orders'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                Medicine Orders
+                            </button>
+                            <button
                                 onClick={() => navigate('/dashboard/profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
                                     ? 'border-blue-600 text-blue-600'
@@ -1347,9 +1383,16 @@ export function PatientDashboard() {
                                                                         ) : null;
                                                                     })()}
                                                                 </Button>
-                                                                <Button variant="outline" className="border-gray-200">
-                                                                    <Phone className="h-4 w-4 mr-2" />
-                                                                    Call
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="border-gray-200"
+                                                                    onClick={() => {
+                                                                        setSelectedPharmacyForMedicine(pharmacy);
+                                                                        setRequestMedicineDialog(true);
+                                                                    }}
+                                                                >
+                                                                    <Pill className="h-4 w-4 mr-2" />
+                                                                    Request Medicine
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -1405,6 +1448,84 @@ export function PatientDashboard() {
                             />
                         )
                     }
+
+                    {/* Medicine Orders Tab */}
+                    {activeTab === 'medicine-orders' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Medicine Orders</h2>
+                                <p className="text-sm text-gray-600 mt-1">Track your medicine orders and prescriptions</p>
+                            </div>
+
+                            {loadingOrders ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                    <span className="ml-3 text-gray-600">Loading orders...</span>
+                                </div>
+                            ) : medicineOrders.length > 0 ? (
+                                <div className="space-y-4">
+                                    {medicineOrders.map((order) => (
+                                        <Card key={order._id} className="border border-gray-200">
+                                            <CardContent className="p-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-3 mb-2">
+                                                            <h3 className="font-semibold text-gray-900">
+                                                                Order #{order._id.slice(-6)}
+                                                            </h3>
+                                                            <Badge className={
+                                                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                                    order.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                        order.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-700' :
+                                                                            order.status === 'paid' || order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
+                                                                                'bg-yellow-100 text-yellow-700'
+                                                            }>
+                                                                {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600">
+                                                            Pharmacy: {order.pharmacyId?.fullName || 'Unknown'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {new Date(order.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                        {order.totalAmount > 0 && (
+                                                            <p className="text-sm font-semibold text-gray-900 mt-2">
+                                                                Total: NPR {order.totalAmount}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col space-y-2">
+                                                        {order.status === 'awaiting_payment' && (
+                                                            <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                                                                Pay Now
+                                                            </Button>
+                                                        )}
+                                                        <Button variant="outline" size="sm">
+                                                            View Details
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            ) : (
+                                <Card className="border border-gray-200">
+                                    <CardContent className="p-12 text-center">
+                                        <Pill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Medicine Orders Yet</h3>
+                                        <p className="text-gray-600 mb-4">
+                                            You haven't requested any medicines yet. Visit the Pharmacy Chat tab to request medicines.
+                                        </p>
+                                        <Button onClick={() => navigate('/dashboard/pharmacy')} className="bg-purple-600 hover:bg-purple-700">
+                                            Browse Pharmacies
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div >
+                    )}
 
                     {/* Profile Tab */}
                     {
@@ -1589,7 +1710,7 @@ export function PatientDashboard() {
                     }}
                 />
 
-                <PharmacyChat
+                < PharmacyChat
                     open={pharmacyDialog}
                     onOpenChange={setPharmacyDialog}
                     pharmacyId={selectedPharmacy?.userId}
@@ -1602,6 +1723,12 @@ export function PatientDashboard() {
                     onOpenChange={setMedicineReminderDialog}
                     onSave={handleSaveMedicineReminder}
                     editingReminder={editingReminder}
+                />
+
+                <RequestMedicineDialog
+                    open={requestMedicineDialog}
+                    onOpenChange={setRequestMedicineDialog}
+                    pharmacy={selectedPharmacyForMedicine}
                 />
 
                 {/* Rating Dialog */}

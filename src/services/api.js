@@ -156,4 +156,23 @@ export const chatAPI = {
     })
 };
 
+// Medicine Order API
+export const medicineOrderAPI = {
+    // Patient endpoints
+    createOrder: (formData) => api.post('/medicine-orders', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    getPatientOrders: () => api.get('/medicine-orders'),
+    cancelOrder: (orderId) => api.put(`/medicine-orders/${orderId}/cancel`),
+
+    // Pharmacy endpoints
+    getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }),
+    verifyPrescription: (orderId, data) => api.put(`/medicine-orders/${orderId}/verify`, data),
+    rejectPrescription: (orderId, reason) => api.put(`/medicine-orders/${orderId}/reject`, { reason }),
+    updateOrderStatus: (orderId, status, notes) => api.put(`/medicine-orders/${orderId}/status`, { status, notes }),
+
+    // Shared
+    getOrderById: (orderId) => api.get(`/medicine-orders/${orderId}`)
+};
+
 export default api;
