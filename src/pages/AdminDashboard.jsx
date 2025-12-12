@@ -4,17 +4,19 @@ import { adminAPI } from '@/services/api';
 import { toast } from 'sonner';
 
 // Import modular components
-import AdminStats from '@/components/admin/AdminStats';
-import AdminTabs from '@/components/admin/AdminTabs';
-import PendingVerifications from '@/components/admin/PendingVerifications';
-import ApprovedProfiles from '@/components/admin/ApprovedProfiles';
-import RejectedProfiles from '@/components/admin/RejectedProfiles';
-import RejectDialog from '@/components/admin/RejectDialog';
+import AdminStats from '../components/admin/AdminStats';
+import AdminTabs from '../components/admin/AdminTabs';
+import PendingVerifications from '../components/admin/PendingVerifications';
+import ApprovedProfiles from '../components/admin/ApprovedProfiles';
+import RejectedProfiles from '../components/admin/RejectedProfiles';
+import RejectDialog from '../components/admin/RejectDialog';
+import AllUsers from '../components/admin/AllUsers';
+import AnalyticsOverview from '../components/admin/AnalyticsOverview';
 
 export default function AdminDashboard() {
     // State management
-    const [activeTab, setActiveTab] = useState('pending');
-    const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
+    const [activeTab, setActiveTab] = useState('overview');
+    const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0, totalUsers: 0 });
     const [pendingProfiles, setPendingProfiles] = useState([]);
     const [approvedProfiles, setApprovedProfiles] = useState([]);
     const [rejectedProfiles, setRejectedProfiles] = useState([]);
@@ -149,6 +151,18 @@ export default function AdminDashboard() {
         window.open(url, '_blank');
     };
 
+    // Fetch users with pagination and filters
+    const handleFetchUsers = async (params) => {
+        try {
+            const response = await adminAPI.getAllUsers(params);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            toast.error('Failed to load users');
+            return null;
+        }
+    };
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'pending':
@@ -179,21 +193,16 @@ export default function AdminDashboard() {
                         loading={loading}
                     />
                 );
-
+            case 'users':
+                return (
+                    <AllUsers
+                        onFetchUsers={handleFetchUsers}
+                        loading={loading}
+                    />
+                );
             case 'overview':
             default:
-                return (
-                    <div className="space-y-6">
-                        <AdminStats stats={stats} />
-                        <PendingVerifications
-                            profiles={pendingProfiles.slice(0, 3)}
-                            onApprove={handleApprove}
-                            onReject={handleRejectClick}
-                            onViewDocument={handleViewDocument}
-                            loading={loading}
-                        />
-                    </div>
-                );
+                return <AnalyticsOverview />;
         }
     };
 
@@ -208,8 +217,8 @@ export default function AdminDashboard() {
                     <p className="text-white/90 text-lg">Manage profile verifications and system oversight</p>
                 </div>
 
-                {/* Stats - Always visible */}
-                {activeTab !== 'overview' && <AdminStats stats={stats} />}
+                {/* Stats - Always visible at top */}
+                <AdminStats stats={stats} />
 
                 {/* Tabs */}
                 <AdminTabs
@@ -218,7 +227,8 @@ export default function AdminDashboard() {
                     counts={{
                         pending: stats.pending,
                         approved: stats.approved,
-                        rejected: stats.rejected
+                        rejected: stats.rejected,
+                        total: stats.totalUsers
                     }}
                 />
 
