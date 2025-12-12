@@ -1497,7 +1497,20 @@ export function PatientDashboard() {
                                                     </div>
                                                     <div className="flex flex-col space-y-2">
                                                         {order.status === 'awaiting_payment' && (
-                                                            <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-purple-600 hover:bg-purple-700"
+                                                                onClick={() => {
+                                                                    setPendingBooking({
+                                                                        type: 'medicine_order',
+                                                                        orderId: order._id,
+                                                                        amount: order.totalAmount,
+                                                                        pharmacyName: order.pharmacyId?.fullName,
+                                                                        orderDetails: order
+                                                                    });
+                                                                    setPaymentDialog(true);
+                                                                }}
+                                                            >
                                                                 Pay Now
                                                             </Button>
                                                         )}
@@ -1671,18 +1684,44 @@ export function PatientDashboard() {
                     bookingDetails={pendingBooking}
                     onPaymentSuccess={async (paymentMethod, consultationData) => {
                         try {
-                            // Consultation already created, just refresh the list
-                            await fetchConsultations();
+                            // Check if this is a medicine order or consultation
+                            if (pendingBooking?.type === 'medicine_order') {
+                                // Handle medicine order payment - call confirmPayment API
+                                const transactionId = consultationData?.transactionId || `TXN-${Date.now()}`;
 
-                            setPaymentDialog(false);
-                            setPendingBooking(null);
+                                await medicineOrderAPI.confirmPayment(pendingBooking.orderId, {
+                                    paymentMethod,
+                                    transactionId
+                                });
 
-                            // Show success message
-                            addNotification({
-                                type: 'success',
-                                title: 'Booking Confirmed!',
-                                message: `Your consultation with ${pendingBooking?.doctorName} has been successfully booked and paid via ${paymentMethod}.`
-                            });
+                                // Refresh orders to show updated status
+                                await fetchMedicineOrders();
+
+                                setPaymentDialog(false);
+                                setPendingBooking(null);
+
+                                // Show success message
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Payment Successful!',
+                                    message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                                });
+
+                                toast.success('Payment successful! Order is being prepared.');
+                            } else {
+                                // Handle consultation payment
+                                await fetchConsultations();
+
+                                setPaymentDialog(false);
+                                setPendingBooking(null);
+
+                                // Show success message
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Booking Confirmed!',
+                                    message: `Your consultation with ${pendingBooking?.doctorName} has been successfully booked and paid via ${paymentMethod}.`
+                                });
+                            }
                         } catch (error) {
                             console.error('Error after payment success:', error);
                             addNotification({

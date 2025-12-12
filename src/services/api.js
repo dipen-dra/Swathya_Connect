@@ -164,6 +164,7 @@ export const medicineOrderAPI = {
     }),
     getPatientOrders: () => api.get('/medicine-orders'),
     cancelOrder: (orderId) => api.put(`/medicine-orders/${orderId}/cancel`),
+    confirmPayment: (orderId, paymentData) => api.put(`/medicine-orders/${orderId}/confirm-payment`, paymentData),
 
     // Pharmacy endpoints
     getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }),
