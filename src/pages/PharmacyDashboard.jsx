@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { profileAPI } from '@/services/api';
+import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
 
 // Mock data for testing
 const MOCK_ORDERS = [
@@ -585,15 +586,19 @@ export default function PharmacyDashboard() {
                             >
                                 Customer Chat
                             </button>
-                            <button
-                                onClick={() => handleTabChange('verification')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
-                                    ? 'border-deep-blue text-deep-blue'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                            >
-                                Verification
-                            </button>
+                            {/* Verification Tab - Only show if not verified */}
+                            {profile?.verificationStatus !== 'approved' && (
+                                <button
+                                    onClick={() => handleTabChange('verification')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
+                                        ? 'border-purple-500 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        } transition-colors`}
+                                >
+                                    <Shield className="inline h-4 w-4 mr-1" />
+                                    Verification
+                                </button>
+                            )}
                             <button
                                 onClick={() => handleTabChange('profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
@@ -832,11 +837,7 @@ export default function PharmacyDashboard() {
 
                         {/* Customer Chat Tab - Placeholder */}
                         {activeTab === 'chat' && (
-                            <div className="text-center py-12">
-                                <MessageSquare className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                                <p className="text-gray-600 font-medium">Customer Chat</p>
-                                <p className="text-sm text-gray-500 mt-1">Coming soon...</p>
-                            </div>
+                            <PharmacyChatList />
                         )}
 
                         {/* Profile Tab */}

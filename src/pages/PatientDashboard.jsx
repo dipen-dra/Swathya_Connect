@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useConsultations } from '@/contexts/ConsultationContext';
+import { useSocket } from '@/contexts/SocketContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +55,7 @@ import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI } from '@/services/api';
+import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI } from '@/services/api';
 import Header from '@/components/layout/Header';
 import { useReminders } from '@/contexts/RemindersContext';
 import { prescriptionsAPI } from '@/services/api';
@@ -71,6 +72,7 @@ const getImageUrl = (imagePath) => {
 export function PatientDashboard() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
+    const { socket, connected } = useSocket();
     const { addNotification } = useNotifications();
     const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
@@ -102,6 +104,7 @@ export function PatientDashboard() {
     const [pendingBooking, setPendingBooking] = useState(null);
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
     const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+    const [chats, setChats] = useState([]); // Store all patient chats
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -115,12 +118,26 @@ export function PatientDashboard() {
     // API data states
     const [doctors, setDoctors] = useState([]);
     const [pharmacies, setPharmacies] = useState([]);
-    const [stats, setStats] = useState(null);
+    const [stats, setStats] = useState({
+        totalConsultations: 0,
+        upcomingConsultations: 0,
+        completedConsultations: 0
+    });
     const [consultations, setConsultations] = useState([]);
     const [loadingDoctors, setLoadingDoctors] = useState(true);
     const [loadingPharmacies, setLoadingPharmacies] = useState(true);
     const [loadingStats, setLoadingStats] = useState(true);
     const [loadingConsultations, setLoadingConsultations] = useState(true);
+
+    // Fetch chats for unread indicators
+    const fetchChats = async () => {
+        try {
+            const response = await chatAPI.getChats();
+            setChats(response.data.chats || []);
+        } catch (error) {
+            console.error('Error fetching chats:', error);
+        }
+    };
 
     // Doctor search and filter states
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
@@ -142,8 +159,34 @@ export function PatientDashboard() {
             fetchDoctors();
             fetchPharmacies();
             fetchConsultations();
+            fetchChats(); // Fetch chats for unread indicators
         }
     }, [user]);
+
+    // Listen for real-time chat updates via Socket.IO
+    useEffect(() => {
+        if (!socket || !connected) return;
+
+        const handleMessageReceived = (message) => {
+            console.log('📩 New message received in patient dashboard:', message);
+            // Refresh chats to update unread counts
+            fetchChats();
+        };
+
+        const handleChatUpdated = (data) => {
+            console.log('💬 Chat updated in patient dashboard:', data);
+            // Refresh chats to update unread counts
+            fetchChats();
+        };
+
+        socket.on('message:received', handleMessageReceived);
+        socket.on('chat:updated', handleChatUpdated);
+
+        return () => {
+            socket.off('message:received', handleMessageReceived);
+            socket.off('chat:updated', handleChatUpdated);
+        };
+    }, [socket, connected]);
 
     const fetchConsultations = async () => {
         try {
@@ -966,12 +1009,21 @@ export function PatientDashboard() {
                             </button>
                             <button
                                 onClick={() => navigate('/dashboard/pharmacy')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'pharmacy'
+                                className={`inline-flex items-center whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'pharmacy'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Pharmacy Chat
+                                {(() => {
+                                    // Calculate total unread messages from all pharmacy chats
+                                    const totalUnread = chats.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0);
+                                    return totalUnread > 0 ? (
+                                        <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                            {totalUnread}
+                                        </span>
+                                    ) : null;
+                                })()}
                             </button>
                             <button
                                 onClick={() => navigate('/dashboard/profile')}
@@ -1270,14 +1322,30 @@ export function PatientDashboard() {
                                                             </div>
                                                             <div className="flex flex-col space-y-2 ml-4">
                                                                 <Button
-                                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white relative"
                                                                     onClick={() => {
+                                                                        console.log('🏥 Pharmacy selected:', pharmacy);
+                                                                        console.log('🆔 Pharmacy userId:', pharmacy.userId);
+                                                                        console.log('🆔 Pharmacy userId._id:', pharmacy.userId?._id);
                                                                         setSelectedPharmacy(pharmacy);
                                                                         setPharmacyDialog(true);
                                                                     }}
                                                                 >
                                                                     <MessageCircle className="h-4 w-4 mr-2" />
-                                                                    Start Chat
+                                                                    Chat
+                                                                    {(() => {
+                                                                        // Find chat with this pharmacy for unread count
+                                                                        const existingChat = chats.find(
+                                                                            chat => chat.pharmacy?._id === pharmacy.userId
+                                                                        );
+                                                                        const unreadCount = existingChat?.unreadCount || 0;
+
+                                                                        return unreadCount > 0 ? (
+                                                                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                                                                {unreadCount}
+                                                                            </span>
+                                                                        ) : null;
+                                                                    })()}
                                                                 </Button>
                                                                 <Button variant="outline" className="border-gray-200">
                                                                     <Phone className="h-4 w-4 mr-2" />
@@ -1524,7 +1592,7 @@ export function PatientDashboard() {
                 <PharmacyChat
                     open={pharmacyDialog}
                     onOpenChange={setPharmacyDialog}
-                    pharmacyId={selectedPharmacy?.userId?._id}
+                    pharmacyId={selectedPharmacy?.userId}
                     pharmacyName={selectedPharmacy?.name}
                     pharmacyImage={selectedPharmacy?.profileImage}
                 />

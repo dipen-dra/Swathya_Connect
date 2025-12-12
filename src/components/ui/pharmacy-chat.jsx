@@ -10,11 +10,11 @@ import { chatAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pharmacyImage }) {
+export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pharmacyImage, chatId: existingChatId }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(false);
-    const [chatId, setChatId] = useState(null);
+    const [chatId, setChatId] = useState(existingChatId || null);
     const [typing, setTyping] = useState(false);
     const { socket, connected } = useSocket();
     const { user } = useAuth();
@@ -30,34 +30,49 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
 
     // Initialize or get existing chat
     useEffect(() => {
-        if (open && pharmacyId) {
+        if (open && (pharmacyId || existingChatId)) {
+            console.log('🔵 Initializing chat:', { pharmacyId, existingChatId });
             initializeChat();
         }
-    }, [open, pharmacyId]);
+    }, [open, pharmacyId, existingChatId]);
 
     const initializeChat = async () => {
         try {
             setLoading(true);
+            let currentChatId = existingChatId;
 
-            // Create or get existing chat
-            const response = await chatAPI.createChat(pharmacyId);
-            const chat = response.data.chat;
-            setChatId(chat._id);
+            // If chatId is provided (pharmacy view), use it directly
+            // Otherwise create/get chat (patient view)
+            if (!existingChatId && pharmacyId) {
+                console.log('📞 Creating/getting chat for pharmacy:', pharmacyId);
+                const response = await chatAPI.createChat(pharmacyId);
+                console.log('✅ Chat response:', response.data);
+                currentChatId = response.data.chat._id;
+                setChatId(currentChatId);
+                console.log('💬 Chat ID set:', currentChatId);
+            } else {
+                console.log('💬 Using existing chat ID:', existingChatId);
+                setChatId(existingChatId);
+            }
 
             // Load messages
-            const messagesResponse = await chatAPI.getChatMessages(chat._id);
+            const messagesResponse = await chatAPI.getChatMessages(currentChatId);
+            console.log('📨 Messages loaded:', messagesResponse.data.messages.length);
             setMessages(messagesResponse.data.messages);
 
             // Join chat room via socket
             if (socket && connected) {
-                socket.emit('chat:join', chat._id);
+                console.log('🔌 Joining chat room via socket');
+                socket.emit('chat:join', currentChatId);
+            } else {
+                console.warn('⚠️ Socket not connected, cannot join room');
             }
 
             // Mark messages as read
-            await chatAPI.markAsRead(chat._id);
+            await chatAPI.markAsRead(currentChatId);
 
         } catch (error) {
-            console.error('Error initializing chat:', error);
+            console.error('❌ Error initializing chat:', error);
             toast.error('Failed to load chat');
         } finally {
             setLoading(false);
@@ -70,6 +85,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
 
         // Listen for new messages
         const handleMessageReceived = (message) => {
+            console.log('📩 Message received:', message);
             setMessages(prev => [...prev, message]);
             scrollToBottom();
 
@@ -118,8 +134,30 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
     };
 
     const handleSendMessage = () => {
-        if (!newMessage.trim() || !socket || !chatId) return;
+        console.log('🔵 Send button clicked!');
+        console.log('📝 Message:', newMessage);
+        console.log('🔌 Socket:', socket ? 'exists' : 'null');
+        console.log('🔗 Connected:', connected);
+        console.log('💬 ChatId:', chatId);
 
+        if (!newMessage.trim()) {
+            console.log('❌ Message is empty');
+            return;
+        }
+
+        if (!socket) {
+            console.log('❌ Socket is null');
+            toast.error('Not connected to chat server');
+            return;
+        }
+
+        if (!chatId) {
+            console.log('❌ ChatId is null');
+            toast.error('Chat not initialized');
+            return;
+        }
+
+        console.log('✅ Sending message via socket...');
         // Emit message via socket
         socket.emit('message:send', {
             chatId,
@@ -226,8 +264,8 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarFallback
                                                         className={`${isOwnMessage
-                                                                ? 'bg-blue-100 text-blue-600'
-                                                                : 'bg-purple-100 text-purple-600'
+                                                            ? 'bg-blue-100 text-blue-600'
+                                                            : 'bg-purple-100 text-purple-600'
                                                             }`}
                                                     >
                                                         {isOwnMessage ? 'You' : pharmacyName?.charAt(0) || 'P'}
@@ -239,8 +277,8 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                 >
                                                     <div
                                                         className={`inline-block px-4 py-2 rounded-lg ${isOwnMessage
-                                                                ? 'bg-blue-600 text-white'
-                                                                : 'bg-gray-100 text-gray-900'
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'bg-gray-100 text-gray-900'
                                                             }`}
                                                     >
                                                         <p className="text-sm break-words">{message.content}</p>
@@ -285,6 +323,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                 disabled={!newMessage.trim() || !connected}
                                 className="bg-purple-600 hover:bg-purple-700"
                                 size="icon"
+                                type="button"
                             >
                                 <Send className="h-4 w-4" />
                             </Button>
