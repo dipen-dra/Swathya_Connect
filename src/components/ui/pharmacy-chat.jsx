@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Send, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, Loader2, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { useSocket } from '@/contexts/SocketContext';
 import { chatAPI } from '@/services/api';
 import { toast } from 'sonner';
@@ -16,10 +16,13 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
     const [loading, setLoading] = useState(false);
     const [chatId, setChatId] = useState(existingChatId || null);
     const [typing, setTyping] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [filePreview, setFilePreview] = useState(null);
     const { socket, connected } = useSocket();
     const { user } = useAuth();
     const scrollRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Helper function to get full image URL
     const getImageUrl = (imagePath) => {
@@ -128,9 +131,11 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
     }, [messages]);
 
     const scrollToBottom = () => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
+        setTimeout(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+        }, 100);
     };
 
     const handleSendMessage = () => {
@@ -198,6 +203,104 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
             handleSendMessage();
         }
     };
+
+    // File handling functions
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('File size must be less than 10MB');
+            return;
+        }
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('File type not supported. Please upload images, PDFs, or Word documents.');
+            return;
+        }
+
+        setSelectedFile(file);
+
+        // Create preview for images
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFilePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setFilePreview(null);
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setFilePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+
+    const handleSendWithFile = async () => {
+        if (!selectedFile && !newMessage.trim()) return;
+        if (!socket || !chatId) {
+            toast.error('Chat not initialized');
+            return;
+        }
+
+        try {
+            let messageType = 'text';
+            let attachment = null;
+
+            // Upload file if selected
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                toast.loading('Uploading file...');
+                const uploadResponse = await chatAPI.uploadFile(formData);
+                toast.dismiss();
+
+                if (uploadResponse.data.success) {
+                    attachment = uploadResponse.data.file;
+                    messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
+                    toast.success('File uploaded successfully');
+                } else {
+                    throw new Error('File upload failed');
+                }
+            }
+
+            // Send message via socket
+            const messageContent = newMessage.trim() || (attachment ? attachment.filename : '');
+
+            socket.emit('message:send', {
+                chatId,
+                content: messageContent,
+                type: messageType,
+                attachment: attachment
+            });
+
+            // Clear inputs
+            setNewMessage('');
+            handleRemoveFile();
+
+            // Stop typing indicator
+            socket.emit('typing:stop', { chatId });
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+        } catch (error) {
+            console.error('Error sending message with file:', error);
+            toast.error('Failed to send message');
+        }
+    };
+
+
 
     const formatTime = (date) => {
         return new Date(date).toLocaleTimeString('en-US', {
@@ -281,7 +384,38 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                             : 'bg-gray-100 text-gray-900'
                                                             }`}
                                                     >
-                                                        <p className="text-sm break-words">{message.content}</p>
+                                                        {/* Image Attachment */}
+                                                        {message.type === 'image' && message.attachment?.url && (
+                                                            <div className="mb-2">
+                                                                <img
+                                                                    src={`http://localhost:5000${message.attachment.url}`}
+                                                                    alt={message.attachment.filename}
+                                                                    className="max-w-full max-h-64 rounded cursor-pointer"
+                                                                    onClick={() => window.open(`http://localhost:5000${message.attachment.url}`, '_blank')}
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {/* File Attachment */}
+                                                        {message.type === 'file' && message.attachment?.url && (
+                                                            <a
+                                                                href={`http://localhost:5000${message.attachment.url}`}
+                                                                download={message.attachment.filename}
+                                                                className={`flex items-center space-x-2 mb-2 p-2 rounded ${isOwnMessage ? 'bg-blue-700' : 'bg-gray-200'
+                                                                    }`}
+                                                            >
+                                                                <FileText className="h-5 w-5" />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium truncate">{message.attachment.filename}</p>
+                                                                    <p className="text-xs opacity-75">{(message.attachment.size / 1024).toFixed(2)} KB</p>
+                                                                </div>
+                                                            </a>
+                                                        )}
+
+                                                        {/* Text Content */}
+                                                        {message.content && (
+                                                            <p className="text-sm break-words">{message.content}</p>
+                                                        )}
                                                     </div>
                                                     <p className="text-xs text-gray-500 mt-1 px-1">
                                                         {formatTime(message.createdAt)}
@@ -309,7 +443,57 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                             </div>
                         </ScrollArea>
 
+                        {/* File Preview */}
+                        {selectedFile && (
+                            <div className="px-6 py-3 border-t bg-gray-50">
+                                <div className="flex items-center justify-between bg-white border rounded-lg p-3">
+                                    <div className="flex items-center space-x-3">
+                                        {filePreview ? (
+                                            <img src={filePreview} alt="Preview" className="h-12 w-12 object-cover rounded" />
+                                        ) : (
+                                            <div className="h-12 w-12 bg-gray-100 rounded flex items-center justify-center">
+                                                <FileText className="h-6 w-6 text-gray-600" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                                            <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={handleRemoveFile}
+                                        className="text-gray-400 hover:text-gray-600"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Input Area */}
                         <div className="flex items-center space-x-2 px-6 py-4 border-t bg-gray-50">
+                            {/* Hidden File Input */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*,.pdf,.doc,.docx"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
+
+                            {/* Attach File Button */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={!connected}
+                                className="text-gray-500 hover:text-purple-600"
+                            >
+                                <Paperclip className="h-5 w-5" />
+                            </Button>
+
                             <Input
                                 placeholder="Type your message..."
                                 value={newMessage}
@@ -319,8 +503,8 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                 className="flex-1 bg-white"
                             />
                             <Button
-                                onClick={handleSendMessage}
-                                disabled={!newMessage.trim() || !connected}
+                                onClick={selectedFile ? handleSendWithFile : handleSendMessage}
+                                disabled={(!newMessage.trim() && !selectedFile) || !connected}
                                 className="bg-purple-600 hover:bg-purple-700"
                                 size="icon"
                                 type="button"

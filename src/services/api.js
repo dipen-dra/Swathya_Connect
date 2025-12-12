@@ -149,7 +149,10 @@ export const chatAPI = {
     getChats: () => api.get('/chats'),
     getChatMessages: (chatId) => api.get(`/chats/${chatId}/messages`),
     createChat: (pharmacyId) => api.post('/chats', { pharmacyId }),
-    markAsRead: (chatId) => api.put(`/chats/${chatId}/read`)
+    markAsRead: (chatId) => api.put(`/chats/${chatId}/read`),
+    uploadFile: (formData) => api.post('/chats/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
 };
 
 export default api;
