@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, X, FileImage } from 'lucide-react';
+import { Upload, X, FileImage, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { medicineOrderAPI } from '@/services/api';
 
@@ -14,6 +14,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState('');
     const [loading, setLoading] = useState(false);
+    const [fetchingLocation, setFetchingLocation] = useState(false);
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -44,6 +45,60 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
     const handleRemoveFile = () => {
         setPrescriptionFile(null);
         setPrescriptionPreview(null);
+    };
+
+    const fetchCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setFetchingLocation(true);
+        toast.info('Fetching your location...');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    // Use OpenStreetMap Nominatim API for reverse geocoding
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.display_name) {
+                        setDeliveryAddress(data.display_name);
+                        toast.success('Location fetched successfully!');
+                    } else {
+                        toast.error('Could not fetch address from location');
+                    }
+                } catch (error) {
+                    console.error('Error fetching address:', error);
+                    toast.error('Failed to fetch address');
+                } finally {
+                    setFetchingLocation(false);
+                }
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                setFetchingLocation(false);
+
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        toast.error('Location permission denied');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        toast.error('Location information unavailable');
+                        break;
+                    case error.TIMEOUT:
+                        toast.error('Location request timed out');
+                        break;
+                    default:
+                        toast.error('Failed to get location');
+                }
+            }
+        );
     };
 
     const handleSubmit = async (e) => {
@@ -91,7 +146,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg bg-white">
                 <DialogHeader>
                     <DialogTitle>Request Medicine</DialogTitle>
                 </DialogHeader>
@@ -153,7 +208,20 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
 
                     {/* Delivery Address */}
                     <div className="space-y-2">
-                        <Label htmlFor="deliveryAddress">Delivery Address *</Label>
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="deliveryAddress">Delivery Address *</Label>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={fetchCurrentLocation}
+                                disabled={fetchingLocation}
+                                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            >
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {fetchingLocation ? 'Fetching...' : 'Use Current Location'}
+                            </Button>
+                        </div>
                         <Textarea
                             id="deliveryAddress"
                             placeholder="Enter your complete delivery address"
