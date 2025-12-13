@@ -257,7 +257,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                             disabled={loading}
                         >
                             {loading ? 'Uploading...' : 'Submit Request'}
