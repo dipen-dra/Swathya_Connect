@@ -89,6 +89,7 @@ export default function PharmacyDashboard() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [verifyDialog, setVerifyDialog] = useState(false);
     const [rejectDialog, setRejectDialog] = useState(false);
+    const [orderFilterTab, setOrderFilterTab] = useState('all'); // all, pending, awaiting, paid, delivered
 
 
     // Update active tab when URL changes
@@ -586,47 +587,70 @@ export default function PharmacyDashboard() {
                                     <p className="text-sm text-gray-600">Manage prescription orders from patients</p>
                                 </div>
 
-                                {/* Filter Buttons */}
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        onClick={() => fetchMedicineOrders()}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        All Orders
-                                    </Button>
-                                    <Button
-                                        onClick={() => fetchMedicineOrders('pending_verification')}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                                    >
-                                        Pending Verification
-                                    </Button>
-                                    <Button
-                                        onClick={() => fetchMedicineOrders('awaiting_payment')}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                                    >
-                                        Awaiting Payment
-                                    </Button>
-                                    <Button
-                                        onClick={() => fetchMedicineOrders('paid')}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                                    >
-                                        Paid
-                                    </Button>
-                                    <Button
-                                        onClick={() => fetchMedicineOrders('delivered')}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-green-300 text-green-700 hover:bg-green-50"
-                                    >
-                                        Delivered
-                                    </Button>
+                                {/* Order Status Tabs */}
+                                <div className="border-b border-gray-200">
+                                    <div className="flex space-x-8">
+                                        <button
+                                            onClick={() => {
+                                                setOrderFilterTab('all');
+                                                fetchMedicineOrders();
+                                            }}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'all'
+                                                    ? 'border-purple-600 text-purple-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            All Orders
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setOrderFilterTab('pending');
+                                                fetchMedicineOrders('pending_verification');
+                                            }}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'pending'
+                                                    ? 'border-yellow-600 text-yellow-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Pending Verification
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setOrderFilterTab('awaiting');
+                                                fetchMedicineOrders('awaiting_payment');
+                                            }}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'awaiting'
+                                                    ? 'border-orange-600 text-orange-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Awaiting Payment
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setOrderFilterTab('paid');
+                                                fetchMedicineOrders('paid');
+                                            }}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'paid'
+                                                    ? 'border-blue-600 text-blue-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Paid
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setOrderFilterTab('delivered');
+                                                fetchMedicineOrders('delivered');
+                                            }}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'delivered'
+                                                    ? 'border-green-600 text-green-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Delivered
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Orders List */}
