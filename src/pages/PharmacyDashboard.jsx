@@ -657,10 +657,7 @@ export default function PharmacyDashboard() {
                                 <div className="border-b border-gray-200">
                                     <div className="flex space-x-8">
                                         <button
-                                            onClick={() => {
-                                                setOrderFilterTab('all');
-                                                fetchMedicineOrders();
-                                            }}
+                                            onClick={() => setOrderFilterTab('all')}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'all'
                                                 ? 'border-purple-600 text-purple-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -669,10 +666,7 @@ export default function PharmacyDashboard() {
                                             All Orders
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setOrderFilterTab('pending');
-                                                fetchMedicineOrders('pending_verification');
-                                            }}
+                                            onClick={() => setOrderFilterTab('pending')}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'pending'
                                                 ? 'border-purple-600 text-purple-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -681,10 +675,7 @@ export default function PharmacyDashboard() {
                                             Pending Verification
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setOrderFilterTab('awaiting');
-                                                fetchMedicineOrders('awaiting_payment');
-                                            }}
+                                            onClick={() => setOrderFilterTab('awaiting')}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'awaiting'
                                                 ? 'border-purple-600 text-purple-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -693,10 +684,7 @@ export default function PharmacyDashboard() {
                                             Awaiting Payment
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setOrderFilterTab('paid');
-                                                fetchMedicineOrders('paid');
-                                            }}
+                                            onClick={() => setOrderFilterTab('paid')}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'paid'
                                                 ? 'border-purple-600 text-purple-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -705,10 +693,7 @@ export default function PharmacyDashboard() {
                                             Paid
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setOrderFilterTab('delivered');
-                                                fetchMedicineOrders('delivered');
-                                            }}
+                                            onClick={() => setOrderFilterTab('delivered')}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'delivered'
                                                 ? 'border-purple-600 text-purple-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
