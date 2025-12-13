@@ -596,8 +596,8 @@ export default function PharmacyDashboard() {
                                                 fetchMedicineOrders();
                                             }}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'all'
-                                                    ? 'border-purple-600 text-purple-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                         >
                                             All Orders
@@ -608,8 +608,8 @@ export default function PharmacyDashboard() {
                                                 fetchMedicineOrders('pending_verification');
                                             }}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'pending'
-                                                    ? 'border-yellow-600 text-yellow-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                         >
                                             Pending Verification
@@ -620,8 +620,8 @@ export default function PharmacyDashboard() {
                                                 fetchMedicineOrders('awaiting_payment');
                                             }}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'awaiting'
-                                                    ? 'border-orange-600 text-orange-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                         >
                                             Awaiting Payment
@@ -632,8 +632,8 @@ export default function PharmacyDashboard() {
                                                 fetchMedicineOrders('paid');
                                             }}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'paid'
-                                                    ? 'border-blue-600 text-blue-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                         >
                                             Paid
@@ -644,8 +644,8 @@ export default function PharmacyDashboard() {
                                                 fetchMedicineOrders('delivered');
                                             }}
                                             className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'delivered'
-                                                    ? 'border-green-600 text-green-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                         >
                                             Delivered
