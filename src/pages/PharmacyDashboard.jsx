@@ -108,11 +108,16 @@ export default function PharmacyDashboard() {
         navigate(`/pharmacy-dashboard/${newTab}`);
     };
 
+
+    // Fetch medicine orders on mount (needed for analytics which are always visible)
+    useEffect(() => {
+        fetchMedicineOrders();
+    }, []);
+
+    // Fetch inventory when switching to inventory tab
     useEffect(() => {
         if (activeTab === 'inventory') {
             fetchInventory();
-        } else if (activeTab === 'orders') {
-            fetchMedicineOrders();
         }
     }, [activeTab]);
 
