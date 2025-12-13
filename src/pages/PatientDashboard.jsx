@@ -51,6 +51,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
+import { PharmacyPaymentDialog } from '@/components/ui/pharmacy-payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
@@ -104,6 +105,7 @@ export function PatientDashboard() {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [consultationDialog, setConsultationDialog] = useState(false);
     const [paymentDialog, setPaymentDialog] = useState(false);
+    const [pharmacyPaymentDialog, setPharmacyPaymentDialog] = useState(false);
     const [pendingBooking, setPendingBooking] = useState(null);
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
     const [selectedPharmacy, setSelectedPharmacy] = useState(null);
@@ -1510,9 +1512,10 @@ export function PatientDashboard() {
                                                                         orderId: order._id,
                                                                         amount: order.totalAmount,
                                                                         pharmacyName: order.pharmacyId?.fullName,
+                                                                        medicineCount: order.medicines?.length,
                                                                         orderDetails: order
                                                                     });
-                                                                    setPaymentDialog(true);
+                                                                    setPharmacyPaymentDialog(true);
                                                                 }}
                                                             >
                                                                 Pay Now
@@ -1752,6 +1755,58 @@ export function PatientDashboard() {
                                 console.error('Failed to cancel consultation:', error);
                             }
                         }
+                        addNotification({
+                            type: 'error',
+                            title: 'Payment Failed',
+                            message: errorMessage || 'Payment could not be processed. Please try again.'
+                        });
+                    }}
+                />
+
+                {/* Pharmacy Payment Dialog */}
+                <PharmacyPaymentDialog
+                    open={pharmacyPaymentDialog}
+                    onOpenChange={(isOpen) => {
+                        setPharmacyPaymentDialog(isOpen);
+                        if (!isOpen) {
+                            setPendingBooking(null);
+                        }
+                    }}
+                    orderDetails={pendingBooking}
+                    onPaymentSuccess={async (paymentMethod, paymentData) => {
+                        try {
+                            // Handle medicine order payment
+                            const transactionId = paymentData?.paymentToken || `TXN-${Date.now()}`;
+
+                            await medicineOrderAPI.confirmPayment(pendingBooking.orderId, {
+                                paymentMethod,
+                                transactionId
+                            });
+
+                            // Refresh orders to show updated status
+                            await fetchMedicineOrders();
+
+                            setPharmacyPaymentDialog(false);
+                            setPendingBooking(null);
+
+                            // Show success message
+                            addNotification({
+                                type: 'success',
+                                title: 'Payment Successful!',
+                                message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                            });
+
+                            toast.success('Payment successful! Order is being prepared.');
+                        } catch (error) {
+                            console.error('Error after payment success:', error);
+                            addNotification({
+                                type: 'error',
+                                title: 'Error',
+                                message: 'Payment was successful but failed to update order status. Please contact support.'
+                            });
+                        }
+                    }}
+                    onPaymentError={(errorMessage) => {
                         addNotification({
                             type: 'error',
                             title: 'Payment Failed',
