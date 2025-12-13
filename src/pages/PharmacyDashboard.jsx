@@ -722,7 +722,7 @@ export default function PharmacyDashboard() {
                                                                 <>
                                                                     <Button
                                                                         size="sm"
-                                                                        className="bg-green-600 hover:bg-green-700"
+                                                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md transition-all"
                                                                         onClick={() => {
                                                                             setSelectedOrder(order);
                                                                             setVerifyDialog(true);
@@ -733,7 +733,7 @@ export default function PharmacyDashboard() {
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        className="border-red-300 text-red-600 hover:bg-red-50"
+                                                                        className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm hover:shadow-md transition-all"
                                                                         onClick={() => {
                                                                             setSelectedOrder(order);
                                                                             setRejectDialog(true);
@@ -746,7 +746,7 @@ export default function PharmacyDashboard() {
                                                             {(order.status === 'paid' || order.status === 'preparing' || order.status === 'ready_for_delivery') && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="bg-blue-600 hover:bg-blue-700"
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all"
                                                                     onClick={async () => {
                                                                         const nextStatus =
                                                                             order.status === 'paid' ? 'preparing' :
@@ -766,7 +766,11 @@ export default function PharmacyDashboard() {
                                                                             'Out for Delivery'}
                                                                 </Button>
                                                             )}
-                                                            <Button variant="outline" size="sm">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow-md transition-all"
+                                                            >
                                                                 View Details
                                                             </Button>
                                                         </div>
