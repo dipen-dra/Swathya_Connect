@@ -150,7 +150,8 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
         if (selectedPayment === 'khalti') {
             handleKhaltiPayment();
         } else if (selectedPayment === 'esewa') {
-            handleEsewaPayment();
+            // eSewa for medicine orders not yet implemented on backend
+            onPaymentError('eSewa payment for medicine orders is coming soon. Please use Khalti for now.');
         }
     };
 

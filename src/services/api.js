@@ -111,6 +111,7 @@ export const paymentAPI = {
     initiateKhaltiPayment: (consultationId) => api.post('/payment/khalti/initiate', { consultationId }),
     verifyKhaltiPayment: (pidx, consultationId) => api.post('/payment/khalti/verify', { pidx, consultationId }),
     initiateEsewaPayment: (consultationId) => api.post('/payment/esewa/initiate', { consultationId }),
+    initiateEsewaMedicine: (orderId) => api.post('/payment/esewa/initiate-medicine', { orderId }),
     verifyEsewaPayment: (data) => api.post('/payment/esewa/verify', data)
 };
 
