@@ -1957,8 +1957,8 @@ export function PatientDashboard() {
                                                             <td className="px-4 py-2 text-sm">{med.name}</td>
                                                             <td className="px-4 py-2 text-sm">{med.dosage}</td>
                                                             <td className="px-4 py-2 text-sm">{med.quantity}</td>
-                                                            <td className="px-4 py-2 text-sm">NPR {med.price}</td>
-                                                            <td className="px-4 py-2 text-sm font-semibold">NPR {med.price * med.quantity}</td>
+                                                            <td className="px-4 py-2 text-sm">NPR {med.pricePerUnit}</td>
+                                                            <td className="px-4 py-2 text-sm font-semibold">NPR {med.pricePerUnit * med.quantity}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
