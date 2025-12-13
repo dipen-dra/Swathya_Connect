@@ -123,6 +123,14 @@ export default function App() {
                       }
                     />
                     <Route
+                      path="/dashboard/medicine-orders"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/dashboard/profile"
                       element={
                         <ProtectedRoute allowedRoles={['patient']}>
