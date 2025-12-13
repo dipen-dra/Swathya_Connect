@@ -20,9 +20,10 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            toast.error('Please upload an image file');
+        // Validate file type - accept images and PDFs
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Please upload an image (PNG, JPG, WEBP) or PDF file');
             return;
         }
 
@@ -34,12 +35,17 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
 
         setPrescriptionFile(file);
 
-        // Create preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setPrescriptionPreview(reader.result);
-        };
-        reader.readAsDataURL(file);
+        // Create preview only for images
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPrescriptionPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // For PDFs, set preview to null
+            setPrescriptionPreview(null);
+        }
     };
 
     const handleRemoveFile = () => {
@@ -165,7 +171,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
                                 <input
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,.pdf,application/pdf"
                                     onChange={handleFileSelect}
                                     className="hidden"
                                     id="prescription-upload"
@@ -173,7 +179,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
                                 <label htmlFor="prescription-upload" className="cursor-pointer">
                                     <Upload className="h-10 w-10 text-gray-400 mx-auto mb-2" />
                                     <p className="text-sm text-gray-600">Click to upload prescription</p>
-                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (Max 5MB)</p>
+                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP, PDF (Max 5MB)</p>
                                 </label>
                             </div>
                         ) : (
