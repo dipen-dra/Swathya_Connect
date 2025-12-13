@@ -120,6 +120,8 @@ export function PatientDashboard() {
     const [prescriptionConsultationId, setPrescriptionConsultationId] = useState(null);
     const [medicineOrders, setMedicineOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
+    const [orderDetailsDialog, setOrderDetailsDialog] = useState(false);
+    const [selectedMedicineOrder, setSelectedMedicineOrder] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -1500,7 +1502,7 @@ export function PatientDashboard() {
                                                         {order.status === 'awaiting_payment' && (
                                                             <Button
                                                                 size="sm"
-                                                                className="bg-purple-600 hover:bg-purple-700"
+                                                                className="bg-purple-600 hover:bg-purple-700 text-white"
                                                                 onClick={() => {
                                                                     setPendingBooking({
                                                                         type: 'medicine_order',
@@ -1515,7 +1517,14 @@ export function PatientDashboard() {
                                                                 Pay Now
                                                             </Button>
                                                         )}
-                                                        <Button variant="outline" size="sm">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setSelectedMedicineOrder(order);
+                                                                setOrderDetailsDialog(true);
+                                                            }}
+                                                        >
                                                             View Details
                                                         </Button>
                                                     </div>
@@ -1861,6 +1870,139 @@ export function PatientDashboard() {
                     onOpenChange={setPrescriptionDialog}
                     consultationId={prescriptionConsultationId}
                 />
+
+                {/* Medicine Order Details Dialog */}
+                <Dialog open={orderDetailsDialog} onOpenChange={setOrderDetailsDialog}>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+                        <DialogHeader>
+                            <DialogTitle>Order Details</DialogTitle>
+                        </DialogHeader>
+
+                        {selectedMedicineOrder && (
+                            <div className="space-y-6 py-4">
+                                {/* Order Info */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Order ID</p>
+                                        <p className="font-semibold">{selectedMedicineOrder._id}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Status</p>
+                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedMedicineOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
+                                                selectedMedicineOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                                    selectedMedicineOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                        selectedMedicineOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {selectedMedicineOrder.status.replace(/_/g, ' ').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Pharmacy</p>
+                                        <p className="font-semibold">{selectedMedicineOrder.pharmacyId?.fullName || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Order Date</p>
+                                        <p className="font-semibold">{new Date(selectedMedicineOrder.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+
+                                {/* Prescription */}
+                                {selectedMedicineOrder.prescriptionImage && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
+                                        {selectedMedicineOrder.prescriptionImage.toLowerCase().endsWith('.pdf') ? (
+                                            <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                                                <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
+                                                <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
+                                                <a
+                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                                >
+                                                    <Download className="h-4 w-4 mr-2" />
+                                                    Download Prescription
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                alt="Prescription"
+                                                className="max-w-full h-auto rounded-lg border"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Medicines */}
+                                {selectedMedicineOrder.medicines && selectedMedicineOrder.medicines.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Medicines</h4>
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Medicine</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Dosage</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Price</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {selectedMedicineOrder.medicines.map((med, idx) => (
+                                                        <tr key={idx}>
+                                                            <td className="px-4 py-2 text-sm">{med.name}</td>
+                                                            <td className="px-4 py-2 text-sm">{med.dosage}</td>
+                                                            <td className="px-4 py-2 text-sm">{med.quantity}</td>
+                                                            <td className="px-4 py-2 text-sm">NPR {med.price}</td>
+                                                            <td className="px-4 py-2 text-sm font-semibold">NPR {med.price * med.quantity}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Bill Summary */}
+                                {selectedMedicineOrder.totalAmount > 0 && (
+                                    <div className="border-t pt-4">
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Subtotal</span>
+                                                <span className="font-semibold">NPR {selectedMedicineOrder.subtotal || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Delivery Charges</span>
+                                                <span className="font-semibold">NPR {selectedMedicineOrder.deliveryCharges || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                                <span>Total Amount</span>
+                                                <span className="text-purple-600">NPR {selectedMedicineOrder.totalAmount}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Delivery Address */}
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                                    <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedMedicineOrder.deliveryAddress}</p>
+                                </div>
+
+                                {/* Delivery Notes */}
+                                {selectedMedicineOrder.deliveryNotes && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Delivery Notes</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedMedicineOrder.deliveryNotes}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div >
         </div >
     );
