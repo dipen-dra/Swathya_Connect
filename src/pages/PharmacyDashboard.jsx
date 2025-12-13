@@ -152,6 +152,53 @@ export default function PharmacyDashboard() {
         }
     };
 
+    // Calculate stats from medicine orders
+    useEffect(() => {
+        if (medicineOrders.length > 0) {
+            // Total orders (all orders)
+            const totalOrders = medicineOrders.length;
+
+            // Pending orders (pending_verification status)
+            const pendingOrders = medicineOrders.filter(
+                order => order.status === 'pending_verification'
+            ).length;
+
+            // This month revenue (sum of paid orders from this month)
+            const now = new Date();
+            const thisMonthRevenue = medicineOrders
+                .filter(order => {
+                    const orderDate = new Date(order.paidAt || order.createdAt);
+                    return (
+                        order.paymentStatus === 'paid' &&
+                        orderDate.getMonth() === now.getMonth() &&
+                        orderDate.getFullYear() === now.getFullYear()
+                    );
+                })
+                .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+            // Active customers (unique patients who have placed orders)
+            const uniquePatients = new Set(
+                medicineOrders.map(order => order.patientId?._id || order.patientId)
+            );
+            const activeCustomers = uniquePatients.size;
+
+            setStats({
+                totalOrders,
+                pendingOrders,
+                thisMonthRevenue,
+                activeCustomers
+            });
+        } else {
+            // Reset stats if no orders
+            setStats({
+                totalOrders: 0,
+                pendingOrders: 0,
+                thisMonthRevenue: 0,
+                activeCustomers: 0
+            });
+        }
+    }, [medicineOrders]);
+
     const reduceInventoryStock = (medicines) => {
         setInventory(prevInventory => {
             return prevInventory.map(item => {
