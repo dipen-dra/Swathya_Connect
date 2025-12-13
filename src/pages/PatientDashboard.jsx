@@ -85,6 +85,7 @@ export function PatientDashboard() {
         if (pathname.includes('/doctors')) return 'doctors';
         if (pathname.includes('/consultations')) return 'consultations';
         if (pathname.includes('/pharmacy')) return 'pharmacy';
+        if (pathname.includes('/medicine-orders')) return 'medicine-orders';
         if (pathname.includes('/profile')) return 'profile';
         if (pathname.includes('/health-records')) return 'health-records';
         return 'doctors'; // default tab
