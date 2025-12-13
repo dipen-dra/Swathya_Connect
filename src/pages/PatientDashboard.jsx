@@ -41,7 +41,8 @@ import {
     Edit3,
     Trash2,
     AlertCircle,
-    FileText
+    FileText,
+    Download
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -1889,10 +1890,10 @@ export function PatientDashboard() {
                                     <div>
                                         <p className="text-sm text-gray-600">Status</p>
                                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedMedicineOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
-                                                selectedMedicineOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
-                                                    selectedMedicineOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                                                        selectedMedicineOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                            'bg-gray-100 text-gray-800'
+                                            selectedMedicineOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                                selectedMedicineOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                    selectedMedicineOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                        'bg-gray-100 text-gray-800'
                                             }`}>
                                             {selectedMedicineOrder.status.replace(/_/g, ' ').toUpperCase()}
                                         </span>
