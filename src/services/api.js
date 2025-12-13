@@ -128,9 +128,11 @@ export const documentsAPI = {
 // Prescriptions API
 export const prescriptionsAPI = {
     getPrescriptions: () => api.get('/prescriptions'),
+    getByConsultation: (consultationId) => api.get(`/prescriptions/consultation/${consultationId}`),
     createPrescription: (prescriptionData) => api.post('/prescriptions', prescriptionData),
     updatePrescription: (id, prescriptionData) => api.put(`/prescriptions/${id}`, prescriptionData),
-    deletePrescription: (id) => api.delete(`/prescriptions/${id}`)
+    deletePrescription: (id) => api.delete(`/prescriptions/${id}`),
+    downloadPDF: (id) => api.get(`/prescriptions/${id}/pdf`, { responseType: 'blob' })
 };
 
 // Admin API
