@@ -1512,7 +1512,7 @@ export default function PharmacyDashboard() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Patient Phone</p>
-                                    <p className="font-semibold">{selectedOrder.patientId?.phoneNumber || 'N/A'}</p>
+                                    <p className="font-semibold">{selectedOrder.patientId?.phone || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Order Date</p>
