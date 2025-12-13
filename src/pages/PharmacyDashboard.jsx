@@ -1524,15 +1524,33 @@ export default function PharmacyDashboard() {
                             {selectedOrder.prescriptionImage && (
                                 <div>
                                     <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
-                                    <img
-                                        src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
-                                        alt="Prescription"
-                                        className="max-w-full h-auto rounded-lg border"
-                                        onError={(e) => {
-                                            console.error('Failed to load prescription image:', selectedOrder.prescriptionImage);
-                                            e.target.style.display = 'none';
-                                        }}
-                                    />
+                                    {selectedOrder.prescriptionImage.toLowerCase().endsWith('.pdf') ? (
+                                        // PDF file - show download link
+                                        <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                                            <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
+                                            <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
+                                            <a
+                                                href={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                            >
+                                                <Download className="h-4 w-4 mr-2" />
+                                                Download Prescription
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        // Image file - display inline
+                                        <img
+                                            src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                            alt="Prescription"
+                                            className="max-w-full h-auto rounded-lg border"
+                                            onError={(e) => {
+                                                console.error('Failed to load prescription image:', selectedOrder.prescriptionImage);
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             )}
 
