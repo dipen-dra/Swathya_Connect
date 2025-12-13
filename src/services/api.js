@@ -102,6 +102,7 @@ export const pharmaciesAPI = {
 
 // Stats API
 export const statsAPI = {
+    getDashboardStats: () => api.get('/stats/dashboard'),
     getPatientStats: () => api.get('/stats/patient'),
     getDoctorStats: () => api.get('/stats/doctor')
 };
