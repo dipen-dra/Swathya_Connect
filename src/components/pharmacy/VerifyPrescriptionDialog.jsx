@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, X, ZoomIn } from 'lucide-react';
+import { Plus, X, ZoomIn, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { medicineOrderAPI } from '@/services/api';
 
@@ -96,14 +96,14 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
                     <DialogHeader>
                         <DialogTitle>Verify Prescription & Create Bill</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-6">
                         {/* Patient Info */}
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <div className="p-4 bg-white rounded-lg border border-gray-200">
                             <h3 className="font-semibold text-gray-900 mb-2">Patient Information</h3>
                             <p className="text-sm text-gray-700">Name: {order.patientId?.fullName}</p>
                             <p className="text-sm text-gray-700">Delivery: {order.deliveryAddress}</p>
@@ -112,27 +112,44 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                             )}
                         </div>
 
-                        {/* Prescription Image */}
+                        {/* Prescription */}
                         <div className="space-y-2">
                             <Label>Prescription</Label>
-                            <div className="relative border rounded-lg overflow-hidden">
-                                <img
-                                    src={getPrescriptionUrl(order.prescriptionImage)}
-                                    alt="Prescription"
-                                    className="w-full h-64 object-contain bg-gray-50 cursor-pointer"
-                                    onClick={() => setShowPrescription(true)}
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="absolute top-2 right-2"
-                                    onClick={() => setShowPrescription(true)}
-                                >
-                                    <ZoomIn className="h-4 w-4 mr-1" />
-                                    View Full
-                                </Button>
-                            </div>
-                        </div>
+                            {order.prescriptionImage?.toLowerCase().endsWith('.pdf') ? (
+                                // PDF file - show download button
+                                <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                                    <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
+                                    <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
+                                    <a
+                                        href={getPrescriptionUrl(order.prescriptionImage)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Download Prescription
+                                    </a>
+                                </div>
+                            ) : (
+                                // Image file - display with zoom
+                                <div className="relative border rounded-lg overflow-hidden bg-white">
+                                    <img
+                                        src={getPrescriptionUrl(order.prescriptionImage)}
+                                        alt="Prescription"
+                                        className="w-full h-64 object-contain bg-gray-50 cursor-pointer"
+                                        onClick={() => setShowPrescription(true)}
+                                    />
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="absolute top-2 right-2"
+                                        onClick={() => setShowPrescription(true)}
+                                    >
+                                        <ZoomIn className="h-4 w-4 mr-1" />
+                                        View Full
+                                    </Button>
+                                </div>
+                            )}                        </div>
 
                         {/* Medicines */}
                         <div className="space-y-4">
@@ -145,7 +162,7 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                             </div>
 
                             {medicines.map((medicine, index) => (
-                                <div key={index} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                                <div key={index} className="p-4 border rounded-lg space-y-3 bg-white">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm font-medium text-gray-700">Medicine {index + 1}</span>
                                         {medicines.length > 1 && (
@@ -220,7 +237,7 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                         </div>
 
                         {/* Bill Summary */}
-                        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-2">
+                        <div className="p-4 bg-white rounded-lg border border-gray-200 space-y-2">
                             <h3 className="font-semibold text-gray-900">Bill Summary</h3>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Subtotal:</span>
