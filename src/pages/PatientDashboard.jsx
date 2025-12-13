@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useConsultations } from '@/contexts/ConsultationContext';
+import { useSocket } from '@/contexts/SocketContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,8 @@ import {
     Edit3,
     Trash2,
     AlertCircle,
-    FileText
+    FileText,
+    Download
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -49,12 +51,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
+import { PharmacyPaymentDialog } from '@/components/ui/pharmacy-payment-dialog';
 import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
+import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI } from '@/services/api';
+import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI, medicineOrderAPI } from '@/services/api';
 import Header from '@/components/layout/Header';
 import { useReminders } from '@/contexts/RemindersContext';
 import { prescriptionsAPI } from '@/services/api';
@@ -71,6 +75,7 @@ const getImageUrl = (imagePath) => {
 export function PatientDashboard() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
+    const { socket, connected } = useSocket();
     const { addNotification } = useNotifications();
     const { reminders, createReminder, updateReminder, deleteReminder, toggleReminder } = useReminders();
     const navigate = useNavigate();
@@ -82,6 +87,7 @@ export function PatientDashboard() {
         if (pathname.includes('/doctors')) return 'doctors';
         if (pathname.includes('/consultations')) return 'consultations';
         if (pathname.includes('/pharmacy')) return 'pharmacy';
+        if (pathname.includes('/medicine-orders')) return 'medicine-orders';
         if (pathname.includes('/profile')) return 'profile';
         if (pathname.includes('/health-records')) return 'health-records';
         return 'doctors'; // default tab
@@ -99,10 +105,15 @@ export function PatientDashboard() {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [consultationDialog, setConsultationDialog] = useState(false);
     const [paymentDialog, setPaymentDialog] = useState(false);
+    const [pharmacyPaymentDialog, setPharmacyPaymentDialog] = useState(false);
     const [pendingBooking, setPendingBooking] = useState(null);
     const [pharmacyDialog, setPharmacyDialog] = useState(false);
+    const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+    const [chats, setChats] = useState([]); // Store all patient chats
     const [medicineReminderDialog, setMedicineReminderDialog] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
+    const [requestMedicineDialog, setRequestMedicineDialog] = useState(false);
+    const [selectedPharmacyForMedicine, setSelectedPharmacyForMedicine] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [ratingDialog, setRatingDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
@@ -110,16 +121,49 @@ export function PatientDashboard() {
     const [review, setReview] = useState('');
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [prescriptionConsultationId, setPrescriptionConsultationId] = useState(null);
+    const [medicineOrders, setMedicineOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
+    const [orderDetailsDialog, setOrderDetailsDialog] = useState(false);
+    const [selectedMedicineOrder, setSelectedMedicineOrder] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
     const [pharmacies, setPharmacies] = useState([]);
-    const [stats, setStats] = useState(null);
+    const [stats, setStats] = useState({
+        totalConsultations: 0,
+        upcomingConsultations: 0,
+        completedConsultations: 0
+    });
     const [consultations, setConsultations] = useState([]);
     const [loadingDoctors, setLoadingDoctors] = useState(true);
     const [loadingPharmacies, setLoadingPharmacies] = useState(true);
     const [loadingStats, setLoadingStats] = useState(true);
     const [loadingConsultations, setLoadingConsultations] = useState(true);
+
+    // Fetch chats for unread indicators
+    const fetchChats = async () => {
+        try {
+            const response = await chatAPI.getChats();
+            setChats(response.data.chats || []);
+        } catch (error) {
+            console.error('Error fetching chats:', error);
+        }
+    };
+
+    const fetchMedicineOrders = async () => {
+        try {
+            setLoadingOrders(true);
+            const response = await medicineOrderAPI.getPatientOrders();
+            if (response.data.success) {
+                setMedicineOrders(response.data.orders || []);
+            }
+        } catch (error) {
+            console.error('Error fetching medicine orders:', error);
+            toast.error('Failed to load medicine orders');
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
 
     // Doctor search and filter states
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
@@ -141,8 +185,41 @@ export function PatientDashboard() {
             fetchDoctors();
             fetchPharmacies();
             fetchConsultations();
+            fetchChats(); // Fetch chats for unread indicators
         }
     }, [user]);
+
+    // Listen for real-time chat updates via Socket.IO
+    useEffect(() => {
+        if (!socket || !connected) return;
+
+        const handleMessageReceived = (message) => {
+            console.log('📩 New message received in patient dashboard:', message);
+            // Refresh chats to update unread counts
+            fetchChats();
+        };
+
+        const handleChatUpdated = (data) => {
+            console.log('💬 Chat updated in patient dashboard:', data);
+            // Refresh chats to update unread counts
+            fetchChats();
+        };
+
+        socket.on('message:received', handleMessageReceived);
+        socket.on('chat:updated', handleChatUpdated);
+
+        return () => {
+            socket.off('message:received', handleMessageReceived);
+            socket.off('chat:updated', handleChatUpdated);
+        };
+    }, [socket, connected]);
+
+    // Fetch medicine orders when on medicine-orders tab
+    useEffect(() => {
+        if (activeTab === 'medicine-orders') {
+            fetchMedicineOrders();
+        }
+    }, [activeTab]);
 
     const fetchConsultations = async () => {
         try {
@@ -209,82 +286,39 @@ export function PatientDashboard() {
     };
 
     const fetchDashboardStats = async () => {
+        setLoadingStats(true);
+
+        // Always fetch stats from API to include both consultations and medicine orders
         try {
-            setLoadingStats(true);
-
-            // Calculate stats from consultations data
+            const response = await statsAPI.getDashboardStats();
+            setStats(response.data.data);
+            console.log('📊 Stats fetched from API:', response.data.data);
+        } catch (apiError) {
+            console.error('API stats fetch failed:', apiError);
+            // Fallback: calculate from consultations only if API fails
             if (consultations && consultations.length > 0) {
-                console.log('📊 Calculating stats from consultations:', consultations);
-                console.log('📊 Consultation statuses:', consultations.map(c => ({ id: c._id, status: c.status, doctor: c.doctorName })));
-
-                // Count both 'upcoming' (pending approval) and 'approved' (doctor approved) as upcoming
-                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'approved').length;
+                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'scheduled' || c.status === 'pending').length;
                 const completed = consultations.filter(c => c.status === 'completed').length;
                 const total = consultations.length;
                 const totalSpent = consultations
                     .filter(c => c.paymentStatus === 'paid')
                     .reduce((sum, c) => sum + (c.fee || 0), 0);
 
-                console.log('📊 Stats calculated:', { total, upcoming, completed, totalSpent });
-
-                // Calculate percentage changes (mock data for now - you can calculate real changes later)
-                const calculateChange = (current) => {
-                    if (current === 0) return 0;
-                    // Mock: assume 100% growth if we have data
-                    return current > 0 ? 100 : 0;
-                };
-
                 setStats({
-                    totalConsultations: {
-                        value: total,
-                        change: calculateChange(total),
-                        changeText: 'from last month'
-                    },
-                    upcomingAppointments: {
-                        value: upcoming,
-                        change: calculateChange(upcoming),
-                        changeText: 'from last month'
-                    },
-                    completedConsultations: {
-                        value: completed,
-                        change: calculateChange(completed),
-                        changeText: 'from last month'
-                    },
-                    totalSpent: {
-                        value: totalSpent,
-                        change: calculateChange(totalSpent),
-                        changeText: 'from last month'
-                    }
+                    totalConsultations: { value: total, change: 0, changeText: 'from last month' },
+                    upcomingAppointments: { value: upcoming, change: 0, changeText: 'from last month' },
+                    completedConsultations: { value: completed, change: 0, changeText: 'from last month' },
+                    totalSpent: { value: totalSpent, change: 0, changeText: 'from last month' }
                 });
             } else {
-                console.log('📊 No consultations data, using API fallback');
-                // Only use API fallback if we're sure there are no consultations
-                // Don't call API if consultations is just undefined (still loading)
-                if (consultations && consultations.length === 0) {
-                    try {
-                        const response = await statsAPI.getDashboardStats();
-                        setStats(response.data.data);
-                    } catch (apiError) {
-                        console.error('API fallback failed:', apiError);
-                        // Set default stats
-                        setStats({
-                            totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                            upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
-                            completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                            totalSpent: { value: 0, change: 0, changeText: 'from last month' }
-                        });
-                    }
-                }
+                // Set default stats
+                setStats({
+                    totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                    upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                    completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                    totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+                });
             }
-        } catch (error) {
-            console.error('Failed to fetch dashboard stats:', error);
-            // Set default stats on error
-            setStats({
-                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
-                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
-            });
         } finally {
             setLoadingStats(false);
         }
@@ -965,12 +999,30 @@ export function PatientDashboard() {
                             </button>
                             <button
                                 onClick={() => navigate('/dashboard/pharmacy')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'pharmacy'
+                                className={`inline-flex items-center whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'pharmacy'
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 Pharmacy Chat
+                                {(() => {
+                                    // Calculate total unread messages from all pharmacy chats
+                                    const totalUnread = chats.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0);
+                                    return totalUnread > 0 ? (
+                                        <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                            {totalUnread}
+                                        </span>
+                                    ) : null;
+                                })()}
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/medicine-orders')}
+                                className={`inline-flex items-center whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'medicine-orders'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                Medicine Orders
                             </button>
                             <button
                                 onClick={() => navigate('/dashboard/profile')}
@@ -1268,13 +1320,42 @@ export function PatientDashboard() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex flex-col space-y-2 ml-4">
-                                                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                                                <Button
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white relative"
+                                                                    onClick={() => {
+                                                                        console.log('🏥 Pharmacy selected:', pharmacy);
+                                                                        console.log('🆔 Pharmacy userId:', pharmacy.userId);
+                                                                        console.log('🆔 Pharmacy userId._id:', pharmacy.userId?._id);
+                                                                        setSelectedPharmacy(pharmacy);
+                                                                        setPharmacyDialog(true);
+                                                                    }}
+                                                                >
                                                                     <MessageCircle className="h-4 w-4 mr-2" />
-                                                                    Start Chat
+                                                                    Chat
+                                                                    {(() => {
+                                                                        // Find chat with this pharmacy for unread count
+                                                                        const existingChat = chats.find(
+                                                                            chat => chat.pharmacy?._id === pharmacy.userId
+                                                                        );
+                                                                        const unreadCount = existingChat?.unreadCount || 0;
+
+                                                                        return unreadCount > 0 ? (
+                                                                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                                                                {unreadCount}
+                                                                            </span>
+                                                                        ) : null;
+                                                                    })()}
                                                                 </Button>
-                                                                <Button variant="outline" className="border-gray-200">
-                                                                    <Phone className="h-4 w-4 mr-2" />
-                                                                    Call
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="border-gray-200"
+                                                                    onClick={() => {
+                                                                        setSelectedPharmacyForMedicine(pharmacy);
+                                                                        setRequestMedicineDialog(true);
+                                                                    }}
+                                                                >
+                                                                    <Pill className="h-4 w-4 mr-2" />
+                                                                    Request Medicine
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -1330,6 +1411,105 @@ export function PatientDashboard() {
                             />
                         )
                     }
+
+                    {/* Medicine Orders Tab */}
+                    {activeTab === 'medicine-orders' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Medicine Orders</h2>
+                                <p className="text-sm text-gray-600 mt-1">Track your medicine orders and prescriptions</p>
+                            </div>
+
+                            {loadingOrders ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                    <span className="ml-3 text-gray-600">Loading orders...</span>
+                                </div>
+                            ) : medicineOrders.length > 0 ? (
+                                <div className="space-y-4">
+                                    {medicineOrders.map((order) => (
+                                        <Card key={order._id} className="border border-gray-200">
+                                            <CardContent className="p-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-3 mb-2">
+                                                            <h3 className="font-semibold text-gray-900">
+                                                                Order #{order._id.slice(-6)}
+                                                            </h3>
+                                                            <Badge className={
+                                                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                                    order.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                        order.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-700' :
+                                                                            order.status === 'paid' || order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
+                                                                                'bg-yellow-100 text-yellow-700'
+                                                            }>
+                                                                {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600">
+                                                            Pharmacy: {order.pharmacyId?.fullName || 'Unknown'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {new Date(order.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                        {order.totalAmount > 0 && (
+                                                            <p className="text-sm font-semibold text-gray-900 mt-2">
+                                                                Total: NPR {order.totalAmount}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col space-y-2">
+                                                        {order.status === 'awaiting_payment' && (
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                                                onClick={() => {
+                                                                    setPendingBooking({
+                                                                        type: 'medicine_order',
+                                                                        orderId: order._id,
+                                                                        amount: order.totalAmount,
+                                                                        pharmacyName: order.pharmacyId?.fullName,
+                                                                        medicineCount: order.medicines?.length,
+                                                                        orderDetails: order
+                                                                    });
+                                                                    setPharmacyPaymentDialog(true);
+                                                                }}
+                                                            >
+                                                                Pay Now
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setSelectedMedicineOrder(order);
+                                                                setOrderDetailsDialog(true);
+                                                            }}
+                                                        >
+                                                            View Details
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            ) : (
+                                <Card className="border border-gray-200">
+                                    <CardContent className="p-12 text-center">
+                                        <Pill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Medicine Orders Yet</h3>
+                                        <p className="text-gray-600 mb-4">
+                                            You haven't requested any medicines yet. Visit the Pharmacy Chat tab to request medicines.
+                                        </p>
+                                        <Button onClick={() => navigate('/dashboard/pharmacy')} className="bg-purple-600 hover:bg-purple-700">
+                                            Browse Pharmacies
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div >
+                    )}
 
                     {/* Profile Tab */}
                     {
@@ -1475,18 +1655,44 @@ export function PatientDashboard() {
                     bookingDetails={pendingBooking}
                     onPaymentSuccess={async (paymentMethod, consultationData) => {
                         try {
-                            // Consultation already created, just refresh the list
-                            await fetchConsultations();
+                            // Check if this is a medicine order or consultation
+                            if (pendingBooking?.type === 'medicine_order') {
+                                // Handle medicine order payment - call confirmPayment API
+                                const transactionId = consultationData?.transactionId || `TXN-${Date.now()}`;
 
-                            setPaymentDialog(false);
-                            setPendingBooking(null);
+                                await medicineOrderAPI.confirmPayment(pendingBooking.orderId, {
+                                    paymentMethod,
+                                    transactionId
+                                });
 
-                            // Show success message
-                            addNotification({
-                                type: 'success',
-                                title: 'Booking Confirmed!',
-                                message: `Your consultation with ${pendingBooking?.doctorName} has been successfully booked and paid via ${paymentMethod}.`
-                            });
+                                // Refresh orders to show updated status
+                                await fetchMedicineOrders();
+
+                                setPaymentDialog(false);
+                                setPendingBooking(null);
+
+                                // Show success message
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Payment Successful!',
+                                    message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                                });
+
+                                toast.success('Payment successful! Order is being prepared.');
+                            } else {
+                                // Handle consultation payment
+                                await fetchConsultations();
+
+                                setPaymentDialog(false);
+                                setPendingBooking(null);
+
+                                // Show success message
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Booking Confirmed!',
+                                    message: `Your consultation with ${pendingBooking?.doctorName} has been successfully booked and paid via ${paymentMethod}.`
+                                });
+                            }
                         } catch (error) {
                             console.error('Error after payment success:', error);
                             addNotification({
@@ -1514,9 +1720,62 @@ export function PatientDashboard() {
                     }}
                 />
 
+                {/* Pharmacy Payment Dialog */}
+                <PharmacyPaymentDialog
+                    open={pharmacyPaymentDialog}
+                    onOpenChange={(isOpen) => {
+                        setPharmacyPaymentDialog(isOpen);
+                        if (!isOpen) {
+                            setPendingBooking(null);
+                        }
+                    }}
+                    orderDetails={pendingBooking}
+                    onPaymentSuccess={async (paymentMethod, paymentData) => {
+                        try {
+                            // Handle medicine order payment
+                            const transactionId = paymentData?.paymentToken || `TXN-${Date.now()}`;
+
+                            await medicineOrderAPI.confirmPayment(pendingBooking.orderId, {
+                                paymentMethod,
+                                transactionId
+                            });
+
+                            // Refresh orders to show updated status
+                            await fetchMedicineOrders();
+
+                            setPharmacyPaymentDialog(false);
+                            setPendingBooking(null);
+
+                            // Show success message
+                            addNotification({
+                                type: 'success',
+                                title: 'Payment Successful!',
+                                message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                            });
+                        } catch (error) {
+                            console.error('Error after payment success:', error);
+                            addNotification({
+                                type: 'error',
+                                title: 'Error',
+                                message: 'Payment was successful but failed to update order status. Please contact support.'
+                            });
+                        }
+                    }}
+                    onPaymentError={(errorMessage) => {
+                        addNotification({
+                            type: 'error',
+                            title: 'Payment Failed',
+                            message: errorMessage || 'Payment could not be processed. Please try again.'
+                        });
+                    }}
+                />
+
                 < PharmacyChat
                     open={pharmacyDialog}
                     onOpenChange={setPharmacyDialog}
+                    pharmacyId={selectedPharmacy?.userId}
+                    pharmacyName={selectedPharmacy?.name}
+                    pharmacyImage={selectedPharmacy?.profileImage}
                 />
 
                 <MedicineReminderDialog
@@ -1524,6 +1783,12 @@ export function PatientDashboard() {
                     onOpenChange={setMedicineReminderDialog}
                     onSave={handleSaveMedicineReminder}
                     editingReminder={editingReminder}
+                />
+
+                <RequestMedicineDialog
+                    open={requestMedicineDialog}
+                    onOpenChange={setRequestMedicineDialog}
+                    pharmacy={selectedPharmacyForMedicine}
                 />
 
                 {/* Rating Dialog */}
@@ -1616,6 +1881,139 @@ export function PatientDashboard() {
                     onOpenChange={setPrescriptionDialog}
                     consultationId={prescriptionConsultationId}
                 />
+
+                {/* Medicine Order Details Dialog */}
+                <Dialog open={orderDetailsDialog} onOpenChange={setOrderDetailsDialog}>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+                        <DialogHeader>
+                            <DialogTitle>Order Details</DialogTitle>
+                        </DialogHeader>
+
+                        {selectedMedicineOrder && (
+                            <div className="space-y-6 py-4">
+                                {/* Order Info */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Order ID</p>
+                                        <p className="font-semibold">{selectedMedicineOrder._id}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Status</p>
+                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedMedicineOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
+                                            selectedMedicineOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                                selectedMedicineOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                    selectedMedicineOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {selectedMedicineOrder.status.replace(/_/g, ' ').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Pharmacy</p>
+                                        <p className="font-semibold">{selectedMedicineOrder.pharmacyId?.fullName || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Order Date</p>
+                                        <p className="font-semibold">{new Date(selectedMedicineOrder.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+
+                                {/* Prescription */}
+                                {selectedMedicineOrder.prescriptionImage && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
+                                        {selectedMedicineOrder.prescriptionImage.toLowerCase().endsWith('.pdf') ? (
+                                            <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                                                <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
+                                                <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
+                                                <a
+                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                                >
+                                                    <Download className="h-4 w-4 mr-2" />
+                                                    Download Prescription
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                alt="Prescription"
+                                                className="max-w-full h-auto rounded-lg border"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Medicines */}
+                                {selectedMedicineOrder.medicines && selectedMedicineOrder.medicines.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Medicines</h4>
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Medicine</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Dosage</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Price</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {selectedMedicineOrder.medicines.map((med, idx) => (
+                                                        <tr key={idx}>
+                                                            <td className="px-4 py-2 text-sm">{med.name}</td>
+                                                            <td className="px-4 py-2 text-sm">{med.dosage}</td>
+                                                            <td className="px-4 py-2 text-sm">{med.quantity}</td>
+                                                            <td className="px-4 py-2 text-sm">NPR {med.pricePerUnit}</td>
+                                                            <td className="px-4 py-2 text-sm font-semibold">NPR {med.pricePerUnit * med.quantity}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Bill Summary */}
+                                {selectedMedicineOrder.totalAmount > 0 && (
+                                    <div className="border-t pt-4">
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Subtotal</span>
+                                                <span className="font-semibold">NPR {selectedMedicineOrder.subtotal || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Delivery Charges</span>
+                                                <span className="font-semibold">NPR {selectedMedicineOrder.deliveryCharges || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                                <span>Total Amount</span>
+                                                <span className="text-purple-600">NPR {selectedMedicineOrder.totalAmount}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Delivery Address */}
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                                    <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedMedicineOrder.deliveryAddress}</p>
+                                </div>
+
+                                {/* Delivery Notes */}
+                                {selectedMedicineOrder.deliveryNotes && (
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 mb-2">Delivery Notes</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedMedicineOrder.deliveryNotes}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div >
         </div >
     );

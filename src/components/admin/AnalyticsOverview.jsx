@@ -371,13 +371,6 @@ export default function AnalyticsOverview() {
                                         </span>
                                     </div>
                                 </div>
-                                {analytics.revenue.pharmacies.total === 0 && (
-                                    <div className="mt-3 p-2 bg-purple-100 border border-purple-200 rounded-lg">
-                                        <p className="text-xs text-purple-800 text-center">
-                                            Pharmacy orders coming soon
-                                        </p>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                     </div>

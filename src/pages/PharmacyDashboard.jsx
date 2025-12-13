@@ -29,56 +29,14 @@ import {
     ShoppingCart, Clock, DollarSign, Users, Search,
     MessageSquare, Package, User, Shield, CheckCircle,
     TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut,
-    Upload, FileText, XCircle
+    Upload, FileText, XCircle, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { profileAPI } from '@/services/api';
+import { profileAPI, medicineOrderAPI } from '@/services/api';
+import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
+import { VerifyPrescriptionDialog } from '@/components/pharmacy/VerifyPrescriptionDialog';
+import { RejectPrescriptionDialog } from '@/components/pharmacy/RejectPrescriptionDialog';
 
-// Mock data for testing
-const MOCK_ORDERS = [
-    {
-        _id: '1',
-        orderId: 'ORD-001',
-        patientName: 'Ram Sharma',
-        patientId: { fullName: 'Ram Sharma' },
-        medicines: [
-            { name: 'Paracetamol', dosage: '500mg', quantity: 2 },
-            { name: 'Vitamin C', dosage: '25', quantity: 1 }
-        ],
-        prescriptionRequired: true,
-        totalAmount: 450,
-        status: 'pending',
-        orderDate: new Date().toISOString()
-    },
-    {
-        _id: '2',
-        orderId: 'ORD-002',
-        patientName: 'Sita Poudel',
-        patientId: { fullName: 'Sita Poudel' },
-        medicines: [
-            { name: 'Amoxicillin', dosage: '250mg', quantity: 3 },
-            { name: 'Cough Syrup', quantity: 1 }
-        ],
-        prescriptionRequired: true,
-        totalAmount: 680,
-        status: 'processing',
-        orderDate: new Date(Date.now() - 86400000).toISOString()
-    },
-    {
-        _id: '3',
-        orderId: 'ORD-003',
-        patientName: 'Hari Thapa',
-        patientId: { fullName: 'Hari Thapa' },
-        medicines: [
-            { name: 'Aspirin', dosage: '75mg', quantity: 1 }
-        ],
-        prescriptionRequired: false,
-        totalAmount: 120,
-        status: 'completed',
-        orderDate: new Date(Date.now() - 172800000).toISOString(),
-        completedDate: new Date(Date.now() - 86400000).toISOString()
-    }
-];
 
 export default function PharmacyDashboard() {
     const { user, logout } = useAuth();
@@ -87,13 +45,13 @@ export default function PharmacyDashboard() {
     const { tab } = useParams();
 
     const [activeTab, setActiveTab] = useState(tab || 'orders');
-    const [orders, setOrders] = useState(MOCK_ORDERS); // Use mock data
+    const [orders, setOrders] = useState([]); // Empty - no backend integration yet
     const [inventory, setInventory] = useState([]);
     const [stats, setStats] = useState({
-        totalOrders: 156,
-        pendingOrders: 8,
-        thisMonthRevenue: 45000,
-        activeCustomers: 89
+        totalOrders: 0,
+        pendingOrders: 0,
+        thisMonthRevenue: 0,
+        activeCustomers: 0
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -125,6 +83,16 @@ export default function PharmacyDashboard() {
     const [pharmacyLicenseNumber, setPharmacyLicenseNumber] = useState('');
     const [panNumber, setPanNumber] = useState('');
 
+    // Medicine Orders state
+    const [medicineOrders, setMedicineOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [verifyDialog, setVerifyDialog] = useState(false);
+    const [rejectDialog, setRejectDialog] = useState(false);
+    const [orderFilterTab, setOrderFilterTab] = useState('all'); // all, pending, awaiting, paid, delivered
+    const [viewDetailsDialog, setViewDetailsDialog] = useState(false);
+
+
     // Update active tab when URL changes
     useEffect(() => {
         if (tab) {
@@ -140,6 +108,13 @@ export default function PharmacyDashboard() {
         navigate(`/pharmacy-dashboard/${newTab}`);
     };
 
+
+    // Fetch medicine orders on mount (needed for analytics which are always visible)
+    useEffect(() => {
+        fetchMedicineOrders();
+    }, []);
+
+    // Fetch inventory when switching to inventory tab
     useEffect(() => {
         if (activeTab === 'inventory') {
             fetchInventory();
@@ -167,6 +142,68 @@ export default function PharmacyDashboard() {
             setIsLoading(false);
         }
     };
+
+    const fetchMedicineOrders = async (status = null) => {
+        try {
+            setLoadingOrders(true);
+            const response = await medicineOrderAPI.getPharmacyOrders(status);
+            if (response.data.success) {
+                setMedicineOrders(response.data.orders || []);
+            }
+        } catch (error) {
+            console.error('Error fetching medicine orders:', error);
+            toast.error('Failed to load medicine orders');
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    // Calculate stats from medicine orders
+    useEffect(() => {
+        if (medicineOrders.length > 0) {
+            // Total orders (all orders)
+            const totalOrders = medicineOrders.length;
+
+            // Pending orders (pending_verification status)
+            const pendingOrders = medicineOrders.filter(
+                order => order.status === 'pending_verification'
+            ).length;
+
+            // This month revenue (sum of paid orders from this month)
+            const now = new Date();
+            const thisMonthRevenue = medicineOrders
+                .filter(order => {
+                    const orderDate = new Date(order.paidAt || order.createdAt);
+                    return (
+                        order.paymentStatus === 'paid' &&
+                        orderDate.getMonth() === now.getMonth() &&
+                        orderDate.getFullYear() === now.getFullYear()
+                    );
+                })
+                .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+            // Active customers (unique patients who have placed orders)
+            const uniquePatients = new Set(
+                medicineOrders.map(order => order.patientId?._id || order.patientId)
+            );
+            const activeCustomers = uniquePatients.size;
+
+            setStats({
+                totalOrders,
+                pendingOrders,
+                thisMonthRevenue,
+                activeCustomers
+            });
+        } else {
+            // Reset stats if no orders
+            setStats({
+                totalOrders: 0,
+                pendingOrders: 0,
+                thisMonthRevenue: 0,
+                activeCustomers: 0
+            });
+        }
+    }, [medicineOrders]);
 
     const reduceInventoryStock = (medicines) => {
         setInventory(prevInventory => {
@@ -323,6 +360,24 @@ export default function PharmacyDashboard() {
         item.medicineName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.genericName && item.genericName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
+
+    // Filter medicine orders based on selected tab
+    const filteredMedicineOrders = medicineOrders.filter(order => {
+        switch (orderFilterTab) {
+            case 'all':
+                return true;
+            case 'pending':
+                return order.status === 'pending_verification';
+            case 'awaiting':
+                return order.status === 'awaiting_payment';
+            case 'paid':
+                return order.status === 'paid' || order.status === 'preparing';
+            case 'delivered':
+                return order.status === 'delivered' || order.status === 'out_for_delivery';
+            default:
+                return true;
+        }
+    });
 
     // Verification handlers
     const handleVerificationDocumentChange = (e) => {
@@ -484,10 +539,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Total Orders</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.totalOrders}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+12% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                     <ShoppingCart className="h-6 w-6 text-blue-600" />
@@ -503,10 +554,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Pending Orders</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.pendingOrders}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-amber-600">
-                                        <Clock className="h-3 w-3" />
-                                        <span>Needs attention</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
                                     <Clock className="h-6 w-6 text-amber-600" />
@@ -522,10 +569,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">This Month Revenue</p>
                                     <h3 className="text-3xl font-bold text-gray-900">NPR {stats.thisMonthRevenue.toLocaleString()}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+18% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                                     <DollarSign className="h-6 w-6 text-green-600" />
@@ -541,10 +584,6 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Active Customers</p>
                                     <h3 className="text-3xl font-bold text-gray-900">{stats.activeCustomers}</h3>
-                                    <div className="flex items-center space-x-1 mt-2 text-xs text-green-600">
-                                        <TrendingUp className="h-3 w-3" />
-                                        <span>+5% from last month</span>
-                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
                                     <Users className="h-6 w-6 text-teal-600" />
@@ -585,15 +624,19 @@ export default function PharmacyDashboard() {
                             >
                                 Customer Chat
                             </button>
-                            <button
-                                onClick={() => handleTabChange('verification')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
-                                    ? 'border-deep-blue text-deep-blue'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                            >
-                                Verification
-                            </button>
+                            {/* Verification Tab - Only show if not verified */}
+                            {profile?.verificationStatus !== 'approved' && (
+                                <button
+                                    onClick={() => handleTabChange('verification')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
+                                        ? 'border-purple-500 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        } transition-colors`}
+                                >
+                                    <Shield className="inline h-4 w-4 mr-1" />
+                                    Verification
+                                </button>
+                            )}
                             <button
                                 onClick={() => handleTabChange('profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
@@ -607,120 +650,206 @@ export default function PharmacyDashboard() {
                     </CardHeader>
 
                     <CardContent className="p-6">
-                        {/* Orders Tab */}
+                        {/* Orders Tab - Medicine Orders */}
                         {activeTab === 'orders' && (
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-1">Medicine Orders</h3>
-                                    <p className="text-sm text-gray-600">Manage prescription and over-the-counter medicine orders</p>
+                                    <p className="text-sm text-gray-600">Manage prescription orders from patients</p>
                                 </div>
 
-                                {/* Search */}
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <Input
-                                        placeholder="Search orders..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 border-gray-200"
-                                    />
+                                {/* Order Status Tabs */}
+                                <div className="border-b border-gray-200">
+                                    <div className="flex space-x-8">
+                                        <button
+                                            onClick={() => setOrderFilterTab('all')}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'all'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            All Orders
+                                        </button>
+                                        <button
+                                            onClick={() => setOrderFilterTab('pending')}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'pending'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Pending Verification
+                                        </button>
+                                        <button
+                                            onClick={() => setOrderFilterTab('awaiting')}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'awaiting'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Awaiting Payment
+                                        </button>
+                                        <button
+                                            onClick={() => setOrderFilterTab('paid')}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'paid'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Paid
+                                        </button>
+                                        <button
+                                            onClick={() => setOrderFilterTab('delivered')}
+                                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${orderFilterTab === 'delivered'
+                                                ? 'border-purple-600 text-purple-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            Delivered
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {/* Order Cards */}
-                                <div className="space-y-4">
-                                    {filteredOrders.length === 0 ? (
-                                        <div className="text-center py-12">
-                                            <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                                            <p className="text-gray-600 font-medium">No orders found</p>
-                                            <p className="text-sm text-gray-500 mt-1">Orders from patients will appear here</p>
-                                        </div>
-                                    ) : (
-                                        filteredOrders.map((order) => (
+                                {/* Orders List */}
+                                {loadingOrders ? (
+                                    <div className="flex justify-center items-center py-12">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                        <span className="ml-3 text-gray-600">Loading orders...</span>
+                                    </div>
+                                ) : filteredMedicineOrders.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {filteredMedicineOrders.map((order) => (
                                             <Card key={order._id} className="border border-gray-200 hover:shadow-md transition-shadow">
                                                 <CardContent className="p-6">
                                                     <div className="flex items-start justify-between">
-                                                        <div className="flex items-start space-x-4 flex-1">
-                                                            <Avatar className="h-12 w-12">
-                                                                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white">
-                                                                    {order.patientName?.[0] || 'P'}
-                                                                </AvatarFallback>
-                                                            </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-3 mb-2">
+                                                                <h4 className="font-semibold text-gray-900">
+                                                                    Order #{order._id.slice(-6)}
+                                                                </h4>
+                                                                <Badge className={
+                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                                        order.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                            order.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-700' :
+                                                                                order.status === 'paid' || order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
+                                                                                    'bg-yellow-100 text-yellow-700'
+                                                                }>
+                                                                    {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                </Badge>
+                                                            </div>
 
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-3 mb-2">
-                                                                    <h4 className="font-semibold text-gray-900">{order.patientName}</h4>
-                                                                    <span className="text-sm text-gray-500">Order ID: {order.orderId}</span>
-                                                                    {order.prescriptionRequired && (
-                                                                        <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                                                                            Prescription
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
+                                                            <p className="text-sm text-gray-600 mb-1">
+                                                                Patient: <span className="font-medium">{order.patientId?.fullName || 'Unknown'}</span>
+                                                            </p>
 
-                                                                <div className="mb-3">
-                                                                    <p className="text-sm text-gray-600 font-medium mb-1">Medicines:</p>
-                                                                    <ul className="space-y-1">
-                                                                        {order.medicines.map((med, idx) => (
-                                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                                • {med.name} {med.dosage && `${med.dosage}`} {med.quantity > 1 && `x${med.quantity}`}
-                                                                            </li>
+                                                            <p className="text-sm text-gray-600 mb-2">
+                                                                Delivery: {order.deliveryAddress}
+                                                            </p>
+
+                                                            {order.medicines && order.medicines.length > 0 && (
+                                                                <div className="mb-2">
+                                                                    <p className="text-xs text-gray-500 mb-1">Medicines:</p>
+                                                                    <div className="flex flex-wrap gap-1">
+                                                                        {order.medicines.slice(0, 3).map((med, idx) => (
+                                                                            <Badge key={idx} variant="outline" className="text-xs">
+                                                                                {med.name} {med.dosage}
+                                                                            </Badge>
                                                                         ))}
-                                                                    </ul>
+                                                                        {order.medicines.length > 3 && (
+                                                                            <Badge variant="outline" className="text-xs">
+                                                                                +{order.medicines.length - 3} more
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
+                                                            )}
 
-                                                                <div className="flex items-center space-x-6 text-sm text-gray-600">
-                                                                    <div>
-                                                                        <span className="font-medium text-gray-700">Order Date:</span>
-                                                                        <span className="ml-2">{new Date(order.orderDate).toLocaleDateString()}</span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="font-medium text-gray-700">Total Amount:</span>
-                                                                        <span className="ml-2 text-teal-600 font-semibold">NPR {order.totalAmount}</span>
-                                                                    </div>
-                                                                </div>
+                                                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                                <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                                {order.totalAmount > 0 && (
+                                                                    <span className="font-semibold text-purple-600">
+                                                                        NPR {order.totalAmount}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-col items-end space-y-3">
-                                                            <Badge className={getStatusColor(order.status)}>
-                                                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                                            </Badge>
-
-                                                            <div className="flex items-center space-x-2">
-                                                                {order.status === 'pending' && (
+                                                        <div className="flex flex-col space-y-2 ml-4">
+                                                            {order.status === 'pending_verification' && (
+                                                                <>
                                                                     <Button
-                                                                        onClick={() => handleUpdateOrderStatus(order._id, 'processing')}
-                                                                        className="bg-teal-600 hover:bg-teal-700 text-white"
                                                                         size="sm"
+                                                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md transition-all"
+                                                                        onClick={() => {
+                                                                            setSelectedOrder(order);
+                                                                            setVerifyDialog(true);
+                                                                        }}
                                                                     >
-                                                                        Process Order
+                                                                        Verify & Bill
                                                                     </Button>
-                                                                )}
-                                                                {order.status === 'processing' && (
                                                                     <Button
-                                                                        onClick={() => handleUpdateOrderStatus(order._id, 'completed')}
-                                                                        className="bg-green-600 hover:bg-green-700 text-white"
                                                                         size="sm"
+                                                                        variant="outline"
+                                                                        className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm hover:shadow-md transition-all"
+                                                                        onClick={() => {
+                                                                            setSelectedOrder(order);
+                                                                            setRejectDialog(true);
+                                                                        }}
                                                                     >
-                                                                        Complete
+                                                                        Reject
                                                                     </Button>
-                                                                )}
+                                                                </>
+                                                            )}
+                                                            {(order.status === 'paid' || order.status === 'preparing' || order.status === 'ready_for_delivery') && (
                                                                 <Button
-                                                                    variant="outline"
                                                                     size="sm"
-                                                                    className="border-gray-300"
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all"
+                                                                    onClick={async () => {
+                                                                        const nextStatus =
+                                                                            order.status === 'paid' ? 'preparing' :
+                                                                                order.status === 'preparing' ? 'ready_for_delivery' :
+                                                                                    'out_for_delivery';
+                                                                        try {
+                                                                            await medicineOrderAPI.updateOrderStatus(order._id, nextStatus, 'Status updated');
+                                                                            toast.success('Order status updated');
+                                                                            fetchMedicineOrders();
+                                                                        } catch (error) {
+                                                                            toast.error('Failed to update status');
+                                                                        }
+                                                                    }}
                                                                 >
-                                                                    <MessageSquare className="h-4 w-4 mr-1" />
-                                                                    Chat
+                                                                    {order.status === 'paid' ? 'Start Preparing' :
+                                                                        order.status === 'preparing' ? 'Ready for Delivery' :
+                                                                            'Out for Delivery'}
                                                                 </Button>
-                                                            </div>
+                                                            )}
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow-md transition-all"
+                                                                onClick={() => {
+                                                                    setSelectedOrder(order);
+                                                                    setViewDetailsDialog(true);
+                                                                }}
+                                                            >
+                                                                View Details
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                 </CardContent>
                                             </Card>
-                                        ))
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <Card className="border border-gray-200">
+                                        <CardContent className="p-12 text-center">
+                                            <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Medicine Orders Yet</h3>
+                                            <p className="text-gray-600">
+                                                Orders from patients will appear here
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
                         )}
 
@@ -832,11 +961,7 @@ export default function PharmacyDashboard() {
 
                         {/* Customer Chat Tab - Placeholder */}
                         {activeTab === 'chat' && (
-                            <div className="text-center py-12">
-                                <MessageSquare className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                                <p className="text-gray-600 font-medium">Customer Chat</p>
-                                <p className="text-sm text-gray-500 mt-1">Coming soon...</p>
-                            </div>
+                            <PharmacyChatList />
                         )}
 
                         {/* Profile Tab */}
@@ -1340,7 +1465,171 @@ export default function PharmacyDashboard() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog >
+            </AlertDialog>
+
+            {/* Medicine Order Dialogs */}
+            <VerifyPrescriptionDialog
+                open={verifyDialog}
+                onOpenChange={setVerifyDialog}
+                order={selectedOrder}
+                onVerified={() => {
+                    fetchMedicineOrders();
+                    setSelectedOrder(null);
+                }}
+            />
+
+            <RejectPrescriptionDialog
+                open={rejectDialog}
+                onOpenChange={setRejectDialog}
+                order={selectedOrder}
+                onRejected={() => {
+                    fetchMedicineOrders();
+                    setSelectedOrder(null);
+                }}
+            />
+
+            {/* Order Details Dialog */}
+            <Dialog open={viewDetailsDialog} onOpenChange={setViewDetailsDialog}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+                    <DialogHeader>
+                        <DialogTitle>Order Details</DialogTitle>
+                    </DialogHeader>
+
+                    {selectedOrder && (
+                        <div className="space-y-6 py-4">
+                            {/* Order Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-gray-600">Order ID</p>
+                                    <p className="font-semibold">{selectedOrder._id}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Status</p>
+                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
+                                        selectedOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                            selectedOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {selectedOrder.status.replace(/_/g, ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Patient Name</p>
+                                    <p className="font-semibold">{selectedOrder.patientId?.fullName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Patient Phone</p>
+                                    <p className="font-semibold">{selectedOrder.patientId?.phone || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Order Date</p>
+                                    <p className="font-semibold">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+
+                            {/* Prescription */}
+                            {selectedOrder.prescriptionImage && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
+                                    {selectedOrder.prescriptionImage.toLowerCase().endsWith('.pdf') ? (
+                                        // PDF file - show download link
+                                        <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                                            <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
+                                            <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
+                                            <a
+                                                href={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                            >
+                                                <Download className="h-4 w-4 mr-2" />
+                                                Download Prescription
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        // Image file - display inline
+                                        <img
+                                            src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                            alt="Prescription"
+                                            className="max-w-full h-auto rounded-lg border"
+                                            onError={(e) => {
+                                                console.error('Failed to load prescription image:', selectedOrder.prescriptionImage);
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Medicines */}
+                            {selectedOrder.medicines && selectedOrder.medicines.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Medicines</h4>
+                                    <div className="border rounded-lg overflow-hidden">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Medicine</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Dosage</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Price</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {selectedOrder.medicines.map((med, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="px-4 py-2 text-sm">{med.name}</td>
+                                                        <td className="px-4 py-2 text-sm">{med.dosage}</td>
+                                                        <td className="px-4 py-2 text-sm">{med.quantity}</td>
+                                                        <td className="px-4 py-2 text-sm">NPR {med.pricePerUnit}</td>
+                                                        <td className="px-4 py-2 text-sm font-semibold">NPR {med.pricePerUnit * med.quantity}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bill Summary */}
+                            {selectedOrder.totalAmount > 0 && (
+                                <div className="border-t pt-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Subtotal</span>
+                                            <span className="font-semibold">NPR {selectedOrder.subtotal || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Delivery Charges</span>
+                                            <span className="font-semibold">NPR {selectedOrder.deliveryCharges || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                            <span>Total Amount</span>
+                                            <span className="text-purple-600">NPR {selectedOrder.totalAmount}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Delivery Address */}
+                            <div>
+                                <h4 className="font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedOrder.deliveryAddress}</p>
+                            </div>
+
+                            {/* Delivery Notes */}
+                            {selectedOrder.deliveryNotes && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Delivery Notes</h4>
+                                    <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedOrder.deliveryNotes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }
