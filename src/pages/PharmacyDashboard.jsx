@@ -90,6 +90,7 @@ export default function PharmacyDashboard() {
     const [verifyDialog, setVerifyDialog] = useState(false);
     const [rejectDialog, setRejectDialog] = useState(false);
     const [orderFilterTab, setOrderFilterTab] = useState('all'); // all, pending, awaiting, paid, delivered
+    const [viewDetailsDialog, setViewDetailsDialog] = useState(false);
 
 
     // Update active tab when URL changes
@@ -817,6 +818,10 @@ export default function PharmacyDashboard() {
                                                                 variant="outline"
                                                                 size="sm"
                                                                 className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow-md transition-all"
+                                                                onClick={() => {
+                                                                    setSelectedOrder(order);
+                                                                    setViewDetailsDialog(true);
+                                                                }}
                                                             >
                                                                 View Details
                                                             </Button>
@@ -1474,6 +1479,123 @@ export default function PharmacyDashboard() {
                     setSelectedOrder(null);
                 }}
             />
+
+            {/* Order Details Dialog */}
+            <Dialog open={viewDetailsDialog} onOpenChange={setViewDetailsDialog}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+                    <DialogHeader>
+                        <DialogTitle>Order Details</DialogTitle>
+                    </DialogHeader>
+
+                    {selectedOrder && (
+                        <div className="space-y-6 py-4">
+                            {/* Order Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-gray-600">Order ID</p>
+                                    <p className="font-semibold">{selectedOrder._id}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Status</p>
+                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
+                                            selectedOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                                selectedOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                    selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {selectedOrder.status.replace(/_/g, ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Patient Name</p>
+                                    <p className="font-semibold">{selectedOrder.patientId?.fullName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Order Date</p>
+                                    <p className="font-semibold">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+
+                            {/* Prescription */}
+                            {selectedOrder.prescriptionImage && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
+                                    <img
+                                        src={`http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                        alt="Prescription"
+                                        className="max-w-full h-auto rounded-lg border"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Medicines */}
+                            {selectedOrder.medicines && selectedOrder.medicines.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Medicines</h4>
+                                    <div className="border rounded-lg overflow-hidden">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Medicine</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Dosage</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Price</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {selectedOrder.medicines.map((med, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="px-4 py-2 text-sm">{med.name}</td>
+                                                        <td className="px-4 py-2 text-sm">{med.dosage}</td>
+                                                        <td className="px-4 py-2 text-sm">{med.quantity}</td>
+                                                        <td className="px-4 py-2 text-sm">NPR {med.price}</td>
+                                                        <td className="px-4 py-2 text-sm font-semibold">NPR {med.price * med.quantity}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bill Summary */}
+                            {selectedOrder.totalAmount > 0 && (
+                                <div className="border-t pt-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Subtotal</span>
+                                            <span className="font-semibold">NPR {selectedOrder.subtotal || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Delivery Charges</span>
+                                            <span className="font-semibold">NPR {selectedOrder.deliveryCharges || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                            <span>Total Amount</span>
+                                            <span className="text-purple-600">NPR {selectedOrder.totalAmount}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Delivery Address */}
+                            <div>
+                                <h4 className="font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedOrder.deliveryAddress}</p>
+                            </div>
+
+                            {/* Delivery Notes */}
+                            {selectedOrder.deliveryNotes && (
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Delivery Notes</h4>
+                                    <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedOrder.deliveryNotes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }
