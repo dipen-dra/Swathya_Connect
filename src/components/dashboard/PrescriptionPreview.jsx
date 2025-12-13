@@ -132,7 +132,7 @@ export default function PrescriptionPreview({ open, onOpenChange, consultationId
                             <Button
                                 onClick={handleDownloadPDF}
                                 disabled={downloading}
-                                className="w-full bg-green-600 hover:bg-green-700"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white"
                             >
                                 {downloading ? (
                                     <>
