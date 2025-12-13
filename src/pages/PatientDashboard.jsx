@@ -1795,8 +1795,6 @@ export function PatientDashboard() {
                                 title: 'Payment Successful!',
                                 message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
                             });
-
-                            toast.success('Payment successful! Order is being prepared.');
                         } catch (error) {
                             console.error('Error after payment success:', error);
                             addNotification({
