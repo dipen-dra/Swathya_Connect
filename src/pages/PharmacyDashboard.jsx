@@ -356,6 +356,24 @@ export default function PharmacyDashboard() {
         (item.genericName && item.genericName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
+    // Filter medicine orders based on selected tab
+    const filteredMedicineOrders = medicineOrders.filter(order => {
+        switch (orderFilterTab) {
+            case 'all':
+                return true;
+            case 'pending':
+                return order.status === 'pending_verification';
+            case 'awaiting':
+                return order.status === 'awaiting_payment';
+            case 'paid':
+                return order.status === 'paid' || order.status === 'preparing';
+            case 'delivered':
+                return order.status === 'delivered' || order.status === 'out_for_delivery';
+            default:
+                return true;
+        }
+    });
+
     // Verification handlers
     const handleVerificationDocumentChange = (e) => {
         const file = e.target.files[0];
@@ -707,9 +725,9 @@ export default function PharmacyDashboard() {
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                                         <span className="ml-3 text-gray-600">Loading orders...</span>
                                     </div>
-                                ) : medicineOrders.length > 0 ? (
+                                ) : filteredMedicineOrders.length > 0 ? (
                                     <div className="space-y-4">
-                                        {medicineOrders.map((order) => (
+                                        {filteredMedicineOrders.map((order) => (
                                             <Card key={order._id} className="border border-gray-200 hover:shadow-md transition-shadow">
                                                 <CardContent className="p-6">
                                                     <div className="flex items-start justify-between">
