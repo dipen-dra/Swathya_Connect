@@ -63,7 +63,7 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
                     async onSuccess(payload) {
                         try {
                             // Payment successful - notify parent
-                            onPaymentSuccess('Khalti', {
+                            onPaymentSuccess('khalti', {
                                 paymentToken: payload.token,
                                 amount: payload.amount,
                                 tempOrderId: tempOrderId
