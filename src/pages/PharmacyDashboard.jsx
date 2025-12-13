@@ -1498,10 +1498,10 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600">Status</p>
                                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
-                                            selectedOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
-                                                selectedOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                                                    selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                        selectedOrder.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800' :
+                                            selectedOrder.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                    'bg-gray-100 text-gray-800'
                                         }`}>
                                         {selectedOrder.status.replace(/_/g, ' ').toUpperCase()}
                                     </span>
@@ -1509,6 +1509,10 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <p className="text-sm text-gray-600">Patient Name</p>
                                     <p className="font-semibold">{selectedOrder.patientId?.fullName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600">Patient Phone</p>
+                                    <p className="font-semibold">{selectedOrder.patientId?.phoneNumber || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Order Date</p>
@@ -1521,9 +1525,13 @@ export default function PharmacyDashboard() {
                                 <div>
                                     <h4 className="font-semibold text-gray-900 mb-2">Prescription</h4>
                                     <img
-                                        src={`http://localhost:5000${selectedOrder.prescriptionImage}`}
+                                        src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:5000${selectedOrder.prescriptionImage}`}
                                         alt="Prescription"
                                         className="max-w-full h-auto rounded-lg border"
+                                        onError={(e) => {
+                                            console.error('Failed to load prescription image:', selectedOrder.prescriptionImage);
+                                            e.target.style.display = 'none';
+                                        }}
                                     />
                                 </div>
                             )}
