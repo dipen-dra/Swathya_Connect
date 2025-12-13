@@ -286,82 +286,39 @@ export function PatientDashboard() {
     };
 
     const fetchDashboardStats = async () => {
+        setLoadingStats(true);
+
+        // Always fetch stats from API to include both consultations and medicine orders
         try {
-            setLoadingStats(true);
-
-            // Calculate stats from consultations data
+            const response = await statsAPI.getDashboardStats();
+            setStats(response.data.data);
+            console.log('📊 Stats fetched from API:', response.data.data);
+        } catch (apiError) {
+            console.error('API stats fetch failed:', apiError);
+            // Fallback: calculate from consultations only if API fails
             if (consultations && consultations.length > 0) {
-                console.log('📊 Calculating stats from consultations:', consultations);
-                console.log('📊 Consultation statuses:', consultations.map(c => ({ id: c._id, status: c.status, doctor: c.doctorName })));
-
-                // Count both 'upcoming' (pending approval) and 'approved' (doctor approved) as upcoming
-                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'approved').length;
+                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'scheduled' || c.status === 'pending').length;
                 const completed = consultations.filter(c => c.status === 'completed').length;
                 const total = consultations.length;
                 const totalSpent = consultations
                     .filter(c => c.paymentStatus === 'paid')
                     .reduce((sum, c) => sum + (c.fee || 0), 0);
 
-                console.log('📊 Stats calculated:', { total, upcoming, completed, totalSpent });
-
-                // Calculate percentage changes (mock data for now - you can calculate real changes later)
-                const calculateChange = (current) => {
-                    if (current === 0) return 0;
-                    // Mock: assume 100% growth if we have data
-                    return current > 0 ? 100 : 0;
-                };
-
                 setStats({
-                    totalConsultations: {
-                        value: total,
-                        change: calculateChange(total),
-                        changeText: 'from last month'
-                    },
-                    upcomingAppointments: {
-                        value: upcoming,
-                        change: calculateChange(upcoming),
-                        changeText: 'from last month'
-                    },
-                    completedConsultations: {
-                        value: completed,
-                        change: calculateChange(completed),
-                        changeText: 'from last month'
-                    },
-                    totalSpent: {
-                        value: totalSpent,
-                        change: calculateChange(totalSpent),
-                        changeText: 'from last month'
-                    }
+                    totalConsultations: { value: total, change: 0, changeText: 'from last month' },
+                    upcomingAppointments: { value: upcoming, change: 0, changeText: 'from last month' },
+                    completedConsultations: { value: completed, change: 0, changeText: 'from last month' },
+                    totalSpent: { value: totalSpent, change: 0, changeText: 'from last month' }
                 });
             } else {
-                console.log('📊 No consultations data, using API fallback');
-                // Only use API fallback if we're sure there are no consultations
-                // Don't call API if consultations is just undefined (still loading)
-                if (consultations && consultations.length === 0) {
-                    try {
-                        const response = await statsAPI.getDashboardStats();
-                        setStats(response.data.data);
-                    } catch (apiError) {
-                        console.error('API fallback failed:', apiError);
-                        // Set default stats
-                        setStats({
-                            totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                            upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
-                            completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                            totalSpent: { value: 0, change: 0, changeText: 'from last month' }
-                        });
-                    }
-                }
+                // Set default stats
+                setStats({
+                    totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                    upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
+                    completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
+                    totalSpent: { value: 0, change: 0, changeText: 'from last month' }
+                });
             }
-        } catch (error) {
-            console.error('Failed to fetch dashboard stats:', error);
-            // Set default stats on error
-            setStats({
-                totalConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                upcomingAppointments: { value: 0, change: 0, changeText: 'from last month' },
-                completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
-                totalSpent: { value: 0, change: 0, changeText: 'from last month' }
-            });
         } finally {
             setLoadingStats(false);
         }
