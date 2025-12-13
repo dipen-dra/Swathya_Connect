@@ -29,7 +29,7 @@ import {
     ShoppingCart, Clock, DollarSign, Users, Search,
     MessageSquare, Package, User, Shield, CheckCircle,
     TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut,
-    Upload, FileText, XCircle
+    Upload, FileText, XCircle, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { profileAPI, medicineOrderAPI } from '@/services/api';
