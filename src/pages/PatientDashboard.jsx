@@ -363,6 +363,7 @@ export function PatientDashboard() {
                 completedConsultations: { value: 0, change: 0, changeText: 'from last month' },
                 totalSpent: { value: 0, change: 0, changeText: 'from last month' }
             });
+            setLoadingStats(false); // Stop loading state
         }
     }, [consultations.length]); // Only re-run when the length changes
 
@@ -1599,55 +1600,34 @@ export function PatientDashboard() {
                     doctor={selectedDoctor}
                     onConfirm={async (bookingData) => {
                         try {
-                            // Create consultation in database (needed for eSewa API)
-                            const consultationData = {
+                            // Don't create consultation yet - just store booking data
+                            // Consultation will be created after successful payment
+                            setPendingBooking({
+                                ...bookingData,
+                                doctorName: selectedDoctor?.name,
                                 doctorId: selectedDoctor.userId || selectedDoctor._id,
-                                date: bookingData.date,
-                                time: bookingData.time,
-                                type: bookingData.type,
-                                reason: bookingData.reason,
                                 fee: bookingData.fee
-                            };
+                            });
 
-                            const response = await consultationsAPI.bookConsultation(consultationData);
-
-                            if (response.data.success) {
-                                const createdConsultation = response.data.data;
-
-                                // Store booking data with consultation ID
-                                setPendingBooking({
-                                    ...bookingData,
-                                    doctorName: selectedDoctor?.name,
-                                    consultationId: createdConsultation._id,
-                                    fee: createdConsultation.fee,
-                                    doctorId: selectedDoctor.userId || selectedDoctor._id
-                                });
-
-                                setConsultationDialog(false);
-                                setPaymentDialog(true);
-                            }
+                            setConsultationDialog(false);
+                            setPaymentDialog(true);
                         } catch (error) {
-                            console.error('Failed to create consultation:', error);
+                            console.error('Failed to prepare booking:', error);
                             addNotification({
                                 type: 'error',
                                 title: 'Booking Failed',
-                                message: 'Failed to create consultation. Please try again.'
+                                message: 'Failed to prepare booking. Please try again.'
                             });
                         }
                     }}
                 />
 
-                < PaymentDialog
+                <PaymentDialog
                     open={paymentDialog}
-                    onOpenChange={async (isOpen) => {
-                        // If dialog is being closed and there's a pending booking, delete the consultation
-                        if (!isOpen && pendingBooking?.consultationId) {
-                            try {
-                                await consultationsAPI.cancelConsultation(pendingBooking.consultationId);
-                                console.log('Cancelled consultation due to payment cancellation');
-                            } catch (error) {
-                                console.error('Failed to cancel consultation:', error);
-                            }
+                    onOpenChange={(isOpen) => {
+                        // Just close the dialog and clear pending booking
+                        // No need to cancel consultation since it doesn't exist yet
+                        if (!isOpen) {
                             setPendingBooking(null);
                         }
                         setPaymentDialog(isOpen);
@@ -1709,9 +1689,17 @@ export function PatientDashboard() {
                                 await consultationsAPI.cancelConsultation(pendingBooking.consultationId);
                                 console.log('Cancelled consultation due to payment error');
                             } catch (error) {
-                                console.error('Failed to cancel consultation:', error);
+                                // Ignore 404 errors (already deleted)
+                                if (error.response?.status !== 404) {
+                                    console.error('Failed to cancel consultation:', error);
+                                }
                             }
                         }
+
+                        // Close dialog and clear state
+                        setPaymentDialog(false);
+                        setPendingBooking(null);
+
                         addNotification({
                             type: 'error',
                             title: 'Payment Failed',
