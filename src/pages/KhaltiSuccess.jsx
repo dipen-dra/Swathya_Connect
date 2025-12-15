@@ -1,38 +1,74 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { paymentAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 export default function KhaltiSuccess() {
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { addNotification } = useNotifications();
-    const [status, setStatus] = useState('success');
-    const [message, setMessage] = useState('Payment successful! Your consultation has been booked.');
-    const hasShownToast = useRef(false); // Prevent duplicate toast
+    const [status, setStatus] = useState('verifying'); // verifying, success, error
+    const [message, setMessage] = useState('Verifying your payment...');
+    const hasVerified = useRef(false); // Prevent duplicate verification calls
 
     useEffect(() => {
-        // Prevent duplicate toast (React StrictMode runs effects twice in dev)
-        if (!hasShownToast.current) {
-            toast.success('Khalti payment completed successfully!');
+        const verifyPayment = async () => {
+            // Prevent duplicate calls (React StrictMode runs effects twice in dev)
+            if (hasVerified.current) return;
+            hasVerified.current = true;
 
-            // Add notification
-            addNotification({
-                type: 'success',
-                title: 'Consultation Booked!',
-                message: 'Your consultation has been successfully booked and paid via Khalti.'
-            });
+            try {
+                const token = searchParams.get('token');
+                const amount = searchParams.get('amount');
+                const bookingData = JSON.parse(sessionStorage.getItem('khaltiBookingData') || '{}');
 
-            hasShownToast.current = true;
-        }
+                if (!token || !amount) {
+                    setStatus('error');
+                    setMessage('Invalid payment data received');
+                    return;
+                }
 
-        // Redirect to consultations after 3 seconds
-        const timer = setTimeout(() => {
-            navigate('/dashboard/consultations');
-        }, 3000);
+                // Clear session storage
+                sessionStorage.removeItem('khaltiBookingData');
 
-        return () => clearTimeout(timer);
-    }, [navigate]);
+                // Call backend to verify payment
+                const response = await paymentAPI.verifyKhaltiPayment(token, amount, bookingData);
+
+                if (response.data.success) {
+                    setStatus('success');
+                    setMessage('Payment successful! Your consultation has been booked.');
+
+                    // Show success toast
+                    toast.success('Khalti payment completed successfully!');
+
+                    // Add notification
+                    addNotification({
+                        type: 'success',
+                        title: 'Consultation Booked!',
+                        message: 'Your consultation has been successfully booked and paid via Khalti.'
+                    });
+
+                    // Redirect to consultations after 3 seconds
+                    setTimeout(() => {
+                        navigate('/dashboard/consultations');
+                    }, 3000);
+                } else {
+                    setStatus('error');
+                    setMessage(response.data.message || 'Payment verification failed');
+                    toast.error('Payment verification failed');
+                }
+            } catch (error) {
+                console.error('Payment verification error:', error);
+                setStatus('error');
+                setMessage(error.response?.data?.message || 'An error occurred while verifying payment');
+                toast.error('Payment verification failed');
+            }
+        };
+
+        verifyPayment();
+    }, [searchParams, navigate, addNotification]);
 
     const handleReturnToDashboard = () => {
         navigate('/dashboard/consultations');
@@ -41,39 +77,81 @@ export default function KhaltiSuccess() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-                {/* Success Icon */}
+                {/* Status Icon */}
                 <div className="flex justify-center mb-6">
-                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center animate-scale-in">
-                        <CheckCircle className="h-10 w-10 text-purple-600" />
-                    </div>
+                    {status === 'verifying' && (
+                        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center">
+                            <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
+                        </div>
+                    )}
+                    {status === 'success' && (
+                        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center animate-scale-in">
+                            <CheckCircle className="h-10 w-10 text-purple-600" />
+                        </div>
+                    )}
+                    {status === 'error' && (
+                        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+                            <XCircle className="h-10 w-10 text-red-600" />
+                        </div>
+                    )}
                 </div>
 
                 {/* Status Message */}
                 <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-purple-900 mb-2">
-                        Payment Successful!
+                    <h1 className={`text-2xl font-bold mb-2 ${status === 'verifying' ? 'text-purple-900' :
+                            status === 'success' ? 'text-purple-900' :
+                                'text-red-900'
+                        }`}>
+                        {status === 'verifying' && 'Verifying Payment'}
+                        {status === 'success' && 'Payment Successful!'}
+                        {status === 'error' && 'Payment Failed'}
                     </h1>
                     <p className="text-gray-600">
                         {message}
                     </p>
                 </div>
 
-                {/* Success Details */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                    <p className="text-sm text-purple-800 text-center">
-                        Redirecting to your consultations in 3 seconds...
-                    </p>
-                </div>
+                {/* Progress Indicator for Verifying */}
+                {status === 'verifying' && (
+                    <div className="mb-6">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                        </div>
+                    </div>
+                )}
 
-                {/* Action Button */}
-                <div className="space-y-3">
-                    <button
-                        onClick={handleReturnToDashboard}
-                        className="w-full py-3 px-4 rounded-lg font-medium bg-purple-600 hover:bg-purple-700 text-white transition-colors"
-                    >
-                        View My Consultations
-                    </button>
-                </div>
+                {/* Success Details */}
+                {status === 'success' && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-purple-800 text-center">
+                            Redirecting to your consultations in 3 seconds...
+                        </p>
+                    </div>
+                )}
+
+                {/* Action Buttons */}
+                {status !== 'verifying' && (
+                    <div className="space-y-3">
+                        <button
+                            onClick={handleReturnToDashboard}
+                            className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${status === 'success'
+                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                }`}
+                        >
+                            {status === 'success' ? 'View My Consultations' : 'Return to Dashboard'}
+                        </button>
+
+                        {status === 'error' && (
+                            <button
+                                onClick={() => navigate('/dashboard/doctors')}
+                                className="w-full py-3 px-4 rounded-lg font-medium border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Find Doctors
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Payment Method Badge */}
                 <div className="mt-6 pt-6 border-t border-gray-200">

@@ -66,23 +66,20 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                 eventHandler: {
                     async onSuccess(payload) {
                         console.log('Khalti payment success:', payload);
-                        setIsProcessing(true);
-                        try {
-                            // Verify payment with backend - now passing booking data
-                            await paymentAPI.verifyKhaltiPayment(
-                                payload.token,
-                                payload.amount,
-                                bookingDetails // Pass booking data instead of consultationId
-                            );
 
-                            // Redirect to Khalti success page
-                            window.location.href = '/khalti-success';
-                        } catch (error) {
-                            console.error('Khalti verification error:', error);
-                            onPaymentError(error.response?.data?.message || 'Payment verification failed');
-                        } finally {
-                            setIsProcessing(false);
-                        }
+                        // Redirect immediately to success page (like eSewa)
+                        // Pass payment data via URL params for verification on success page
+                        const params = new URLSearchParams({
+                            token: payload.token,
+                            amount: payload.amount,
+                            // Store booking data in sessionStorage for success page
+                        });
+
+                        // Store booking data temporarily
+                        sessionStorage.setItem('khaltiBookingData', JSON.stringify(bookingDetails));
+
+                        // Immediate redirect - no waiting!
+                        window.location.href = `/khalti-success?${params.toString()}`;
                     },
                     onError: (error) => {
                         console.error('Khalti payment error:', error);
