@@ -61,19 +61,19 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
                 productUrl: window.location.href,
                 eventHandler: {
                     async onSuccess(payload) {
-                        try {
-                            // Payment successful - notify parent
-                            onPaymentSuccess('khalti', {
-                                paymentToken: payload.token,
-                                amount: payload.amount,
-                                tempOrderId: tempOrderId
-                            });
-                        } catch (error) {
-                            console.error('Khalti verification error:', error);
-                            onPaymentError(error.response?.data?.message || 'Payment verification failed');
-                        } finally {
-                            setIsProcessing(false);
-                        }
+                        console.log('Khalti payment success:', payload);
+
+                        // Redirect immediately to success page (like consultations)
+                        const params = new URLSearchParams({
+                            token: payload.token,
+                            amount: payload.amount
+                        });
+
+                        // Store order data temporarily
+                        sessionStorage.setItem('khaltiMedicineOrderData', JSON.stringify(orderDetails));
+
+                        // Immediate redirect - no waiting!
+                        window.location.href = `/khalti-medicine-success?${params.toString()}`;
                     },
                     onError: (error) => {
                         console.error('Khalti payment error:', error);
@@ -104,14 +104,8 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
         try {
             setIsProcessing(true);
 
-            // eSewa requires an order ID
-            if (!orderDetails.orderId) {
-                onPaymentError('Order ID is required for eSewa payment');
-                setIsProcessing(false);
-                return;
-            }
-
-            const response = await paymentAPI.initiateEsewaMedicine(orderDetails.orderId);
+            // Pass order data instead of orderId
+            const response = await paymentAPI.initiateEsewaMedicine(orderDetails);
 
             if (response.data.success) {
                 const esewaData = response.data.data;
@@ -150,8 +144,7 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
         if (selectedPayment === 'khalti') {
             handleKhaltiPayment();
         } else if (selectedPayment === 'esewa') {
-            // eSewa for medicine orders not yet implemented on backend
-            onPaymentError('eSewa payment for medicine orders is coming soon. Please use Khalti for now.');
+            handleEsewaPayment();
         }
     };
 

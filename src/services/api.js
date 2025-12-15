@@ -113,13 +113,18 @@ export const statsAPI = {
 
 // Payment API
 export const paymentAPI = {
+    // Consultation payments
     initiateKhaltiPayment: (bookingData) => api.post('/payment/khalti/initiate', { bookingData }),
     verifyKhaltiPayment: (token, amount, bookingData) => api.post('/payment/khalti/verify', { token, amount, bookingData }),
     initiateEsewaPayment: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
     initiateEsewa: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
     verifyEsewaPayment: (params) => api.get('/payment/esewa/verify', params),
     verifyEsewa: (params) => api.get('/payment/esewa/verify', params),
-    initiateEsewaMedicine: (orderId) => api.post('/payment/esewa/initiate-medicine', { orderId }),
+
+    // Medicine order payments
+    initiateEsewaMedicine: (orderData) => api.post('/payment/esewa/initiate-medicine', { orderData }),
+    verifyEsewaMedicine: (params) => api.get('/payment/esewa/verify-medicine', params),
+    verifyKhaltiMedicine: (token, amount, orderData) => api.post('/payment/khalti/verify-medicine', { token, amount, orderData }),
 };
 
 // Documents API
