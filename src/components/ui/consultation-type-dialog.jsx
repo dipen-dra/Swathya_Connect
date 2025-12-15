@@ -61,16 +61,16 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
         '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM'
     ];
 
-    // Generate next 30 days for date selection
+    // Generate next 30 days for date selection (including today)
     const getAvailableDates = () => {
         const dates = [];
         const today = new Date();
-        for (let i = 1; i <= 30; i++) {
+        for (let i = 0; i <= 30; i++) { // Start from 0 to include today
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             dates.push({
                 value: date.toISOString().split('T')[0],
-                label: date.toLocaleDateString('en-US', {
+                label: i === 0 ? 'Today' : date.toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric'

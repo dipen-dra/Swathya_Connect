@@ -49,11 +49,13 @@ export const profileAPI = {
     getProfile: () => api.get('/profile'),
     getUserProfile: (userId) => api.get(`/profile/${userId}`),
     updateProfile: (data) => api.post('/profile', data),
-    uploadProfileImage: (formData) => api.post('/profile/upload-image', formData, {
+    uploadProfileImage: (formData) => api.post('/profile/image', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
-    })
+    }),
+    deleteProfileImage: () => api.delete('/profile/image'),
+    submitForReview: () => api.post('/profile/submit-review')
 };
 
 // Auth API
@@ -71,13 +73,15 @@ export const remindersAPI = {
     getReminders: () => api.get('/reminders'),
     createReminder: (reminderData) => api.post('/reminders', reminderData),
     updateReminder: (id, reminderData) => api.put(`/reminders/${id}`, reminderData),
-    deleteReminder: (id) => api.delete(`/reminders/${id}`)
+    deleteReminder: (id) => api.delete(`/reminders/${id}`),
+    toggleReminder: (id) => api.put(`/reminders/${id}/toggle`)
 };
 
 // Consultations API
 export const consultationsAPI = {
     getConsultations: () => api.get('/consultations'),
     createConsultation: (consultationData) => api.post('/consultations', consultationData),
+    bookConsultation: (consultationData) => api.post('/consultations', consultationData),
     updateConsultation: (id, updateData) => api.put(`/consultations/${id}`, updateData),
     cancelConsultation: (id, reason) => api.put(`/consultations/${id}/cancel`, { reason }),
     rateConsultation: (id, rating) => api.put(`/consultations/${id}/rate`, { rating })
@@ -109,21 +113,26 @@ export const statsAPI = {
 
 // Payment API
 export const paymentAPI = {
-    initiateKhaltiPayment: (consultationId) => api.post('/payment/khalti/initiate', { consultationId }),
-    verifyKhaltiPayment: (pidx, consultationId) => api.post('/payment/khalti/verify', { pidx, consultationId }),
-    initiateEsewaPayment: (consultationId) => api.post('/payment/esewa/initiate', { consultationId }),
-    initiateEsewaMedicine: (orderId) => api.post('/payment/esewa/initiate-medicine', { orderId }),
-    verifyEsewaPayment: (data) => api.post('/payment/esewa/verify', data)
+    // Consultation payments
+    initiateKhaltiPayment: (bookingData) => api.post('/payment/khalti/initiate', { bookingData }),
+    verifyKhaltiPayment: (token, amount, bookingData) => api.post('/payment/khalti/verify', { token, amount, bookingData }),
+    initiateEsewaPayment: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
+    initiateEsewa: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
+    verifyEsewaPayment: (params) => api.get('/payment/esewa/verify', params),
+    verifyEsewa: (params) => api.get('/payment/esewa/verify', params),
+
+    // Medicine order payments
+    initiateEsewaMedicine: (orderData) => api.post('/payment/esewa/initiate-medicine', { orderData }),
+    verifyEsewaMedicine: (params) => api.get('/payment/esewa/verify-medicine', params),
+    verifyKhaltiMedicine: (token, amount, orderData) => api.post('/payment/khalti/verify-medicine', { token, amount, orderData }),
 };
 
 // Documents API
 export const documentsAPI = {
+    getMyDocuments: () => api.get('/documents/my-documents'),
     uploadDocument: (formData) => api.post('/documents/upload', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    getDocuments: () => api.get('/documents'),
     deleteDocument: (id) => api.delete(`/documents/${id}`)
 };
 

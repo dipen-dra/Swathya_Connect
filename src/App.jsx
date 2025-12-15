@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "./contexts/AuthContext";
@@ -21,8 +22,10 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/DoctorProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 import EsewaSuccess from './pages/EsewaSuccess';
-import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
+import EsewaMedicineSuccess from './pages/EsewaMedicineSuccess';
+import KhaltiMedicineSuccess from './pages/KhaltiMedicineSuccess';
+import EsewaFailure from "./pages/EsewaFailure";
 import ProfilePage from './pages/ProfilePage';
 import AccountSettings from './pages/AccountSettings';
 import PharmacyDashboard from './pages/PharmacyDashboard';
@@ -39,7 +42,7 @@ export default function App() {
                 {/* GLOBAL TOAST SYSTEM */}
                 <Toaster position="top-right" richColors expand theme="light" />
 
-                <BrowserRouter>
+                <Router>
                   <Routes>
                     {/* Landing Page - Redirect authenticated users to dashboard */}
                     <Route
@@ -234,6 +237,55 @@ export default function App() {
                         </ProtectedRoute>
                       }
                     />
+                    {/* Payment Success Pages */}
+                    <Route
+                      path="/esewa-success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <EsewaSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/khalti-success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <KhaltiSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/esewa-medicine-success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <EsewaMedicineSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/khalti-medicine-success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <KhaltiMedicineSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/esewa-medicine-failure"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <Navigate to="/dashboard" replace />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/khalti-medicine-failure"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <Navigate to="/dashboard" replace />
+                        </ProtectedRoute>
+                      }
+                    />
 
                     <Route
                       path="/profile"
@@ -244,7 +296,7 @@ export default function App() {
                       }
                     />
                   </Routes>
-                </BrowserRouter>
+                </Router>
               </SocketProvider>
             </RemindersProvider>
           </ConsultationProvider>

@@ -5,7 +5,7 @@ import { paymentAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { useNotifications } from '@/contexts/NotificationContext';
 
-export default function EsewaSuccess() {
+export default function EsewaMedicineSuccess() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { addNotification } = useNotifications();
@@ -29,11 +29,11 @@ export default function EsewaSuccess() {
                 }
 
                 // Call backend to verify payment (GET request with query param)
-                const response = await paymentAPI.verifyEsewa({ params: { data } });
+                const response = await paymentAPI.verifyEsewaMedicine({ params: { data } });
 
                 if (response.data.success) {
                     setStatus('success');
-                    setMessage('Payment successful! Your consultation has been booked.');
+                    setMessage('Payment successful! Your medicine order has been placed.');
 
                     // Show success toast
                     toast.success('Payment completed successfully!');
@@ -41,13 +41,13 @@ export default function EsewaSuccess() {
                     // Add notification
                     addNotification({
                         type: 'success',
-                        title: 'Consultation Booked!',
-                        message: 'Your consultation has been successfully booked and paid via eSewa.'
+                        title: 'Order Placed!',
+                        message: 'Your medicine order has been successfully placed and paid via eSewa.'
                     });
 
-                    // Redirect to consultations after 3 seconds
+                    // Redirect to orders after 3 seconds
                     setTimeout(() => {
-                        navigate('/dashboard/consultations');
+                        navigate('/dashboard');
                     }, 3000);
                 } else {
                     setStatus('error');
@@ -63,10 +63,10 @@ export default function EsewaSuccess() {
         };
 
         verifyPayment();
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, addNotification]);
 
     const handleReturnToDashboard = () => {
-        navigate('/dashboard/consultations');
+        navigate('/dashboard');
     };
 
     return (
@@ -98,7 +98,7 @@ export default function EsewaSuccess() {
                             'text-red-900'
                         }`}>
                         {status === 'verifying' && 'Verifying Payment'}
-                        {status === 'success' && 'Payment Successful!'}
+                        {status === 'success' && 'Order Placed Successfully!'}
                         {status === 'error' && 'Payment Failed'}
                     </h1>
                     <p className="text-gray-600">
@@ -119,7 +119,7 @@ export default function EsewaSuccess() {
                 {status === 'success' && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                         <p className="text-sm text-green-800 text-center">
-                            Redirecting to your consultations in 3 seconds...
+                            Redirecting to your dashboard in 3 seconds...
                         </p>
                     </div>
                 )}
@@ -134,17 +134,8 @@ export default function EsewaSuccess() {
                                 : 'bg-blue-600 hover:bg-blue-700 text-white'
                                 }`}
                         >
-                            {status === 'success' ? 'View My Consultations' : 'Return to Dashboard'}
+                            {status === 'success' ? 'View Dashboard' : 'Return to Dashboard'}
                         </button>
-
-                        {status === 'error' && (
-                            <button
-                                onClick={() => navigate('/dashboard/doctors')}
-                                className="w-full py-3 px-4 rounded-lg font-medium border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                Find Doctors
-                            </button>
-                        )}
                     </div>
                 )}
 

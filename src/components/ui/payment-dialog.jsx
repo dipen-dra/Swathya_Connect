@@ -65,19 +65,21 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                 productUrl: window.location.href,
                 eventHandler: {
                     async onSuccess(payload) {
-                        try {
-                            // Payment successful - notify parent to create consultation
-                            onPaymentSuccess('Khalti', {
-                                paymentToken: payload.token,
-                                amount: payload.amount,
-                                tempBookingId: tempBookingId
-                            });
-                        } catch (error) {
-                            console.error('Khalti verification error:', error);
-                            onPaymentError(error.response?.data?.message || 'Payment verification failed');
-                        } finally {
-                            setIsProcessing(false);
-                        }
+                        console.log('Khalti payment success:', payload);
+
+                        // Redirect immediately to success page (like eSewa)
+                        // Pass payment data via URL params for verification on success page
+                        const params = new URLSearchParams({
+                            token: payload.token,
+                            amount: payload.amount,
+                            // Store booking data in sessionStorage for success page
+                        });
+
+                        // Store booking data temporarily
+                        sessionStorage.setItem('khaltiBookingData', JSON.stringify(bookingDetails));
+
+                        // Immediate redirect - no waiting!
+                        window.location.href = `/khalti-success?${params.toString()}`;
                     },
                     onError: (error) => {
                         console.error('Khalti payment error:', error);
@@ -111,14 +113,14 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
         try {
             setIsProcessing(true);
 
-            // eSewa requires a consultation ID, so we need it from bookingDetails
-            if (!bookingDetails.consultationId) {
-                onPaymentError('Consultation ID is required for eSewa payment');
+            // eSewa now accepts booking data instead of consultation ID
+            if (!bookingDetails.doctorId || !bookingDetails.fee) {
+                onPaymentError('Booking information is incomplete');
                 setIsProcessing(false);
                 return;
             }
 
-            const response = await paymentAPI.initiateEsewa(bookingDetails.consultationId);
+            const response = await paymentAPI.initiateEsewa({ bookingData: bookingDetails });
 
             if (response.data.success) {
                 const esewaData = response.data.data;
