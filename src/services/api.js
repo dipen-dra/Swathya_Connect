@@ -117,8 +117,9 @@ export const paymentAPI = {
     verifyKhaltiPayment: (token, amount, bookingData) => api.post('/payment/khalti/verify', { token, amount, bookingData }),
     initiateEsewaPayment: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
     initiateEsewa: (bookingData) => api.post('/payment/esewa/initiate', bookingData),
+    verifyEsewaPayment: (params) => api.get('/payment/esewa/verify', params),
+    verifyEsewa: (params) => api.get('/payment/esewa/verify', params),
     initiateEsewaMedicine: (orderId) => api.post('/payment/esewa/initiate-medicine', { orderId }),
-    verifyEsewaPayment: (data) => api.post('/payment/esewa/verify', data)
 };
 
 // Documents API

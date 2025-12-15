@@ -75,10 +75,8 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                                 bookingDetails // Pass booking data instead of consultationId
                             );
 
-                            onPaymentSuccess('Khalti', {
-                                paymentToken: payload.token,
-                                amount: payload.amount
-                            });
+                            // Redirect to Khalti success page
+                            window.location.href = '/khalti-success';
                         } catch (error) {
                             console.error('Khalti verification error:', error);
                             onPaymentError(error.response?.data?.message || 'Payment verification failed');

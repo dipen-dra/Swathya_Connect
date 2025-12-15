@@ -138,17 +138,16 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleViewDocument = (documentPath) => {
-        if (!documentPath) {
+    const handleViewDocument = (documentUrl) => {
+        if (!documentUrl) {
             toast.error('No document available');
             return;
         }
-
-        const url = documentPath.startsWith('http')
-            ? documentPath
-            : `http://localhost:5000${documentPath}`;
-
-        window.open(url, '_blank');
+        // Ensure proper URL format with slash
+        const fullUrl = documentUrl.startsWith('http')
+            ? documentUrl
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${documentUrl.startsWith('/') ? '' : '/'}${documentUrl}`;
+        window.open(fullUrl, '_blank');
     };
 
     // Fetch users with pagination and filters

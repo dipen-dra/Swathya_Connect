@@ -21,8 +21,8 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/DoctorProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 import EsewaSuccess from './pages/EsewaSuccess';
-import EsewaFailure from "./pages/EsewaFailure";
 import KhaltiSuccess from './pages/KhaltiSuccess';
+import EsewaFailure from "./pages/EsewaFailure";
 import ProfilePage from './pages/ProfilePage';
 import AccountSettings from './pages/AccountSettings';
 import PharmacyDashboard from './pages/PharmacyDashboard';
@@ -228,6 +228,23 @@ export default function App() {
                     />
                     <Route
                       path="/payment/khalti/success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <KhaltiSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Payment Success Pages */}
+                    <Route
+                      path="/esewa-success"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <EsewaSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/khalti-success"
                       element={
                         <ProtectedRoute allowedRoles={['patient']}>
                           <KhaltiSuccess />

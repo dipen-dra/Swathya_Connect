@@ -28,8 +28,8 @@ export default function EsewaSuccess() {
                     return;
                 }
 
-                // Call backend to verify payment
-                const response = await paymentAPI.verifyEsewa(data);
+                // Call backend to verify payment (GET request with query param)
+                const response = await paymentAPI.verifyEsewa({ params: { data } });
 
                 if (response.data.success) {
                     setStatus('success');
