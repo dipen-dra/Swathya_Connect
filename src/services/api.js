@@ -49,11 +49,13 @@ export const profileAPI = {
     getProfile: () => api.get('/profile'),
     getUserProfile: (userId) => api.get(`/profile/${userId}`),
     updateProfile: (data) => api.post('/profile', data),
-    uploadProfileImage: (formData) => api.post('/profile/upload-image', formData, {
+    uploadProfileImage: (formData) => api.post('/profile/image', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
-    })
+    }),
+    deleteProfileImage: () => api.delete('/profile/image'),
+    submitForReview: () => api.post('/profile/submit-review')
 };
 
 // Auth API
