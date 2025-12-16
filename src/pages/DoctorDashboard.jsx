@@ -408,7 +408,8 @@ export default function DoctorDashboard() {
     const todayConsultations = consultations
         .filter(r => {
             const consultDate = new Date(r.date).toISOString().split('T')[0];
-            return consultDate === today && (r.status === 'upcoming' || r.status === 'completed');
+            // Count all consultations scheduled for today (not cancelled or rejected)
+            return consultDate === today && !['cancelled', 'rejected'].includes(r.status);
         })
         .length;
 
