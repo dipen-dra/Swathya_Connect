@@ -413,11 +413,14 @@ export default function DoctorDashboard() {
         .length;
 
 
-    // Calculate percentage changes (mock for now - can be enhanced with historical data)
+
+    // Calculate percentage changes
+    // Since we don't track historical data, show +100% for any current data
+    // This indicates growth from 0 (no previous data)
     const calculateChange = (current) => {
-        if (current === 0) return 0;
-        // Mock: assume some growth if we have data
-        return current > 0 ? Math.min(100, current * 10) : 0;
+        // If we have current data but no historical tracking,
+        // show +100% to indicate new activity
+        return current > 0 ? 100 : 0;
     };
 
     const stats = [
@@ -1564,7 +1567,7 @@ export default function DoctorDashboard() {
                                 </Button>
                                 <Button
                                     onClick={handleConfirmAction}
-                                    className={`flex-1 ${actionType === 'approve'
+                                    className={`flex-1 text-white ${actionType === 'approve'
                                         ? 'bg-green-600 hover:bg-green-700'
                                         : 'bg-red-600 hover:bg-red-700'
                                         }`}
