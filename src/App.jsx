@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -10,6 +10,7 @@ import { RemindersProvider } from "./contexts/RemindersContext";
 import { SocketProvider } from "./contexts/SocketContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicRoute } from "./components/PublicRoute";
+import LoadingScreen from "./components/LoadingScreen";
 
 import Home from "./pages/Home";
 import LoginPage from './pages/LoginPage';
@@ -32,6 +33,22 @@ import PharmacyDashboard from './pages/PharmacyDashboard';
 import PharmacyProfile from './pages/PharmacyProfile';
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial app loading (checking auth, loading configs, etc.)
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000); // Show loader for 2 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading screen while app initializes
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <AuthProvider>
       <ProfileProvider>
