@@ -780,6 +780,57 @@ export default function DoctorDashboard() {
 
         const urgent = isUrgent();
 
+        // Check if doctor can start the consultation (10 minutes before scheduled time)
+        const canStartConsultation = () => {
+            try {
+                const now = new Date();
+                const time24 = convertTo24Hour(request.time);
+
+                // Extract just the date part (YYYY-MM-DD) from ISO string or date object
+                const dateOnly = new Date(request.date).toISOString().split('T')[0];
+                const consultDateTime = new Date(`${dateOnly}T${time24}`);
+                const minutesUntil = Math.floor((consultDateTime - now) / (1000 * 60));
+
+                // Can start 10 minutes before scheduled time, up to 1 hour after
+                return minutesUntil <= 10 && minutesUntil >= -60;
+            } catch (error) {
+                console.error('Error checking consultation start time:', error);
+                return false;
+            }
+        };
+
+        // Get minutes until consultation can be started
+        const getMinutesUntil = () => {
+            try {
+                if (!request.time || !request.date) {
+                    console.error('Missing time or date:', request);
+                    return '?';
+                }
+
+                const now = new Date();
+                const time24 = convertTo24Hour(request.time);
+
+                // Extract just the date part (YYYY-MM-DD) from ISO string or date object
+                const dateOnly = new Date(request.date).toISOString().split('T')[0];
+                const consultDateTime = new Date(`${dateOnly}T${time24}`);
+
+                if (isNaN(consultDateTime.getTime())) {
+                    console.error('Invalid date/time:', dateOnly, time24);
+                    return '?';
+                }
+
+                const totalMinutesUntil = Math.floor((consultDateTime - now) / (1000 * 60));
+
+                // Subtract 10 minutes (early access window)
+                const minutesUntilStart = Math.max(0, totalMinutesUntil - 10);
+
+                return minutesUntilStart;
+            } catch (error) {
+                console.error('Error calculating minutes until:', error, request);
+                return '?';
+            }
+        };
+
         return (
             <Card key={request.id} className={`border hover:shadow-md transition-all duration-200 ${urgent ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
                 }`}>
@@ -913,18 +964,29 @@ export default function DoctorDashboard() {
                             {request.status === 'approved' && (
                                 <Button
                                     size="sm"
+                                    disabled={!canStartConsultation()}
                                     onClick={() => {
-                                        // If consultation link exists, open it, otherwise show a message
-                                        if (request.consultationLink) {
-                                            window.open(request.consultationLink, '_blank');
-                                        } else {
-                                            toast.info('Consultation link will be available closer to the scheduled time');
+                                        if (canStartConsultation()) {
+                                            // Navigate to consultation chat page
+                                            navigate(`/consultation-chat/${request._id}`);
                                         }
                                     }}
-                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm"
+                                    className={`${canStartConsultation()
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
                                 >
-                                    <ConsultationIcon className="h-3 w-3 mr-1" />
-                                    Start Consultation
+                                    {canStartConsultation() ? (
+                                        <>
+                                            <ConsultationIcon className="h-3 w-3 mr-1" />
+                                            Start Consultation
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            Available in {getMinutesUntil()} min
+                                        </>
+                                    )}
                                 </Button>
                             )}
 
