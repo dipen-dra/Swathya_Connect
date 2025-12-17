@@ -48,6 +48,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import ChatConsultationDialog from '@/components/ChatConsultationDialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
@@ -125,6 +126,8 @@ export function PatientDashboard() {
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [orderDetailsDialog, setOrderDetailsDialog] = useState(false);
     const [selectedMedicineOrder, setSelectedMedicineOrder] = useState(null);
+    const [chatDialogOpen, setChatDialogOpen] = useState(false);
+    const [chatConsultationId, setChatConsultationId] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -516,6 +519,59 @@ export function PatientDashboard() {
         }
     };
 
+    // Helper function to check if patient can join consultation (10 min before to 1 hour after)
+    const canJoinConsultation = (consultation) => {
+        if (!consultation.date || !consultation.time) return false;
+
+        try {
+            // Handle both ISO date strings and formatted dates
+            const dateStr = consultation.date.includes('T')
+                ? consultation.date.split('T')[0]
+                : consultation.date;
+            const consultationDateTime = new Date(`${dateStr} ${consultation.time}`);
+
+            if (isNaN(consultationDateTime.getTime())) {
+                console.error('Invalid date:', consultation.date, consultation.time);
+                return false;
+            }
+
+            const now = new Date();
+            const diffMinutes = (consultationDateTime - now) / 1000 / 60;
+
+            // Can join 10 minutes before to 60 minutes after scheduled time
+            return diffMinutes <= 10 && diffMinutes >= -60;
+        } catch (error) {
+            console.error('Error parsing consultation date:', error);
+            return false;
+        }
+    };
+
+    // Helper function to get minutes until consultation can be joined
+    const getMinutesUntil = (consultation) => {
+        if (!consultation.date || !consultation.time) return 0;
+
+        try {
+            // Handle both ISO date strings and formatted dates
+            const dateStr = consultation.date.includes('T')
+                ? consultation.date.split('T')[0]
+                : consultation.date;
+            const consultationDateTime = new Date(`${dateStr} ${consultation.time}`);
+
+            if (isNaN(consultationDateTime.getTime())) {
+                console.error('Invalid date for minutes calc:', consultation.date, consultation.time);
+                return 0;
+            }
+
+            const now = new Date();
+            const diffMinutes = Math.ceil((consultationDateTime - now) / 1000 / 60);
+
+            return Math.max(0, diffMinutes - 10); // Subtract 10 because can join 10 min early
+        } catch (error) {
+            console.error('Error calculating minutes until:', error);
+            return 0;
+        }
+    };
+
     const renderConsultationCard = (consultation) => {
         const ConsultationIcon = getConsultationTypeIcon(consultation.type);
         const getConsultationTypeLabel = (type) => {
@@ -548,7 +604,16 @@ export function PatientDashboard() {
                             {/* Doctor Info and Details */}
                             <div className="flex-1 space-y-3">
                                 <div>
-                                    <h4 className="font-semibold text-lg text-gray-900">{consultation.doctorName}</h4>
+                                    <div className="flex items-center space-x-2">
+                                        <h4 className="font-semibold text-lg text-gray-900">{consultation.doctorName}</h4>
+                                        {/* Show Live badge for approved consultations that can be joined */}
+                                        {consultation.status === 'approved' && canJoinConsultation(consultation) && (
+                                            <Badge className="bg-green-100 text-green-700 border-green-300 animate-pulse">
+                                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1 inline-block"></span>
+                                                Live
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-gray-600">{consultation.specialty}</p>
                                     <div className={`flex items-center space-x-1 mt-1 ${getConsultationTypeColor(consultation.type)}`}>
                                         <ConsultationIcon className="h-4 w-4" />
@@ -619,14 +684,33 @@ export function PatientDashboard() {
                                 <p className="text-lg font-bold text-blue-600">NPR {consultation.fee}</p>
                             </div>
 
-                            {/* Join Button - Only for upcoming */}
-                            {consultation.status === 'upcoming' && (
+                            {/* Join Consultation Button - Only for approved consultations */}
+                            {consultation.status === 'approved' && (
                                 <Button
-                                    className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                                    disabled={!canJoinConsultation(consultation)}
+                                    onClick={() => {
+                                        if (canJoinConsultation(consultation)) {
+                                            setChatConsultationId(consultation._id);
+                                            setChatDialogOpen(true);
+                                        }
+                                    }}
+                                    className={`${canJoinConsultation(consultation)
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        } mt-2`}
                                     size="default"
                                 >
-                                    <ConsultationIcon className="h-4 w-4 mr-2" />
-                                    {consultation.type === 'chat' ? 'Join Chat' : 'Join Call'}
+                                    {canJoinConsultation(consultation) ? (
+                                        <>
+                                            <ConsultationIcon className="h-4 w-4 mr-2" />
+                                            Join Consultation
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Clock className="h-4 w-4 mr-2" />
+                                            Available in {getMinutesUntil(consultation)} min
+                                        </>
+                                    )}
                                 </Button>
                             )}
 
@@ -2002,6 +2086,20 @@ export function PatientDashboard() {
                         )}
                     </DialogContent>
                 </Dialog>
+
+                {/* Chat Consultation Dialog */}
+                {chatDialogOpen && chatConsultationId && (
+                    <ChatConsultationDialog
+                        consultationId={chatConsultationId}
+                        open={chatDialogOpen}
+                        onClose={() => {
+                            setChatDialogOpen(false);
+                            setChatConsultationId(null);
+                            // Refresh consultations
+                            fetchConsultations();
+                        }}
+                    />
+                )}
             </div >
         </div >
     );

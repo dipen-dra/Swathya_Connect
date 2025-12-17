@@ -31,6 +31,7 @@ import ProfilePage from './pages/ProfilePage';
 import AccountSettings from './pages/AccountSettings';
 import PharmacyDashboard from './pages/PharmacyDashboard';
 import PharmacyProfile from './pages/PharmacyProfile';
+import ChatConsultation from './pages/ChatConsultation';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -189,6 +190,14 @@ export default function App() {
                       element={
                         <ProtectedRoute allowedRoles={['doctor']}>
                           <DoctorProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/consultation-chat/:id"
+                      element={
+                        <ProtectedRoute allowedRoles={['doctor', 'patient']}>
+                          <ChatConsultation />
                         </ProtectedRoute>
                       }
                     />

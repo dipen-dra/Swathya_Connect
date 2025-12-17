@@ -169,6 +169,15 @@ export const chatAPI = {
     })
 };
 
+// Consultation Chat API (for doctor-patient consultations)
+export const consultationChatAPI = {
+    getConsultationChat: (consultationId) => api.get(`/consultation-chat/${consultationId}`),
+    getMessages: (consultationId) => api.get(`/consultation-chat/${consultationId}/messages`),
+    sendMessage: (consultationId, messageData) => api.post(`/consultation-chat/${consultationId}/messages`, messageData),
+    markMessagesAsRead: (consultationId) => api.put(`/consultation-chat/${consultationId}/read`),
+    endConsultation: (consultationId) => api.post(`/consultation-chat/${consultationId}/end`)
+};
+
 // Medicine Order API
 export const medicineOrderAPI = {
     // Patient endpoints

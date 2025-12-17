@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ChatConsultationDialog from '@/components/ChatConsultationDialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -82,6 +83,8 @@ export default function DoctorDashboard() {
     const [showSignOutDialog, setShowSignOutDialog] = useState(false);
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
+    const [chatDialogOpen, setChatDialogOpen] = useState(false);
+    const [chatConsultationId, setChatConsultationId] = useState(null);
 
     // Verification fees state
     const [verificationFees, setVerificationFees] = useState({
@@ -851,6 +854,13 @@ export default function DoctorDashboard() {
                             <div>
                                 <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-lg text-gray-900">{request.patientId?.fullName || request.patientId?.name || 'Unknown Patient'}</h4>
+                                    {/* Show Live badge for approved consultations that can be started */}
+                                    {request.status === 'approved' && canStartConsultation(request) && (
+                                        <Badge className="bg-green-100 text-green-700 border-green-300 animate-pulse">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full mr-1 inline-block"></span>
+                                            Live
+                                        </Badge>
+                                    )}
                                     {urgent && (
                                         <Badge className="bg-red-100 text-red-800 border-red-200">
                                             <AlertCircle className="h-3 w-3 mr-1" />
@@ -967,8 +977,9 @@ export default function DoctorDashboard() {
                                     disabled={!canStartConsultation()}
                                     onClick={() => {
                                         if (canStartConsultation()) {
-                                            // Navigate to consultation chat page
-                                            navigate(`/consultation-chat/${request._id}`);
+                                            // Open chat dialog instead of navigating
+                                            setChatConsultationId(request._id);
+                                            setChatDialogOpen(true);
                                         }
                                     }}
                                     className={`${canStartConsultation()
@@ -1742,6 +1753,20 @@ export default function DoctorDashboard() {
                     }}
                 />
             </div>
+
+            {/* Chat Consultation Dialog */}
+            {chatDialogOpen && chatConsultationId && (
+                <ChatConsultationDialog
+                    consultationId={chatConsultationId}
+                    open={chatDialogOpen}
+                    onClose={() => {
+                        setChatDialogOpen(false);
+                        setChatConsultationId(null);
+                        // Refresh consultations to update status
+                        fetchConsultations();
+                    }}
+                />
+            )}
         </div >
     );
 }
