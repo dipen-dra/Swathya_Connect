@@ -83,6 +83,7 @@ export default function DoctorDashboard() {
     const [showSignOutDialog, setShowSignOutDialog] = useState(false);
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
+    const [selectedPatientProfile, setSelectedPatientProfile] = useState(null);
     const [chatDialogOpen, setChatDialogOpen] = useState(false);
     const [chatConsultationId, setChatConsultationId] = useState(null);
 
@@ -1021,8 +1022,18 @@ export default function DoctorDashboard() {
                     {request.status === 'completed' && !request.prescriptionId && (
                         <div className="flex justify-center pt-4 mt-4 border-t border-gray-200">
                             <Button
-                                onClick={() => {
+                                onClick={async () => {
                                     setSelectedConsultation(request);
+                                    // Fetch patient profile
+                                    try {
+                                        const response = await profileAPI.getUserProfile(request.patientId);
+                                        if (response.data.success) {
+                                            setSelectedPatientProfile(response.data.data);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error fetching patient profile:', error);
+                                        toast.error('Failed to load patient details');
+                                    }
                                     setPrescriptionDialog(true);
                                 }}
                                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm"
@@ -1745,10 +1756,10 @@ export default function DoctorDashboard() {
                     onOpenChange={setPrescriptionDialog}
                     consultation={selectedConsultation}
                     doctorProfile={profile}
-                    patientProfile={{
+                    patientProfile={selectedPatientProfile || {
                         firstName: selectedConsultation?.patientName?.split(' ')[0] || '',
                         lastName: selectedConsultation?.patientName?.split(' ')[1] || '',
-                        dateOfBirth: null, // Would come from actual patient data
+                        dateOfBirth: null,
                         gender: selectedConsultation?.gender || 'N/A'
                     }}
                 />
