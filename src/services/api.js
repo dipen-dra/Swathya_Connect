@@ -178,7 +178,8 @@ export const consultationChatAPI = {
     endConsultation: (consultationId) => api.post(`/consultation-chat/${consultationId}/end`),
     uploadFile: (formData) => api.post('/consultation-chat/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    }),
+    generateAgoraToken: (consultationId) => api.post(`/consultation-chat/${consultationId}/agora-token`)
 };
 
 // Medicine Order API

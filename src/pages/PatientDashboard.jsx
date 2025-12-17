@@ -49,6 +49,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import ChatConsultationDialog from '@/components/ChatConsultationDialog';
+import AudioConsultationDialog from '@/components/AudioConsultationDialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
@@ -128,6 +129,9 @@ export function PatientDashboard() {
     const [selectedMedicineOrder, setSelectedMedicineOrder] = useState(null);
     const [chatDialogOpen, setChatDialogOpen] = useState(false);
     const [chatConsultationId, setChatConsultationId] = useState(null);
+    const [audioDialogOpen, setAudioDialogOpen] = useState(false);
+    const [audioConsultationId, setAudioConsultationId] = useState(null);
+    const [audioConsultationData, setAudioConsultationData] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -690,8 +694,20 @@ export function PatientDashboard() {
                                     disabled={!canJoinConsultation(consultation)}
                                     onClick={() => {
                                         if (canJoinConsultation(consultation)) {
-                                            setChatConsultationId(consultation._id);
-                                            setChatDialogOpen(true);
+                                            // Check consultation type and open appropriate dialog
+                                            if (consultation.type === 'audio' || consultation.type === 'video') {
+                                                // Open audio call dialog for audio/video consultations
+                                                setAudioConsultationId(consultation._id);
+                                                setAudioConsultationData({
+                                                    doctorName: consultation.doctorName,
+                                                    doctorImage: consultation.doctorImage
+                                                });
+                                                setAudioDialogOpen(true);
+                                            } else {
+                                                // Open chat dialog for chat consultations
+                                                setChatConsultationId(consultation._id);
+                                                setChatDialogOpen(true);
+                                            }
                                         }
                                     }}
                                     className={`${canJoinConsultation(consultation)
@@ -2097,6 +2113,28 @@ export function PatientDashboard() {
                             setChatConsultationId(null);
                             // Refresh consultations
                             fetchConsultations();
+                        }}
+                    />
+                )}
+
+                {/* Audio Consultation Dialog */}
+                {audioDialogOpen && audioConsultationId && (
+                    <AudioConsultationDialog
+                        open={audioDialogOpen}
+                        onOpenChange={(isOpen) => {
+                            setAudioDialogOpen(isOpen);
+                            if (!isOpen) {
+                                setAudioConsultationId(null);
+                                setAudioConsultationData(null);
+                                // Refresh consultations
+                                fetchConsultations();
+                            }
+                        }}
+                        consultationId={audioConsultationId}
+                        userRole="patient"
+                        otherUser={{
+                            name: audioConsultationData?.doctorName,
+                            image: audioConsultationData?.doctorImage
                         }}
                     />
                 )}

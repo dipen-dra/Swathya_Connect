@@ -59,6 +59,7 @@ import { toast } from 'sonner';
 import { documentsAPI, prescriptionsAPI, profileAPI, consultationsAPI } from '@/services/api';
 import DoctorDocuments from '@/components/dashboard/DoctorDocuments';
 import PrescriptionDialog from '@/components/dashboard/PrescriptionDialog';
+import AudioConsultationDialog from '@/components/AudioConsultationDialog';
 
 export default function DoctorDashboard() {
     console.log('🏥 DoctorDashboard component is rendering!');
@@ -86,6 +87,9 @@ export default function DoctorDashboard() {
     const [selectedPatientProfile, setSelectedPatientProfile] = useState(null);
     const [chatDialogOpen, setChatDialogOpen] = useState(false);
     const [chatConsultationId, setChatConsultationId] = useState(null);
+    const [audioDialogOpen, setAudioDialogOpen] = useState(false);
+    const [audioConsultationId, setAudioConsultationId] = useState(null);
+    const [audioConsultationData, setAudioConsultationData] = useState(null);
 
     // Verification fees state
     const [verificationFees, setVerificationFees] = useState({
@@ -978,9 +982,43 @@ export default function DoctorDashboard() {
                                     disabled={!canStartConsultation()}
                                     onClick={() => {
                                         if (canStartConsultation()) {
-                                            // Open chat dialog instead of navigating
-                                            setChatConsultationId(request._id);
-                                            setChatDialogOpen(true);
+                                            // Check consultation type and open appropriate dialog
+                                            if (request.type === 'audio' || request.type === 'video') {
+                                                // Open audio call dialog for audio/video consultations
+                                                setAudioConsultationId(request._id);
+
+                                                // Fetch patient profile for accurate data
+                                                const fetchPatientProfile = async () => {
+                                                    try {
+                                                        const patientId = typeof request.patientId === 'string'
+                                                            ? request.patientId
+                                                            : request.patientId?._id || request.patientId;
+
+                                                        const response = await profileAPI.getUserProfile(patientId);
+                                                        if (response.data.success) {
+                                                            const profile = response.data.data;
+                                                            setAudioConsultationData({
+                                                                patientName: `${profile.firstName} ${profile.lastName}`,
+                                                                patientImage: profile.profileImage
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error fetching patient profile:', error);
+                                                        // Fallback to consultation data
+                                                        setAudioConsultationData({
+                                                            patientName: request.patientName,
+                                                            patientImage: request.patientImage
+                                                        });
+                                                    }
+                                                };
+
+                                                fetchPatientProfile();
+                                                setAudioDialogOpen(true);
+                                            } else {
+                                                // Open chat dialog for chat consultations
+                                                setChatConsultationId(request._id);
+                                                setChatDialogOpen(true);
+                                            }
                                         }
                                     }}
                                     className={`${canStartConsultation()
@@ -1780,6 +1818,28 @@ export default function DoctorDashboard() {
                         setChatConsultationId(null);
                         // Refresh consultations to update status
                         fetchConsultations();
+                    }}
+                />
+            )}
+
+            {/* Audio Consultation Dialog */}
+            {audioDialogOpen && audioConsultationId && (
+                <AudioConsultationDialog
+                    open={audioDialogOpen}
+                    onOpenChange={(isOpen) => {
+                        setAudioDialogOpen(isOpen);
+                        if (!isOpen) {
+                            setAudioConsultationId(null);
+                            setAudioConsultationData(null);
+                            // Refresh consultations to update status
+                            fetchConsultations();
+                        }
+                    }}
+                    consultationId={audioConsultationId}
+                    userRole="doctor"
+                    otherUser={{
+                        name: audioConsultationData?.patientName,
+                        image: audioConsultationData?.patientImage
                     }}
                 />
             )}
