@@ -175,7 +175,10 @@ export const consultationChatAPI = {
     getMessages: (consultationId) => api.get(`/consultation-chat/${consultationId}/messages`),
     sendMessage: (consultationId, messageData) => api.post(`/consultation-chat/${consultationId}/messages`, messageData),
     markMessagesAsRead: (consultationId) => api.put(`/consultation-chat/${consultationId}/read`),
-    endConsultation: (consultationId) => api.post(`/consultation-chat/${consultationId}/end`)
+    endConsultation: (consultationId) => api.post(`/consultation-chat/${consultationId}/end`),
+    uploadFile: (formData) => api.post('/consultation-chat/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
 };
 
 // Medicine Order API

@@ -21,19 +21,21 @@ export const SocketProvider = ({ children }) => {
         // Get token from localStorage
         const token = localStorage.getItem('token');
 
-        // Only connect if user is logged in and is patient or pharmacy
-        if (token && user && (user.role === 'patient' || user.role === 'pharmacy')) {
+        // Connect for patient, pharmacy, AND doctor roles
+        if (token && user && (user.role === 'patient' || user.role === 'pharmacy' || user.role === 'doctor')) {
             console.log('🔌 Initializing socket connection for:', user.role);
 
             const newSocket = io('http://localhost:5000', {
                 auth: {
                     token: token
                 },
+                transports: ['websocket', 'polling'],
                 autoConnect: true
             });
 
             newSocket.on('connect', () => {
                 console.log('✅ Socket connected');
+                console.log('🆔 Frontend Socket ID:', newSocket.id);
                 setConnected(true);
             });
 
@@ -58,7 +60,7 @@ export const SocketProvider = ({ children }) => {
                 newSocket.close();
             };
         } else {
-            // Disconnect if user logs out or is not patient/pharmacy
+            // Disconnect if user logs out or is not patient/pharmacy/doctor
             if (socket) {
                 socket.close();
                 setSocket(null);
