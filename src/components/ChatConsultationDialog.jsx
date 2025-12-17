@@ -44,33 +44,45 @@ export default function ChatConsultationDialog({ consultationId, open, onClose }
         };
     }, [consultationId, open]);
 
-    // 30-minute countdown timer
+    // 30-minute countdown timer - synchronized across all clients
     useEffect(() => {
-        if (!open || !consultationChat) return;
+        if (!open || !consultationChat || !consultationChat.startedAt) return;
 
-        const timer = setInterval(() => {
-            setTimeRemaining(prev => {
-                // Show warning at 10 minutes (600 seconds)
-                if (prev <= 600 && !showWarning) {
-                    setShowWarning(true);
-                    setShowTimer(true);
-                    toast.warning('⏰ 10 minutes remaining in consultation', {
-                        duration: 5000,
-                    });
-                }
+        let warningShown = showWarning; // Use existing state
 
-                // Auto-end at 0
-                if (prev <= 0) {
-                    handleConsultationEnd();
-                    return 0;
-                }
+        const updateTimer = () => {
+            const startTime = new Date(consultationChat.startedAt);
+            const now = new Date();
+            const elapsedSeconds = Math.floor((now - startTime) / 1000);
+            const totalSeconds = 30 * 60; // 30 minutes
+            const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
 
-                return prev - 1;
-            });
-        }, 1000);
+            setTimeRemaining(remainingSeconds);
+
+            // Show warning at 10 minutes (600 seconds) - only once per session
+            if (remainingSeconds <= 600 && !warningShown) {
+                warningShown = true;
+                setShowWarning(true);
+                setShowTimer(true);
+                toast.warning('⏰ 10 minutes remaining in consultation', {
+                    duration: 5000,
+                });
+            }
+
+            // Auto-end at 0
+            if (remainingSeconds <= 0) {
+                handleConsultationEnd();
+            }
+        };
+
+        // Update immediately
+        updateTimer();
+
+        // Update every second
+        const timer = setInterval(updateTimer, 1000);
 
         return () => clearInterval(timer);
-    }, [open, consultationChat, showWarning]);
+    }, [open, consultationChat]); // Removed showWarning from dependencies
 
     // Auto scroll to bottom
     useEffect(() => {
@@ -90,9 +102,15 @@ export default function ChatConsultationDialog({ consultationId, open, onClose }
                 setUserRole(response.data.data.userRole);
                 setOtherUser(response.data.data.otherUser);
 
-                // Calculate time remaining based on start time
+                // Set timer from backend (persists across refreshes)
                 if (response.data.data.timeRemaining !== undefined) {
-                    setTimeRemaining(response.data.data.timeRemaining * 60); // Convert minutes to seconds
+                    const timeInSeconds = response.data.data.timeRemaining * 60;
+                    setTimeRemaining(timeInSeconds);
+                    // Show timer immediately if less than 10 minutes
+                    if (timeInSeconds <= 600) {
+                        setShowTimer(true);
+                        setShowWarning(true);
+                    }
                 }
 
                 // Load messages
@@ -425,11 +443,17 @@ export default function ChatConsultationDialog({ consultationId, open, onClose }
                             </div>
                         </div>
 
-                        {/* Timer Display */}
-                        {showTimer && (
-                            <Badge variant="outline" className="flex items-center space-x-1 px-3 py-1 border-orange-300 bg-orange-50">
-                                <Clock className="h-3 w-3 text-orange-600" />
-                                <span className="text-orange-600 font-mono font-semibold">
+                        {/* Timer Display - Always visible, changes color when low */}
+                        {consultationChat && (
+                            <Badge
+                                variant="outline"
+                                className={`flex items-center space-x-1 px-3 py-1 ${timeRemaining <= 600
+                                    ? 'border-red-300 bg-red-50'
+                                    : 'border-blue-300 bg-blue-50'
+                                    }`}
+                            >
+                                <Clock className={`h-3 w-3 ${timeRemaining <= 600 ? 'text-red-600' : 'text-blue-600'}`} />
+                                <span className={`font-mono font-semibold ${timeRemaining <= 600 ? 'text-red-600' : 'text-blue-600'}`}>
                                     {formatTimer(timeRemaining)}
                                 </span>
                             </Badge>
