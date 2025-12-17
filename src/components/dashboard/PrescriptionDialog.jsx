@@ -89,10 +89,6 @@ export default function PrescriptionDialog({ open, onOpenChange, consultation, d
 
     if (!consultation || !patientProfile) return null;
 
-    const patientAge = patientProfile.dateOfBirth
-        ? Math.floor((new Date() - new Date(patientProfile.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000))
-        : 'N/A';
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="bg-white max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -112,7 +108,7 @@ export default function PrescriptionDialog({ open, onOpenChange, consultation, d
                         <div>
                             <h4 className="font-semibold text-sm text-gray-700 mb-2">Patient Information</h4>
                             <p className="text-sm"><span className="font-medium">Name:</span> {patientProfile.firstName} {patientProfile.lastName}</p>
-                            <p className="text-sm"><span className="font-medium">Age:</span> {patientAge} | <span className="font-medium">Gender:</span> {patientProfile.gender}</p>
+                            <p className="text-sm"><span className="font-medium">Phone:</span> {patientProfile.phoneNumber || 'N/A'} | <span className="font-medium">Gender:</span> {patientProfile.gender || 'N/A'}</p>
                             <p className="text-sm"><span className="font-medium">Date:</span> {new Date(consultation.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div>

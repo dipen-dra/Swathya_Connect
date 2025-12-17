@@ -1026,7 +1026,12 @@ export default function DoctorDashboard() {
                                     setSelectedConsultation(request);
                                     // Fetch patient profile
                                     try {
-                                        const response = await profileAPI.getUserProfile(request.patientId);
+                                        // Extract patient ID (handle both string and object formats)
+                                        const patientId = typeof request.patientId === 'string'
+                                            ? request.patientId
+                                            : request.patientId?._id || request.patientId;
+
+                                        const response = await profileAPI.getUserProfile(patientId);
                                         if (response.data.success) {
                                             setSelectedPatientProfile(response.data.data);
                                         }
