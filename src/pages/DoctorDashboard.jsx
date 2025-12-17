@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ChatConsultationDialog from '@/components/ChatConsultationDialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -58,6 +59,7 @@ import { toast } from 'sonner';
 import { documentsAPI, prescriptionsAPI, profileAPI, consultationsAPI } from '@/services/api';
 import DoctorDocuments from '@/components/dashboard/DoctorDocuments';
 import PrescriptionDialog from '@/components/dashboard/PrescriptionDialog';
+import AudioConsultationDialog from '@/components/AudioConsultationDialog';
 
 export default function DoctorDashboard() {
     console.log('🏥 DoctorDashboard component is rendering!');
@@ -82,6 +84,12 @@ export default function DoctorDashboard() {
     const [showSignOutDialog, setShowSignOutDialog] = useState(false);
     const [prescriptionDialog, setPrescriptionDialog] = useState(false);
     const [selectedConsultation, setSelectedConsultation] = useState(null);
+    const [selectedPatientProfile, setSelectedPatientProfile] = useState(null);
+    const [chatDialogOpen, setChatDialogOpen] = useState(false);
+    const [chatConsultationId, setChatConsultationId] = useState(null);
+    const [audioDialogOpen, setAudioDialogOpen] = useState(false);
+    const [audioConsultationId, setAudioConsultationId] = useState(null);
+    const [audioConsultationData, setAudioConsultationData] = useState(null);
 
     // Verification fees state
     const [verificationFees, setVerificationFees] = useState({
@@ -408,16 +416,20 @@ export default function DoctorDashboard() {
     const todayConsultations = consultations
         .filter(r => {
             const consultDate = new Date(r.date).toISOString().split('T')[0];
-            return consultDate === today && (r.status === 'upcoming' || r.status === 'completed');
+            // Count all consultations scheduled for today (not cancelled or rejected)
+            return consultDate === today && !['cancelled', 'rejected'].includes(r.status);
         })
         .length;
 
 
-    // Calculate percentage changes (mock for now - can be enhanced with historical data)
+
+    // Calculate percentage changes
+    // Since we don't track historical data, show +100% for any current data
+    // This indicates growth from 0 (no previous data)
     const calculateChange = (current) => {
-        if (current === 0) return 0;
-        // Mock: assume some growth if we have data
-        return current > 0 ? Math.min(100, current * 10) : 0;
+        // If we have current data but no historical tracking,
+        // show +100% to indicate new activity
+        return current > 0 ? 100 : 0;
     };
 
     const stats = [
@@ -776,6 +788,57 @@ export default function DoctorDashboard() {
 
         const urgent = isUrgent();
 
+        // Check if doctor can start the consultation (10 minutes before scheduled time)
+        const canStartConsultation = () => {
+            try {
+                const now = new Date();
+                const time24 = convertTo24Hour(request.time);
+
+                // Extract just the date part (YYYY-MM-DD) from ISO string or date object
+                const dateOnly = new Date(request.date).toISOString().split('T')[0];
+                const consultDateTime = new Date(`${dateOnly}T${time24}`);
+                const minutesUntil = Math.floor((consultDateTime - now) / (1000 * 60));
+
+                // Can start 10 minutes before scheduled time, up to 1 hour after
+                return minutesUntil <= 10 && minutesUntil >= -60;
+            } catch (error) {
+                console.error('Error checking consultation start time:', error);
+                return false;
+            }
+        };
+
+        // Get minutes until consultation can be started
+        const getMinutesUntil = () => {
+            try {
+                if (!request.time || !request.date) {
+                    console.error('Missing time or date:', request);
+                    return '?';
+                }
+
+                const now = new Date();
+                const time24 = convertTo24Hour(request.time);
+
+                // Extract just the date part (YYYY-MM-DD) from ISO string or date object
+                const dateOnly = new Date(request.date).toISOString().split('T')[0];
+                const consultDateTime = new Date(`${dateOnly}T${time24}`);
+
+                if (isNaN(consultDateTime.getTime())) {
+                    console.error('Invalid date/time:', dateOnly, time24);
+                    return '?';
+                }
+
+                const totalMinutesUntil = Math.floor((consultDateTime - now) / (1000 * 60));
+
+                // Subtract 10 minutes (early access window)
+                const minutesUntilStart = Math.max(0, totalMinutesUntil - 10);
+
+                return minutesUntilStart;
+            } catch (error) {
+                console.error('Error calculating minutes until:', error, request);
+                return '?';
+            }
+        };
+
         return (
             <Card key={request.id} className={`border hover:shadow-md transition-all duration-200 ${urgent ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
                 }`}>
@@ -796,6 +859,13 @@ export default function DoctorDashboard() {
                             <div>
                                 <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-lg text-gray-900">{request.patientId?.fullName || request.patientId?.name || 'Unknown Patient'}</h4>
+                                    {/* Show Live badge for approved consultations that can be started */}
+                                    {request.status === 'approved' && canStartConsultation(request) && (
+                                        <Badge className="bg-green-100 text-green-700 border-green-300 animate-pulse">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full mr-1 inline-block"></span>
+                                            Live
+                                        </Badge>
+                                    )}
                                     {urgent && (
                                         <Badge className="bg-red-100 text-red-800 border-red-200">
                                             <AlertCircle className="h-3 w-3 mr-1" />
@@ -909,18 +979,64 @@ export default function DoctorDashboard() {
                             {request.status === 'approved' && (
                                 <Button
                                     size="sm"
+                                    disabled={!canStartConsultation()}
                                     onClick={() => {
-                                        // If consultation link exists, open it, otherwise show a message
-                                        if (request.consultationLink) {
-                                            window.open(request.consultationLink, '_blank');
-                                        } else {
-                                            toast.info('Consultation link will be available closer to the scheduled time');
+                                        if (canStartConsultation()) {
+                                            // Check consultation type and open appropriate dialog
+                                            if (request.type === 'audio' || request.type === 'video') {
+                                                // Open audio call dialog for audio/video consultations
+                                                setAudioConsultationId(request._id);
+
+                                                // Fetch patient profile for accurate data
+                                                const fetchPatientProfile = async () => {
+                                                    try {
+                                                        const patientId = typeof request.patientId === 'string'
+                                                            ? request.patientId
+                                                            : request.patientId?._id || request.patientId;
+
+                                                        const response = await profileAPI.getUserProfile(patientId);
+                                                        if (response.data.success) {
+                                                            const profile = response.data.data;
+                                                            setAudioConsultationData({
+                                                                patientName: `${profile.firstName} ${profile.lastName}`,
+                                                                patientImage: profile.profileImage
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error fetching patient profile:', error);
+                                                        // Fallback to consultation data
+                                                        setAudioConsultationData({
+                                                            patientName: request.patientName,
+                                                            patientImage: request.patientImage
+                                                        });
+                                                    }
+                                                };
+
+                                                fetchPatientProfile();
+                                                setAudioDialogOpen(true);
+                                            } else {
+                                                // Open chat dialog for chat consultations
+                                                setChatConsultationId(request._id);
+                                                setChatDialogOpen(true);
+                                            }
                                         }
                                     }}
-                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm"
+                                    className={`${canStartConsultation()
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
                                 >
-                                    <ConsultationIcon className="h-3 w-3 mr-1" />
-                                    Start Consultation
+                                    {canStartConsultation() ? (
+                                        <>
+                                            <ConsultationIcon className="h-3 w-3 mr-1" />
+                                            Start Consultation
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            Available in {getMinutesUntil()} min
+                                        </>
+                                    )}
                                 </Button>
                             )}
 
@@ -944,8 +1060,23 @@ export default function DoctorDashboard() {
                     {request.status === 'completed' && !request.prescriptionId && (
                         <div className="flex justify-center pt-4 mt-4 border-t border-gray-200">
                             <Button
-                                onClick={() => {
+                                onClick={async () => {
                                     setSelectedConsultation(request);
+                                    // Fetch patient profile
+                                    try {
+                                        // Extract patient ID (handle both string and object formats)
+                                        const patientId = typeof request.patientId === 'string'
+                                            ? request.patientId
+                                            : request.patientId?._id || request.patientId;
+
+                                        const response = await profileAPI.getUserProfile(patientId);
+                                        if (response.data.success) {
+                                            setSelectedPatientProfile(response.data.data);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error fetching patient profile:', error);
+                                        toast.error('Failed to load patient details');
+                                    }
                                     setPrescriptionDialog(true);
                                 }}
                                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm"
@@ -1564,7 +1695,7 @@ export default function DoctorDashboard() {
                                 </Button>
                                 <Button
                                     onClick={handleConfirmAction}
-                                    className={`flex-1 ${actionType === 'approve'
+                                    className={`flex-1 text-white ${actionType === 'approve'
                                         ? 'bg-green-600 hover:bg-green-700'
                                         : 'bg-red-600 hover:bg-red-700'
                                         }`}
@@ -1668,14 +1799,50 @@ export default function DoctorDashboard() {
                     onOpenChange={setPrescriptionDialog}
                     consultation={selectedConsultation}
                     doctorProfile={profile}
-                    patientProfile={{
+                    patientProfile={selectedPatientProfile || {
                         firstName: selectedConsultation?.patientName?.split(' ')[0] || '',
                         lastName: selectedConsultation?.patientName?.split(' ')[1] || '',
-                        dateOfBirth: null, // Would come from actual patient data
+                        dateOfBirth: null,
                         gender: selectedConsultation?.gender || 'N/A'
                     }}
                 />
             </div>
+
+            {/* Chat Consultation Dialog */}
+            {chatDialogOpen && chatConsultationId && (
+                <ChatConsultationDialog
+                    consultationId={chatConsultationId}
+                    open={chatDialogOpen}
+                    onClose={() => {
+                        setChatDialogOpen(false);
+                        setChatConsultationId(null);
+                        // Refresh consultations to update status
+                        fetchConsultations();
+                    }}
+                />
+            )}
+
+            {/* Audio Consultation Dialog */}
+            {audioDialogOpen && audioConsultationId && (
+                <AudioConsultationDialog
+                    open={audioDialogOpen}
+                    onOpenChange={(isOpen) => {
+                        setAudioDialogOpen(isOpen);
+                        if (!isOpen) {
+                            setAudioConsultationId(null);
+                            setAudioConsultationData(null);
+                            // Refresh consultations to update status
+                            fetchConsultations();
+                        }
+                    }}
+                    consultationId={audioConsultationId}
+                    userRole="doctor"
+                    otherUser={{
+                        name: audioConsultationData?.patientName,
+                        image: audioConsultationData?.patientImage
+                    }}
+                />
+            )}
         </div >
     );
 }

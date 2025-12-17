@@ -151,9 +151,36 @@ export default function LoginPage() {
       }, 10); // Minimal delay - just enough for state update
     } catch (error) {
       console.error(error);
-      toast.error("Login Failed", {
-        description: error.message || "Invalid credentials. Please try again.",
-      });
+
+      const errorData = error.response?.data;
+
+      // Handle rate limiting - IP blocked
+      if (errorData?.blocked) {
+        toast.error("Account Temporarily Locked", {
+          description: `Too many failed login attempts. Please try again in ${errorData.remainingTime} minute${errorData.remainingTime > 1 ? 's' : ''}.`,
+          duration: 8000,
+        });
+      }
+      // Handle rate limiting - approaching limit
+      else if (errorData?.remainingAttempts !== undefined) {
+        if (errorData.remainingAttempts > 0) {
+          toast.error("Invalid Credentials", {
+            description: `${errorData.message}\n⚠️ ${errorData.remainingAttempts} attempt${errorData.remainingAttempts > 1 ? 's' : ''} remaining before account lock.`,
+            duration: 6000,
+          });
+        } else if (errorData.locked) {
+          toast.error("Account Locked", {
+            description: "Too many failed attempts. Your account has been temporarily locked for 15 minutes.",
+            duration: 8000,
+          });
+        }
+      }
+      // Generic error
+      else {
+        toast.error("Login Failed", {
+          description: errorData?.message || error.message || "Invalid credentials. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
