@@ -31,10 +31,23 @@ export default function AudioConsultationDialog({ open, onOpenChange, consultati
                     user.audioTrack.play();
                     setRemoteUserJoined(true);
                     toast.success(`${otherUser?.name || 'Other user'} joined the call`);
+
+                    // Start the timer now that both users are connected
+                    try {
+                        await consultationChatAPI.startCallTimer(consultationId);
+                        // Refresh the timer by getting updated token data
+                        const response = await consultationChatAPI.generateAgoraToken(consultationId);
+                        if (response.data.success) {
+                            setTimeRemaining(response.data.data.remainingSeconds);
+                        }
+                    } catch (error) {
+                        console.error('Error starting call timer:', error);
+                    }
                 }
             });
 
-            clientRef.current.on('user-unpublished', (user) => {
+            // Listen for user actually leaving (not just muting)
+            clientRef.current.on('user-left', (user) => {
                 setRemoteUserJoined(false);
                 toast.info(`${otherUser?.name || 'Other user'} left the call`);
             });
@@ -97,8 +110,11 @@ export default function AudioConsultationDialog({ open, onOpenChange, consultati
             const response = await consultationChatAPI.generateAgoraToken(consultationId);
 
             if (response.data.success) {
-                const { token, channelName, uid, appId } = response.data.data;
+                const { token, channelName, uid, appId, remainingSeconds } = response.data.data;
                 agoraDataRef.current = { token, channelName, uid, appId };
+
+                // Set timer to remaining seconds from backend (persistent timer)
+                setTimeRemaining(remainingSeconds);
 
                 // Join channel
                 await clientRef.current.join(appId, channelName, token, uid);
@@ -146,9 +162,26 @@ export default function AudioConsultationDialog({ open, onOpenChange, consultati
     };
 
     const handleEndCall = async () => {
-        await handleLeaveCall();
-        toast.success('Call ended');
-        onOpenChange(false);
+        try {
+            // Calculate call duration (30 minutes - remaining time)
+            const callDuration = Math.floor((1800 - timeRemaining) / 60); // in minutes
+
+            // Mark consultation as completed
+            await consultationChatAPI.endConsultation(consultationId, {
+                callDuration,
+                notes: 'Audio consultation completed'
+            });
+
+            await handleLeaveCall();
+            toast.success('Call ended - Consultation marked as completed');
+            onOpenChange(false);
+        } catch (error) {
+            console.error('Error ending consultation:', error);
+            // Still end the call even if API fails
+            await handleLeaveCall();
+            toast.error('Call ended but failed to update consultation status');
+            onOpenChange(false);
+        }
     };
 
     const getQualityColor = () => {
