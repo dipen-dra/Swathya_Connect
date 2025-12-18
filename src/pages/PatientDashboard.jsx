@@ -709,8 +709,9 @@ export function PatientDashboard() {
                             </div>
 
 
+
                             {/* Button Logic - Handle Expired, Permanently Expired, and Approved */}
-                            {consultation.expiryStage === 'expired' ? (
+                            {consultation.expiryStage === 'expired' && !consultation.hasBeenReRequested ? (
                                 <Button
                                     onClick={() => handleReRequest(consultation._id)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm mt-2"
@@ -718,6 +719,15 @@ export function PatientDashboard() {
                                 >
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Re-Request Consultation
+                                </Button>
+                            ) : consultation.expiryStage === 'expired' && consultation.hasBeenReRequested ? (
+                                <Button
+                                    disabled
+                                    className="bg-gray-400 text-gray-200 cursor-not-allowed mt-2"
+                                    size="default"
+                                >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Re-Requested
                                 </Button>
                             ) : consultation.expiryStage === 'permanently_expired' ? (
                                 <Button
