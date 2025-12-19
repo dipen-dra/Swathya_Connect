@@ -84,7 +84,8 @@ export const consultationsAPI = {
     bookConsultation: (consultationData) => api.post('/consultations', consultationData),
     updateConsultation: (id, updateData) => api.put(`/consultations/${id}`, updateData),
     cancelConsultation: (id, reason) => api.put(`/consultations/${id}/cancel`, { reason }),
-    rateConsultation: (id, rating) => api.put(`/consultations/${id}/rate`, { rating })
+    rateConsultation: (id, rating) => api.put(`/consultations/${id}/rate`, { rating }),
+    reRequestConsultation: (consultationId) => api.post(`/consultations/${consultationId}/re-request`)
 };
 
 // Doctors API
@@ -179,7 +180,8 @@ export const consultationChatAPI = {
     uploadFile: (formData) => api.post('/consultation-chat/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    generateAgoraToken: (consultationId) => api.post(`/consultation-chat/${consultationId}/agora-token`)
+    generateAgoraToken: (consultationId) => api.post(`/consultation-chat/${consultationId}/agora-token`),
+    startCallTimer: (consultationId) => api.post(`/consultation-chat/${consultationId}/start-timer`)
 };
 
 // Medicine Order API

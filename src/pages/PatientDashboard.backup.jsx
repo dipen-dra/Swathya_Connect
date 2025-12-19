@@ -28,8 +28,6 @@ import {
     Activity,
     TrendingUp,
     Heart,
-    RefreshCw,
-    XCircle,
     Shield,
     Award,
     Users,
@@ -498,17 +496,6 @@ export function PatientDashboard() {
             });
         }
     };
-    const handleReRequest = async (consultationId) => {
-        try {
-            const response = await consultationsAPI.reRequestConsultation(consultationId);
-            if (response.data.success) {
-                toast({ title: "Success", description: "Consultation re-requested successfully!" });
-                fetchConsultations(); // Refresh the list
-            }
-        } catch (error) {
-            toast({ title: "Error", description: error.response?.data?.message || 'Failed to re-request consultation', variant: "destructive" });
-        }
-    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -696,49 +683,13 @@ export function PatientDashboard() {
                                 {consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}
                             </Badge>
 
-                            {/* Expired Badge */}
-                            {consultation.expiryStage && (
-                                <Badge className="bg-red-500 text-white border-red-600 font-medium px-3 py-1">
-                                    Expired
-                                </Badge>
-                            )}
-
                             <div className="text-right">
                                 <p className="text-sm text-gray-600">Consultation Fee</p>
                                 <p className="text-lg font-bold text-blue-600">NPR {consultation.fee}</p>
                             </div>
 
-
-
-                            {/* Button Logic - Handle Expired, Permanently Expired, and Approved */}
-                            {consultation.expiryStage === 'expired' && !consultation.hasBeenReRequested ? (
-                                <Button
-                                    onClick={() => handleReRequest(consultation._id)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm mt-2"
-                                    size="default"
-                                >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Re-Request Consultation
-                                </Button>
-                            ) : consultation.expiryStage === 'expired' && consultation.hasBeenReRequested ? (
-                                <Button
-                                    disabled
-                                    className="bg-gray-400 text-gray-200 cursor-not-allowed mt-2"
-                                    size="default"
-                                >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Re-Requested
-                                </Button>
-                            ) : consultation.expiryStage === 'permanently_expired' ? (
-                                <Button
-                                    disabled
-                                    className="bg-gray-400 text-gray-200 cursor-not-allowed mt-2"
-                                    size="default"
-                                >
-                                    <XCircle className="h-4 w-4 mr-2" />
-                                    Expired
-                                </Button>
-                            ) : consultation.status === 'approved' && (
+                            {/* Join Consultation Button - Only for approved consultations */}
+                            {consultation.status === 'approved' && (
                                 <Button
                                     disabled={!canJoinConsultation(consultation)}
                                     onClick={() => {

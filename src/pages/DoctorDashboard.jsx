@@ -886,6 +886,21 @@ export default function DoctorDashboard() {
                             <Badge className={`${getStatusColor(request.status)} border font-medium`}>
                                 {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                             </Badge>
+
+                            {/* Expired Badge */}
+                            {request.expiryStage && (
+                                <Badge className="bg-red-500 text-white border-red-600 font-medium">
+                                    Expired
+                                </Badge>
+                            )}
+
+                            {/* Re-Requested Indicator */}
+                            {request.isReRequest && (
+                                <Badge className="bg-blue-100 text-blue-700 border-blue-300 font-medium">
+                                    Re-Requested
+                                </Badge>
+                            )}
+
                             <p className="text-lg font-bold text-blue-600">NPR {request.fee}</p>
                         </div>
                     </div>
