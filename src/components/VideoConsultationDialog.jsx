@@ -113,6 +113,8 @@ const VideoConsultationDialog = ({ open, onOpenChange, consultationId, userRole,
             });
 
             client.on('user-unpublished', (user, mediaType) => {
+                // When user mutes mic or turns off camera, this event fires
+                // We just clear the ref - Agora handles the rest
                 if (mediaType === 'video') {
                     remoteVideoTrackRef.current = null;
                 }
@@ -165,7 +167,8 @@ const VideoConsultationDialog = ({ open, onOpenChange, consultationId, userRole,
                 await clientRef.current.join(appId, channelName, token, uid);
 
                 // Create and publish local tracks
-                const [videoTrack, audioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                // NOTE: Agora returns [audioTrack, videoTrack] from createMicrophoneAndCameraTracks!
+                const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
                 localVideoTrackRef.current = videoTrack;
                 localAudioTrackRef.current = audioTrack;
@@ -210,15 +213,17 @@ const VideoConsultationDialog = ({ open, onOpenChange, consultationId, userRole,
 
     const handleToggleMute = async () => {
         if (localAudioTrackRef.current) {
-            await localAudioTrackRef.current.setEnabled(muted);
-            setMuted(!muted);
+            const isCurrentlyEnabled = localAudioTrackRef.current.enabled;
+            await localAudioTrackRef.current.setEnabled(!isCurrentlyEnabled);
+            setMuted(isCurrentlyEnabled); // If was enabled (ON), now it's muted (OFF)
         }
     };
 
     const handleToggleCamera = async () => {
         if (localVideoTrackRef.current) {
-            await localVideoTrackRef.current.setEnabled(cameraOff);
-            setCameraOff(!cameraOff);
+            const isCurrentlyEnabled = localVideoTrackRef.current.enabled;
+            await localVideoTrackRef.current.setEnabled(!isCurrentlyEnabled);
+            setCameraOff(isCurrentlyEnabled); // If was enabled (ON), now it's off
         }
     };
 
