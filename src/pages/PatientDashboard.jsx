@@ -52,6 +52,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import ChatConsultationDialog from '@/components/ChatConsultationDialog';
 import AudioConsultationDialog from '@/components/AudioConsultationDialog';
+import VideoConsultationDialog from '@/components/VideoConsultationDialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsultationTypeDialog } from '@/components/ui/consultation-type-dialog';
 import { PaymentDialog } from '@/components/ui/payment-dialog';
@@ -134,6 +135,9 @@ export function PatientDashboard() {
     const [audioDialogOpen, setAudioDialogOpen] = useState(false);
     const [audioConsultationId, setAudioConsultationId] = useState(null);
     const [audioConsultationData, setAudioConsultationData] = useState(null);
+    const [videoDialogOpen, setVideoDialogOpen] = useState(false);
+    const [videoConsultationId, setVideoConsultationId] = useState(null);
+    const [videoConsultationData, setVideoConsultationData] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -744,14 +748,22 @@ export function PatientDashboard() {
                                     onClick={() => {
                                         if (canJoinConsultation(consultation)) {
                                             // Check consultation type and open appropriate dialog
-                                            if (consultation.type === 'audio' || consultation.type === 'video') {
-                                                // Open audio call dialog for audio/video consultations
+                                            if (consultation.type === 'audio') {
+                                                // Open audio call dialog for audio consultations
                                                 setAudioConsultationId(consultation._id);
                                                 setAudioConsultationData({
                                                     doctorName: consultation.doctorName,
                                                     doctorImage: consultation.doctorImage
                                                 });
                                                 setAudioDialogOpen(true);
+                                            } else if (consultation.type === 'video') {
+                                                // Open video call dialog for video consultations
+                                                setVideoConsultationId(consultation._id);
+                                                setVideoConsultationData({
+                                                    doctorName: consultation.doctorName,
+                                                    doctorImage: consultation.doctorImage
+                                                });
+                                                setVideoDialogOpen(true);
                                             } else {
                                                 // Open chat dialog for chat consultations
                                                 setChatConsultationId(consultation._id);
@@ -2184,6 +2196,28 @@ export function PatientDashboard() {
                         otherUser={{
                             name: audioConsultationData?.doctorName,
                             image: audioConsultationData?.doctorImage
+                        }}
+                    />
+                )}
+
+                {/* Video Consultation Dialog */}
+                {videoDialogOpen && videoConsultationId && (
+                    <VideoConsultationDialog
+                        open={videoDialogOpen}
+                        onOpenChange={(isOpen) => {
+                            setVideoDialogOpen(isOpen);
+                            if (!isOpen) {
+                                setVideoConsultationId(null);
+                                setVideoConsultationData(null);
+                                // Refresh consultations
+                                fetchConsultations();
+                            }
+                        }}
+                        consultationId={videoConsultationId}
+                        userRole="patient"
+                        otherUser={{
+                            name: videoConsultationData?.doctorName,
+                            image: videoConsultationData?.doctorImage
                         }}
                     />
                 )}

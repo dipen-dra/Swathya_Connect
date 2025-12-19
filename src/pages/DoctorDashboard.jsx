@@ -60,6 +60,7 @@ import { documentsAPI, prescriptionsAPI, profileAPI, consultationsAPI } from '@/
 import DoctorDocuments from '@/components/dashboard/DoctorDocuments';
 import PrescriptionDialog from '@/components/dashboard/PrescriptionDialog';
 import AudioConsultationDialog from '@/components/AudioConsultationDialog';
+import VideoConsultationDialog from '@/components/VideoConsultationDialog';
 
 export default function DoctorDashboard() {
     console.log('🏥 DoctorDashboard component is rendering!');
@@ -90,6 +91,9 @@ export default function DoctorDashboard() {
     const [audioDialogOpen, setAudioDialogOpen] = useState(false);
     const [audioConsultationId, setAudioConsultationId] = useState(null);
     const [audioConsultationData, setAudioConsultationData] = useState(null);
+    const [videoDialogOpen, setVideoDialogOpen] = useState(false);
+    const [videoConsultationId, setVideoConsultationId] = useState(null);
+    const [videoConsultationData, setVideoConsultationData] = useState(null);
 
     // Verification fees state
     const [verificationFees, setVerificationFees] = useState({
@@ -998,8 +1002,8 @@ export default function DoctorDashboard() {
                                     onClick={() => {
                                         if (canStartConsultation()) {
                                             // Check consultation type and open appropriate dialog
-                                            if (request.type === 'audio' || request.type === 'video') {
-                                                // Open audio call dialog for audio/video consultations
+                                            if (request.type === 'audio') {
+                                                // Open audio call dialog for audio consultations
                                                 setAudioConsultationId(request._id);
 
                                                 // Fetch patient profile for accurate data
@@ -1029,6 +1033,37 @@ export default function DoctorDashboard() {
 
                                                 fetchPatientProfile();
                                                 setAudioDialogOpen(true);
+                                            } else if (request.type === 'video') {
+                                                // Open video call dialog for video consultations
+                                                setVideoConsultationId(request._id);
+
+                                                // Fetch patient profile for accurate data
+                                                const fetchPatientProfile = async () => {
+                                                    try {
+                                                        const patientId = typeof request.patientId === 'string'
+                                                            ? request.patientId
+                                                            : request.patientId?._id || request.patientId;
+
+                                                        const response = await profileAPI.getUserProfile(patientId);
+                                                        if (response.data.success) {
+                                                            const profile = response.data.data;
+                                                            setVideoConsultationData({
+                                                                patientName: `${profile.firstName} ${profile.lastName}`,
+                                                                patientImage: profile.profileImage
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error fetching patient profile:', error);
+                                                        // Fallback to consultation data
+                                                        setVideoConsultationData({
+                                                            patientName: request.patientName,
+                                                            patientImage: request.patientImage
+                                                        });
+                                                    }
+                                                };
+
+                                                fetchPatientProfile();
+                                                setVideoDialogOpen(true);
                                             } else {
                                                 // Open chat dialog for chat consultations
                                                 setChatConsultationId(request._id);
@@ -1855,6 +1890,28 @@ export default function DoctorDashboard() {
                     otherUser={{
                         name: audioConsultationData?.patientName,
                         image: audioConsultationData?.patientImage
+                    }}
+                />
+            )}
+
+            {/* Video Consultation Dialog */}
+            {videoDialogOpen && videoConsultationId && (
+                <VideoConsultationDialog
+                    open={videoDialogOpen}
+                    onOpenChange={(isOpen) => {
+                        setVideoDialogOpen(isOpen);
+                        if (!isOpen) {
+                            setVideoConsultationId(null);
+                            setVideoConsultationData(null);
+                            // Refresh consultations to update status
+                            fetchConsultations();
+                        }
+                    }}
+                    consultationId={videoConsultationId}
+                    userRole="doctor"
+                    otherUser={{
+                        name: videoConsultationData?.patientName,
+                        image: videoConsultationData?.patientImage
                     }}
                 />
             )}
