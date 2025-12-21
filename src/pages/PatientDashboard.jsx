@@ -525,8 +525,9 @@ export function PatientDashboard() {
 
     // Filter consultations by status
     // Show both 'upcoming' (pending approval) and 'approved' (doctor approved) in upcoming section
+    // Match backend analytics: upcoming, scheduled, pending, approved
     const upcomingConsultations = consultations.filter(c =>
-        c.status === 'upcoming' || c.status === 'approved'
+        c.status === 'upcoming' || c.status === 'approved' || c.status === 'scheduled' || c.status === 'pending'
     );
     const completedConsultations = consultations.filter(c => c.status === 'completed');
     const rejectedConsultations = consultations.filter(c => c.status === 'rejected');
