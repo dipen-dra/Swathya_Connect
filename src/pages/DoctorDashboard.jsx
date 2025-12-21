@@ -645,7 +645,7 @@ export default function DoctorDashboard() {
 
             try {
                 // Call rejection API
-                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest.id}/reject`, {
+                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest._id}/reject`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
