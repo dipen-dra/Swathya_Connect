@@ -265,7 +265,7 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                             </Button>
                             <Button
                                 onClick={handleVerify}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                 disabled={loading}
                             >
                                 {loading ? 'Verifying...' : 'Approve & Send Bill'}
