@@ -310,7 +310,7 @@ export function PatientDashboard() {
             console.error('API stats fetch failed:', apiError);
             // Fallback: calculate from consultations only if API fails
             if (consultations && consultations.length > 0) {
-                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'scheduled' || c.status === 'pending').length;
+                const upcoming = consultations.filter(c => c.status === 'upcoming' || c.status === 'scheduled' || c.status === 'pending' || c.status === 'approved').length;
                 const completed = consultations.filter(c => c.status === 'completed').length;
                 const total = consultations.length;
                 const totalSpent = consultations
@@ -1234,28 +1234,6 @@ export function PatientDashboard() {
                                 </div>
                             )}
 
-                            {/* Rejected Consultations */}
-                            {rejectedConsultations.length > 0 && (
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center space-x-2 mb-4">
-                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                            <XCircle className="h-5 w-5 text-red-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Rejected Consultations
-                                                <span className="ml-2 text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
-                                                    {rejectedConsultations.length}
-                                                </span>
-                                            </h3>
-                                            <p className="text-sm text-gray-600">Consultations that were rejected by the doctor</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {rejectedConsultations.map(renderConsultationCard)}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Completed Consultations / Consultation History */}
                             {completedConsultations.length > 0 && (
@@ -1276,6 +1254,29 @@ export function PatientDashboard() {
                                     </div>
                                     <div className="space-y-4">
                                         {completedConsultations.map(renderConsultationCard)}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Rejected Consultations */}
+                            {rejectedConsultations.length > 0 && (
+                                <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                    <div className="flex items-center space-x-2 mb-4">
+                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                            <XCircle className="h-5 w-5 text-red-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-gray-900">
+                                                Rejected Consultations
+                                                <span className="ml-2 text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                                                    {rejectedConsultations.length}
+                                                </span>
+                                            </h3>
+                                            <p className="text-sm text-gray-600">Consultations that were rejected by the doctor</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {rejectedConsultations.map(renderConsultationCard)}
                                     </div>
                                 </div>
                             )}
