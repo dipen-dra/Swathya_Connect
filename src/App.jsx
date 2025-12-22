@@ -32,6 +32,10 @@ import AccountSettings from './pages/AccountSettings';
 import PharmacyDashboard from './pages/PharmacyDashboard';
 import PharmacyProfile from './pages/PharmacyProfile';
 import ChatConsultation from './pages/ChatConsultation';
+import CheckoutPage from './pages/patient/CheckoutPage';
+
+import Store from './pages/public/Store';
+import CartPage from './pages/public/CartPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -71,6 +75,10 @@ export default function App() {
                         </PublicRoute>
                       }
                     />
+
+                    {/* Store Page - Accessible to everyone */}
+                    <Route path="/store" element={<Store />} />
+                    <Route path="/cart" element={<CartPage />} />
 
                     {/* Auth Routes - Redirect to dashboard if already logged in */}
                     <Route
@@ -140,6 +148,14 @@ export default function App() {
                       element={
                         <ProtectedRoute allowedRoles={['patient']}>
                           <PatientDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/patient/checkout"
+                      element={
+                        <ProtectedRoute allowedRoles={['patient']}>
+                          <CheckoutPage />
                         </ProtectedRoute>
                       }
                     />

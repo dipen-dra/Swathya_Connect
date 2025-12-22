@@ -114,9 +114,8 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all ${
-        scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur"
-      }`}
+      className={`fixed top-0 w-full z-50 transition-all ${scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur"
+        }`}
     >
       <div className="max-w-[1350px] mx-auto px-6 h-20 flex items-center justify-between">
 
@@ -134,6 +133,7 @@ export default function Navbar() {
 
         {/* Navigation */}
         <nav className="hidden md:flex gap-8">
+          <a href="/store" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Store</a>
           {navItems.map((item) => (
             <button
               key={item.id}

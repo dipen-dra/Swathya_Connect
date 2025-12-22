@@ -196,13 +196,39 @@ export const medicineOrderAPI = {
     confirmPayment: (orderId, paymentData) => api.put(`/medicine-orders/${orderId}/confirm-payment`, paymentData),
 
     // Pharmacy endpoints
-    getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }),
-    verifyPrescription: (orderId, data) => api.put(`/medicine-orders/${orderId}/verify`, data),
-    rejectPrescription: (orderId, reason) => api.put(`/medicine-orders/${orderId}/reject`, { reason }),
-    updateOrderStatus: (orderId, status, notes) => api.put(`/medicine-orders/${orderId}/status`, { status, notes }),
-
     // Shared
     getOrderById: (orderId) => api.get(`/medicine-orders/${orderId}`)
+};
+
+// Pharmacy API
+export const pharmacyAPI = {
+    // Inventory
+    getInventory: () => api.get('/pharmacies/dashboard/inventory'),
+    addInventory: (data) => {
+        const isFormData = data instanceof FormData;
+        return api.post('/pharmacies/dashboard/inventory', data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
+    },
+    updateInventory: (id, data) => {
+        const isFormData = data instanceof FormData;
+        return api.put(`/pharmacies/dashboard/inventory/${id}`, data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
+    },
+    deleteInventory: (id) => api.delete(`/pharmacies/dashboard/inventory/${id}`),
+
+    // Order Management
+    getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }), // This stands correct as per medicineOrderRoutes
+    updateOrderStatus: (orderId, status) => api.put(`/medicine-orders/${orderId}/status`, { status }),
+    verifyPrescription: (orderId, data) => api.put(`/medicine-orders/${orderId}/verify`, data),
+    rejectPrescription: (orderId, reason) => api.put(`/medicine-orders/${orderId}/reject`, { reason }),
+};
+
+// Store API
+export const storeAPI = {
+    getProducts: (params) => api.get('/store/products', { params }),
+    getProductDetails: (id) => api.get(`/store/products/${id}`)
 };
 
 export default api;

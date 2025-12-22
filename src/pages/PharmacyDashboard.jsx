@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,10 +30,10 @@ import {
     ShoppingCart, Clock, DollarSign, Users, Search,
     MessageSquare, Package, User, Shield, CheckCircle,
     TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut,
-    Upload, FileText, XCircle, Download
+    Upload, FileText, XCircle, Download, Link, Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { profileAPI, medicineOrderAPI } from '@/services/api';
+import { profileAPI, medicineOrderAPI, pharmacyAPI } from '@/services/api';
 import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
 import { VerifyPrescriptionDialog } from '@/components/pharmacy/VerifyPrescriptionDialog';
 import { RejectPrescriptionDialog } from '@/components/pharmacy/RejectPrescriptionDialog';
@@ -67,10 +68,16 @@ export default function PharmacyDashboard() {
         manufacturer: '',
         dosage: '',
         quantity: '',
+        reservedStock: 0,
         price: '',
         expiryDate: '',
         category: 'otc',
-        lowStockThreshold: '10'
+        lowStockThreshold: 10,
+        image: '',
+        description: '',
+        isPublic: true,
+        imageFile: null,
+        uploadMode: 'url' // 'url' or 'file'
     });
 
     // Sign out dialog state
@@ -146,7 +153,7 @@ export default function PharmacyDashboard() {
     const fetchMedicineOrders = async (status = null) => {
         try {
             setLoadingOrders(true);
-            const response = await medicineOrderAPI.getPharmacyOrders(status);
+            const response = await pharmacyAPI.getPharmacyOrders(status);
             if (response.data.success) {
                 setMedicineOrders(response.data.orders || []);
             }
@@ -232,20 +239,20 @@ export default function PharmacyDashboard() {
     };
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
-        // Find the order before updating
-        const order = orders.find(o => o._id === orderId);
+        try {
+            const response = await pharmacyAPI.updateOrderStatus(orderId, newStatus);
+            if (response.data.success) {
+                setMedicineOrders(medicineOrders.map(o =>
+                    o._id === orderId ? { ...o, status: newStatus } : o
+                ));
+                toast.success(`Order ${newStatus}!`);
 
-        // Update order status
-        setOrders(orders.map(o =>
-            o._id === orderId ? { ...o, status: newStatus } : o
-        ));
-
-        // If status is changed to 'delivered', reduce inventory stock
-        if (newStatus === 'delivered' && order && order.status !== 'delivered') {
-            reduceInventoryStock(order.medicines);
-            toast.success(`Order ${order.orderId} delivered! Inventory updated.`);
-        } else {
-            toast.success(`Order ${newStatus}!`);
+                // Refresh orders to ensure inventory/stats are synced if needed
+                fetchMedicineOrders(orderFilterTab === 'all' ? null : orderFilterTab);
+            }
+        } catch (error) {
+            console.error('Error updating order:', error);
+            toast.error('Failed to update order status');
         }
     };
 
@@ -260,60 +267,125 @@ export default function PharmacyDashboard() {
             price: '',
             expiryDate: '',
             category: 'otc',
-            lowStockThreshold: '10'
+            lowStockThreshold: '10',
+            image: '',
+            description: '',
+            isPublic: true,
+            imageFile: null,
+            uploadMode: 'url'
         });
         setShowInventoryDialog(true);
     };
 
     const handleEditInventory = (item) => {
-        setEditingItem(item);
+        setEditingItem(item._id);
         setInventoryForm({
             medicineName: item.medicineName,
-            genericName: item.genericName || '',
-            manufacturer: item.manufacturer || '',
+            genericName: item.genericName,
+            manufacturer: item.manufacturer,
             dosage: item.dosage,
-            quantity: item.quantity.toString(),
-            price: item.price.toString(),
-            expiryDate: item.expiryDate ? new Date(item.expiryDate).toISOString().split('T')[0] : '',
+            quantity: item.quantity,
+            price: item.price,
+            expiryDate: item.expiryDate?.split('T')[0],
             category: item.category,
-            lowStockThreshold: item.lowStockThreshold?.toString() || '10'
+            lowStockThreshold: item.lowStockThreshold || 10,
+            image: item.image || '',
+            description: item.description || '',
+            isPublic: item.isPublic,
+            imageFile: null,
+            uploadMode: item.image && !item.image.startsWith('/uploads') ? 'url' : 'file' // Default to file mode if it looks like an uploaded path or empty, url mode if http
         });
+
+        // Better logic: if it has an image and it starts with http, it's a URL mode. 
+        // If it starts with /uploads, it's a file on server, so maybe show 'file' mode but we can't pre-fill the file input. 
+        // Actually, if it's a server file, we might want to just show it's there. 
+        // For simplicity, if it's a URL string, set mode 'url'. If it's a path, maybe default to 'url' too so they see the path?
+        // Or better:
+        // If image exists:
+        //   - If starts with http/https -> mode 'url', value = image
+        //   - If starts with /uploads -> mode 'file' (so they can replace it), but we can't show the file object. 
+        //     We can perhaps show a "Current image" preview in the file mode.
+
+        let initialUploadMode = 'url';
+        if (item.image && item.image.startsWith('/uploads')) {
+            initialUploadMode = 'file';
+        } else if (item.image) {
+            initialUploadMode = 'url';
+        }
+
+        setInventoryForm(prev => ({
+            ...prev,
+            uploadMode: initialUploadMode
+        }));
+
         setShowInventoryDialog(true);
     };
 
     const handleSaveInventory = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const url = editingItem
-                ? `http://localhost:5000/api/pharmacies/dashboard/inventory/${editingItem._id}`
-                : 'http://localhost:5000/api/pharmacies/dashboard/inventory';
+            // Validate required fields
+            if (!inventoryForm.medicineName || !inventoryForm.quantity || !inventoryForm.price || !inventoryForm.expiryDate || !inventoryForm.category || !inventoryForm.dosage) {
+                toast.error('Please fill in all required fields');
+                return;
+            }
 
-            const response = await fetch(url, {
-                method: editingItem ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ...inventoryForm,
-                    quantity: parseInt(inventoryForm.quantity),
-                    price: parseFloat(inventoryForm.price),
-                    lowStockThreshold: parseInt(inventoryForm.lowStockThreshold)
-                })
-            });
+            const formData = new FormData();
+            formData.append('medicineName', inventoryForm.medicineName);
+            formData.append('genericName', inventoryForm.genericName);
+            formData.append('manufacturer', inventoryForm.manufacturer);
+            formData.append('dosage', inventoryForm.dosage);
+            formData.append('quantity', inventoryForm.quantity);
+            formData.append('reservedStock', inventoryForm.reservedStock || 0);
+            formData.append('price', inventoryForm.price);
+            formData.append('expiryDate', inventoryForm.expiryDate);
+            formData.append('category', inventoryForm.category);
+            formData.append('lowStockThreshold', inventoryForm.lowStockThreshold);
+            formData.append('description', inventoryForm.description || '');
+            formData.append('isPublic', inventoryForm.isPublic !== undefined ? inventoryForm.isPublic : true);
 
-            const data = await response.json();
-
-            if (data.success) {
-                toast.success(editingItem ? 'Medicine updated!' : 'Medicine added!');
-                setShowInventoryDialog(false);
-                fetchInventory();
+            // Handle Image - either File or URL
+            if (inventoryForm.imageFile) {
+                formData.append('image', inventoryForm.imageFile);
             } else {
-                toast.error(data.message);
+                formData.append('image', inventoryForm.image || '');
+            }
+
+            if (editingItem) {
+                const response = await pharmacyAPI.updateInventory(editingItem, formData);
+                if (response.data.success) {
+                    toast.success('Medicine updated successfully');
+                    setInventory(inventory.map(item => item._id === editingItem ? response.data.data : item));
+                    setShowInventoryDialog(false);
+                    setEditingItem(null);
+                }
+            } else {
+                const response = await pharmacyAPI.addInventory(formData);
+                if (response.data.success) {
+                    toast.success('Medicine added to inventory');
+                    setInventory([...inventory, response.data.data]);
+                    setShowInventoryDialog(false);
+                    // Reset form
+                    setInventoryForm({
+                        medicineName: '',
+                        genericName: '',
+                        manufacturer: '',
+                        dosage: '',
+                        quantity: '',
+                        reservedStock: 0,
+                        price: '',
+                        expiryDate: '',
+                        category: 'otc',
+                        lowStockThreshold: 10,
+                        image: '',
+                        description: '',
+                        isPublic: true,
+                        imageFile: null
+                    });
+                }
             }
         } catch (error) {
             console.error('Error saving inventory:', error);
-            toast.error('Failed to save medicine');
+            toast.error(error.response?.data?.message || 'Failed to save inventory item');
         }
     };
 
@@ -745,6 +817,12 @@ export default function PharmacyDashboard() {
                                                                 Delivery: {order.deliveryAddress}
                                                             </p>
 
+                                                            <div className="mb-2">
+                                                                <Badge variant="outline" className={`${order.type === 'ecommerce' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                                                    {order.type === 'ecommerce' ? 'Store Order' : 'Prescription'}
+                                                                </Badge>
+                                                            </div>
+
                                                             {order.medicines && order.medicines.length > 0 && (
                                                                 <div className="mb-2">
                                                                     <p className="text-xs text-gray-500 mb-1">Medicines:</p>
@@ -776,16 +854,26 @@ export default function PharmacyDashboard() {
                                                         <div className="flex flex-col space-y-2 ml-4">
                                                             {order.status === 'pending_verification' && (
                                                                 <>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md transition-all"
-                                                                        onClick={() => {
-                                                                            setSelectedOrder(order);
-                                                                            setVerifyDialog(true);
-                                                                        }}
-                                                                    >
-                                                                        Verify & Bill
-                                                                    </Button>
+                                                                    {order.type === 'ecommerce' ? (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md transition-all"
+                                                                            onClick={() => handleUpdateOrderStatus(order._id, 'awaiting_payment')}
+                                                                        >
+                                                                            Accept Order
+                                                                        </Button>
+                                                                    ) : (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md transition-all"
+                                                                            onClick={() => {
+                                                                                setSelectedOrder(order);
+                                                                                setVerifyDialog(true);
+                                                                            }}
+                                                                        >
+                                                                            Verify & Bill
+                                                                        </Button>
+                                                                    )}
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
@@ -803,18 +891,12 @@ export default function PharmacyDashboard() {
                                                                 <Button
                                                                     size="sm"
                                                                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all"
-                                                                    onClick={async () => {
+                                                                    onClick={() => {
                                                                         const nextStatus =
                                                                             order.status === 'paid' ? 'preparing' :
                                                                                 order.status === 'preparing' ? 'ready_for_delivery' :
                                                                                     'out_for_delivery';
-                                                                        try {
-                                                                            await medicineOrderAPI.updateOrderStatus(order._id, nextStatus, 'Status updated');
-                                                                            toast.success('Order status updated');
-                                                                            fetchMedicineOrders();
-                                                                        } catch (error) {
-                                                                            toast.error('Failed to update status');
-                                                                        }
+                                                                        handleUpdateOrderStatus(order._id, nextStatus);
                                                                     }}
                                                                 >
                                                                     {order.status === 'paid' ? 'Start Preparing' :
@@ -1396,6 +1478,118 @@ export default function PharmacyDashboard() {
                                 onChange={(e) => setInventoryForm({ ...inventoryForm, lowStockThreshold: e.target.value })}
                                 placeholder="e.g., 10"
                             />
+                        </div>
+                        <div className="col-span-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                value={inventoryForm.description}
+                                onChange={(e) => setInventoryForm({ ...inventoryForm, description: e.target.value })}
+                                placeholder="Product description, usage, etc."
+                            />
+                        </div>
+                        <div className="col-span-2 space-y-3">
+                            <Label>Product Image</Label>
+
+                            {/* Toggle Switch */}
+                            <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
+                                <button
+                                    type="button"
+                                    onClick={() => setInventoryForm({ ...inventoryForm, uploadMode: 'url', imageFile: null })}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${inventoryForm.uploadMode === 'url'
+                                        ? 'bg-white text-teal-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    <Link className="w-4 h-4" />
+                                    <span>Image URL</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setInventoryForm({ ...inventoryForm, uploadMode: 'file', image: '' })}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${inventoryForm.uploadMode === 'file'
+                                        ? 'bg-white text-teal-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    <span>Upload File</span>
+                                </button>
+                            </div>
+
+                            {/* Content Area */}
+                            <div className="mt-2">
+                                {inventoryForm.uploadMode === 'url' ? (
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Link className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                                            <Input
+                                                value={inventoryForm.image}
+                                                onChange={(e) => setInventoryForm({ ...inventoryForm, image: e.target.value })}
+                                                placeholder="https://example.com/image.png"
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500">
+                                            Enter a direct URL to an image hosted online.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {!inventoryForm.imageFile ? (
+                                            <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:bg-gray-50 transition-colors text-center cursor-pointer group">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setInventoryForm({ ...inventoryForm, imageFile: file, image: '' });
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="flex flex-col items-center space-y-2">
+                                                    <div className="p-3 bg-teal-50 rounded-full group-hover:bg-teal-100 transition-colors">
+                                                        <ImageIcon className="w-6 h-6 text-teal-600" />
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        <span className="font-semibold text-teal-600">Click to upload</span>
+                                                        <span className="text-gray-500"> or drag and drop</span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400">
+                                                        SVG, PNG, JPG or GIF (max. 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between p-3 border rounded-lg bg-teal-50 border-teal-100">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="p-2 bg-white rounded-md border border-teal-100">
+                                                        <ImageIcon className="w-5 h-5 text-teal-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                                                            {inventoryForm.imageFile.name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {(inventoryForm.imageFile.size / 1024).toFixed(0)} KB
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setInventoryForm({ ...inventoryForm, imageFile: null })}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

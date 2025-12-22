@@ -124,9 +124,12 @@ export default function LoginPage() {
       // Use minimal setTimeout to ensure state is updated before navigation
       setTimeout(() => {
         // Navigate to the page they were trying to access, or default dashboard
-        if (from) {
-          console.log('🚀 Navigating to saved location:', from);
-          navigate(from, { replace: true });
+        const redirectPath = from || localStorage.getItem('redirect_after_login');
+
+        if (redirectPath) {
+          console.log('🚀 Navigating to saved location:', redirectPath);
+          localStorage.removeItem('redirect_after_login'); // Clear it after use
+          navigate(redirectPath, { replace: true });
         } else {
           // ADMIN EXCEPTION: Always redirect admin to admin dashboard
           // regardless of selected role

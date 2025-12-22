@@ -1633,6 +1633,9 @@ export function PatientDashboard() {
                                                             }>
                                                                 {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                                             </Badge>
+                                                            <Badge variant="outline" className={`ml-2 ${order.type === 'ecommerce' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                                                {order.type === 'ecommerce' ? 'Store Order' : 'Prescription'}
+                                                            </Badge>
                                                         </div>
                                                         <p className="text-sm text-gray-600">
                                                             Pharmacy: {order.pharmacyId?.fullName || 'Unknown'}

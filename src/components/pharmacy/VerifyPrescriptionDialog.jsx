@@ -6,44 +6,32 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, X, ZoomIn, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { medicineOrderAPI } from '@/services/api';
+import { pharmacyAPI } from '@/services/api';
 
 export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified }) {
-    const [medicines, setMedicines] = useState([{
-        name: '',
-        dosage: '',
-        quantity: 1,
-        pricePerUnit: 0
-    }]);
+    const [medicines, setMedicines] = useState([{ name: '', dosage: '', quantity: 1, pricePerUnit: 0 }]);
     const [deliveryCharges, setDeliveryCharges] = useState(0);
     const [loading, setLoading] = useState(false);
     const [showPrescription, setShowPrescription] = useState(false);
 
     const addMedicine = () => {
-        setMedicines([...medicines, {
-            name: '',
-            dosage: '',
-            quantity: 1,
-            pricePerUnit: 0
-        }]);
+        setMedicines([...medicines, { name: '', dosage: '', quantity: 1, pricePerUnit: 0 }]);
     };
 
     const removeMedicine = (index) => {
-        if (medicines.length > 1) {
-            setMedicines(medicines.filter((_, i) => i !== index));
-        }
+        const newMedicines = [...medicines];
+        newMedicines.splice(index, 1);
+        setMedicines(newMedicines);
     };
 
     const updateMedicine = (index, field, value) => {
-        const updated = [...medicines];
-        updated[index][field] = value;
-        setMedicines(updated);
+        const newMedicines = [...medicines];
+        newMedicines[index][field] = value;
+        setMedicines(newMedicines);
     };
 
     const calculateSubtotal = () => {
-        return medicines.reduce((sum, med) => {
-            return sum + (parseFloat(med.quantity) || 0) * (parseFloat(med.pricePerUnit) || 0);
-        }, 0);
+        return medicines.reduce((sum, med) => sum + ((parseFloat(med.pricePerUnit) || 0) * (parseFloat(med.quantity) || 0)), 0);
     };
 
     const calculateTotal = () => {
@@ -51,20 +39,15 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
     };
 
     const handleVerify = async () => {
-        // Validation
-        const invalidMedicine = medicines.find(med =>
-            !med.name.trim() || !med.dosage.trim() || med.quantity <= 0 || med.pricePerUnit <= 0
-        );
-
-        if (invalidMedicine) {
-            toast.error('Please fill all medicine details correctly');
+        if (medicines.some(m => !m.name || !m.quantity || !m.pricePerUnit)) {
+            toast.error('Please fill in all medicine details');
             return;
         }
 
         try {
             setLoading(true);
 
-            const response = await medicineOrderAPI.verifyPrescription(order._id, {
+            const response = await pharmacyAPI.verifyPrescription(order._id, {
                 medicines,
                 deliveryCharges: parseFloat(deliveryCharges) || 0
             });
