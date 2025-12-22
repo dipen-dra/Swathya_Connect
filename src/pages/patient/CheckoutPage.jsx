@@ -61,8 +61,18 @@ export default function CheckoutPage() {
         fetchUserProfile();
     }, [user]);
 
+    // Mock distance for demonstration (User requested: First 2km free, then 20 NPR/km)
+    // In a real app, this would use the Haversine formula with coordinates
+    // const [distance, setDistance] = useState(3.5); // Default mock distance
+
+    // const deliveryCharge = useMemo(() => {
+    //     if (distance <= 2) return 0;
+    //     return Math.ceil(distance - 2) * 20;
+    // }, [distance]);
+
+    const deliveryCharge = 50; // Fixed delivery charge as per user request
+
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.cartQuantity), 0);
-    const deliveryCharge = 100; // Fixed delivery charge for simplicity
     const total = subtotal + deliveryCharge;
 
     const handleProceedToPayment = async () => {
