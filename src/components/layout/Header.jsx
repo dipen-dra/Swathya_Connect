@@ -101,10 +101,12 @@ export default function Header() {
                     />
                 </div>
 
-                {/* Dashboard <-> Store Toggle */}
-                <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
-                    <DashboardToggle />
-                </div>
+                {/* Dashboard <-> Store Toggle - Only for Patients */}
+                {user?.role === 'patient' && (
+                    <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+                        <DashboardToggle />
+                    </div>
+                )}
 
                 {/* User Actions */}
                 <div className="flex items-center space-x-4">

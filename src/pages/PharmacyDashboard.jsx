@@ -30,13 +30,14 @@ import {
     ShoppingCart, Clock, DollarSign, Users, Search,
     MessageSquare, Package, User, Shield, CheckCircle,
     TrendingUp, Plus, Edit, Trash2, AlertCircle, Settings, LogOut,
-    Upload, FileText, XCircle, Download, Link, Image as ImageIcon
+    Upload, FileText, XCircle, Download, Link, Image as ImageIcon, Layers
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { profileAPI, medicineOrderAPI, pharmacyAPI } from '@/services/api';
+import { profileAPI, medicineOrderAPI, pharmacyAPI, categoryAPI } from '@/services/api';
 import { PharmacyChatList } from '@/components/pharmacy/PharmacyChatList';
 import { VerifyPrescriptionDialog } from '@/components/pharmacy/VerifyPrescriptionDialog';
 import { RejectPrescriptionDialog } from '@/components/pharmacy/RejectPrescriptionDialog';
+import { CategoryManager } from '@/components/pharmacy/CategoryManager';
 
 
 export default function PharmacyDashboard() {
@@ -48,6 +49,7 @@ export default function PharmacyDashboard() {
     const [activeTab, setActiveTab] = useState(tab || 'orders');
     const [orders, setOrders] = useState([]); // Empty - no backend integration yet
     const [inventory, setInventory] = useState([]);
+    const [categories, setCategories] = useState([]); // Dynamic Categories
     const [stats, setStats] = useState({
         totalOrders: 0,
         pendingOrders: 0,
@@ -59,6 +61,8 @@ export default function PharmacyDashboard() {
 
     // Inventory dialog states
     const [showInventoryDialog, setShowInventoryDialog] = useState(false);
+    const [showCategoryDialog, setShowCategoryDialog] = useState(false); // New Category Dialog
+    const [newCategoryForm, setNewCategoryForm] = useState({ name: '', image: null, description: '' }); // New Category Form
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
@@ -114,6 +118,21 @@ export default function PharmacyDashboard() {
         setActiveTab(newTab);
         navigate(`/pharmacy-dashboard/${newTab}`);
     };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await categoryAPI.getAll();
+            if (response.data.success) {
+                setCategories(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
 
 
     // Fetch medicine orders on mount (needed for analytics which are always visible)
@@ -451,6 +470,35 @@ export default function PharmacyDashboard() {
         }
     });
 
+    const handleAddCategory = async () => {
+        if (!newCategoryForm.name) {
+            toast.error('Category name is required');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('name', newCategoryForm.name);
+            formData.append('description', newCategoryForm.description);
+            if (newCategoryForm.image) {
+                formData.append('image', newCategoryForm.image);
+            }
+
+            const response = await categoryAPI.create(formData);
+            if (response.data.success) {
+                toast.success('Category created successfully');
+                setShowCategoryDialog(false);
+                setNewCategoryForm({ name: '', image: null, description: '' });
+                fetchCategories();
+                // Auto-select the new category
+                setInventoryForm(prev => ({ ...prev, category: response.data.data.name }));
+            }
+        } catch (error) {
+            console.error('Error creating category:', error);
+            toast.error(error.response?.data?.error || 'Failed to create category');
+        }
+    };
+
     // Verification handlers
     const handleVerificationDocumentChange = (e) => {
         const file = e.target.files[0];
@@ -687,6 +735,7 @@ export default function PharmacyDashboard() {
                             >
                                 Inventory
                             </button>
+
                             <button
                                 onClick={() => handleTabChange('chat')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'chat'
@@ -1371,6 +1420,12 @@ export default function PharmacyDashboard() {
                                 </Card>
                             </div>
                         )}
+
+
+
+                        {activeTab === 'chat' && (
+                            <PharmacyChatList />
+                        )}
                     </CardContent>
                 </Card >
             </div >
@@ -1456,16 +1511,39 @@ export default function PharmacyDashboard() {
                             <Label htmlFor="category">Category *</Label>
                             <Select
                                 value={inventoryForm.category}
-                                onValueChange={(value) => setInventoryForm({ ...inventoryForm, category: value })}
+                                onValueChange={(value) => {
+                                    if (value === 'new_category') {
+                                        setNewCategoryForm({ name: '', image: null, description: '' });
+                                        setShowCategoryDialog(true);
+                                    } else {
+                                        setInventoryForm({ ...inventoryForm, category: value });
+                                    }
+                                }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder="Select Category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="prescription">Prescription</SelectItem>
-                                    <SelectItem value="otc">Over-the-Counter</SelectItem>
-                                    <SelectItem value="supplement">Supplement</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
+                                    <SelectItem value="new_category" className="text-teal-600 font-semibold cursor-pointer">
+                                        + Create New Category
+                                    </SelectItem>
+                                    <div className="h-px bg-gray-100 my-1"></div>
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat._id} value={cat.name}>
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
+
+                                    {/* Keep legacy options if categories load fails or are empty initially */}
+                                    {categories.length === 0 && (
+                                        <>
+                                            <SelectItem value="otc">OTC Medicines</SelectItem>
+                                            <SelectItem value="prescription">Prescription</SelectItem>
+                                            <SelectItem value="supplement">Supplements</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </>
+                                    )}
+
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1681,6 +1759,47 @@ export default function PharmacyDashboard() {
                     setSelectedOrder(null);
                 }}
             />
+
+            {/* Add Category Dialog */}
+            <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+                <DialogContent className="bg-white sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Create New Category</DialogTitle>
+                        <DialogDescription>Add a new category for your medicines.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label>Category Name *</Label>
+                            <Input
+                                value={newCategoryForm.name}
+                                onChange={(e) => setNewCategoryForm({ ...newCategoryForm, name: e.target.value })}
+                                placeholder="e.g. Skin Care"
+                            />
+                        </div>
+                        <div>
+                            <Label>Description</Label>
+                            <Input
+                                value={newCategoryForm.description}
+                                onChange={(e) => setNewCategoryForm({ ...newCategoryForm, description: e.target.value })}
+                                placeholder="Brief description..."
+                            />
+                        </div>
+                        <div>
+                            <Label>Category Image</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setNewCategoryForm({ ...newCategoryForm, image: e.target.files[0] })}
+                                className="mt-1"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>Cancel</Button>
+                        <Button onClick={handleAddCategory} className="bg-teal-600">Create</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Order Details Dialog */}
             <Dialog open={viewDetailsDialog} onOpenChange={setViewDetailsDialog}>

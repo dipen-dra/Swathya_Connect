@@ -19,9 +19,9 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
     const outOfStock = quantity <= 0;
 
     return (
-        <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col h-full">
+        <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-teal-100 transition-all duration-300 overflow-hidden flex flex-col h-full">
             {/* Image Area */}
-            <div className="relative aspect-[4/3] bg-gray-50 p-4 flex items-center justify-center overflow-hidden">
+            <div className="relative h-40 bg-white p-3 flex items-center justify-center overflow-hidden border-b border-gray-100">
                 {image ? (
                     <img
                         src={image.startsWith('http') ? image : `http://localhost:5000${image}`}
@@ -29,19 +29,19 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
                         className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                     />
                 ) : (
-                    <ShoppingCart className="w-12 h-12 text-gray-300" />
+                    <ShoppingCart className="w-10 h-10 text-gray-200" />
                 )}
 
                 {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    <Badge variant={category === 'prescription' ? "destructive" : "secondary"} className="uppercase text-[10px] tracking-wider font-semibold shadow-none">
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    <Badge variant={category === 'prescription' ? "destructive" : "secondary"} className="uppercase text-[9px] px-1.5 py-0.5 tracking-wider font-semibold shadow-none rounded-md">
                         {category}
                     </Badge>
                 </div>
 
                 {outOfStock && (
                     <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                        <Badge variant="outline" className="bg-white text-red-600 border-red-200 shadow-sm px-3 py-1 text-xs font-semibold">
+                        <Badge variant="outline" className="bg-white text-red-600 border-red-200 shadow-sm px-2 py-0.5 text-[10px] font-semibold">
                             Out of Stock
                         </Badge>
                     </div>
@@ -49,36 +49,36 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
             </div>
 
             {/* Content Area */}
-            <div className="p-4 flex flex-col flex-grow">
-                <div className="mb-3">
-                    <p className="text-xs font-medium text-teal-600 mb-1 uppercase tracking-wide truncate">{manufacturer}</p>
-                    <h3 className="font-semibold text-gray-900 text-base leading-tight group-hover:text-teal-700 transition-colors line-clamp-2 cursor-pointer h-10" onClick={() => onViewDetails(_id)}>
+            <div className="p-3 flex flex-col flex-grow">
+                <div className="mb-2">
+                    <p className="text-[10px] font-bold text-teal-600 mb-0.5 uppercase tracking-wide truncate">{manufacturer}</p>
+                    <h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-teal-700 transition-colors line-clamp-2 cursor-pointer h-9" onClick={() => onViewDetails(_id)}>
                         {medicineName}
                     </h3>
                     {genericName && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-1 truncate">
+                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-1 truncate">
                             {genericName}
                         </p>
                     )}
                 </div>
 
-                <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
                     <div>
-                        <p className="text-lg font-bold text-gray-900 tracking-tight">
+                        <p className="text-sm font-bold text-gray-900 tracking-tight">
                             NPR {price.toLocaleString()}
                         </p>
+                        {/* Unit/Type text if available could go here */}
                     </div>
 
                     <Button
                         size="sm"
-                        className={`h-9 px-3 rounded-lg transition-colors ${outOfStock
+                        className={`h-7 px-3 text-xs rounded-md transition-colors ${outOfStock
                             ? 'bg-gray-100 text-gray-400 hover:bg-gray-100 cursor-not-allowed'
                             : 'bg-teal-600 hover:bg-teal-700 text-white shadow-none'
                             }`}
                         onClick={() => onAddToCart(product)}
                         disabled={outOfStock}
                     >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
                         Add
                     </Button>
                 </div>

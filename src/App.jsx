@@ -235,6 +235,7 @@ export default function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="/pharmacy" element={<Navigate to="/pharmacy-dashboard" replace />} />
                     <Route
                       path="/pharmacy/profile"
                       element={

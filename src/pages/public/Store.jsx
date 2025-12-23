@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StoreHeader } from '@/components/layout/StoreHeader';
+import { StoreHero } from '@/components/store/StoreHero';
+import { HealthConcerns } from '@/components/store/HealthConcerns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { storeAPI } from '@/services/api';
@@ -110,6 +112,8 @@ export default function Store() {
         }
     };
 
+
+
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
             {/* Header Section */}
@@ -119,7 +123,7 @@ export default function Store() {
                 onSearchChange={setSearch}
             />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Mobile Search - Visible only on small screens */}
                 <div className="mb-6 md:hidden">
                     <div className="relative">
@@ -133,10 +137,20 @@ export default function Store() {
                     </div>
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 pb-20">
+                {/* Homepage Sections (Hero & Categories) - Only show when NOT searching/filtering */}
+                {category === 'all' && !search && (
+                    <div className="mb-12 animate-fade-in">
+                        <StoreHero />
+                        <HealthConcerns />
+                        <div className="h-px bg-gray-200 my-8"></div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-6">Explore Products</h3>
+                    </div>
+                )}
+
+                <div className="max-w-[1920px] mx-auto relative z-20 pb-20">
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Filters Sidebar (Desktop) */}
-                        <div className="hidden lg:block w-72 flex-shrink-0">
+                        <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
@@ -257,15 +271,15 @@ export default function Store() {
                             </div>
 
                             {loading ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                                        <div key={i} className="bg-white rounded-2xl h-[380px] shadow-sm animate-pulse border border-gray-100 p-4">
-                                            <div className="w-full h-48 bg-gray-100 rounded-xl mb-4"></div>
-                                            <div className="h-6 bg-gray-100 rounded w-3/4 mb-2"></div>
-                                            <div className="h-4 bg-gray-100 rounded w-1/2 mb-6"></div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                                        <div key={i} className="bg-white rounded-xl h-[280px] shadow-sm animate-pulse border border-gray-100 p-3">
+                                            <div className="w-full h-32 bg-gray-100 rounded-lg mb-3"></div>
+                                            <div className="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                                            <div className="h-3 bg-gray-100 rounded w-1/2 mb-4"></div>
                                             <div className="flex justify-between mt-auto">
-                                                <div className="h-8 bg-gray-100 rounded w-1/3"></div>
-                                                <div className="h-8 bg-gray-100 rounded w-1/3"></div>
+                                                <div className="h-6 bg-gray-100 rounded w-1/3"></div>
+                                                <div className="h-6 bg-gray-100 rounded w-1/3"></div>
                                             </div>
                                         </div>
                                     ))}
@@ -289,7 +303,7 @@ export default function Store() {
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                                     {products.map((product) => (
                                         <ProductCard
                                             key={product._id}

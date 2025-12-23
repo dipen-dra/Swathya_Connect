@@ -160,6 +160,17 @@ export const adminAPI = {
     getAnalytics: () => api.get('/admin/analytics')
 };
 
+// Category API
+export const categoryAPI = {
+    getAll: () => api.get('/categories'),
+    create: (formData) => api.post('/categories', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    update: (id, formData) => api.put(`/categories/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+};
+
 // Chat API
 export const chatAPI = {
     getChats: () => api.get('/chats'),

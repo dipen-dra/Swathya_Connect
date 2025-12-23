@@ -92,10 +92,12 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                         <span className="font-bold text-gray-700 hidden md:block text-lg">Swasthya Connect Store</span>
                     </div>
 
-                    {/* Dashboard <-> Store Toggle (Absolutely Centered) */}
-                    <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
-                        <DashboardToggle />
-                    </div>
+                    {/* Dashboard <-> Store Toggle (Absolutely Centered) - Only for Patients */}
+                    {user?.role === 'patient' && (
+                        <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+                            <DashboardToggle />
+                        </div>
+                    )}
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-3">
