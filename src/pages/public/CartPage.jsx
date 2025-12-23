@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { StoreHeader } from '@/components/layout/StoreHeader';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from '@/components/ui/button';
@@ -84,18 +85,13 @@ export default function CartPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-20">
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/store')}>
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </Button>
-                    <h1 className="text-xl font-bold text-gray-900">Shopping Cart</h1>
-                    <span className="ml-auto text-sm font-medium text-gray-500">
-                        {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
-                    </span>
-                </div>
-            </div>
+            {/* Unified Store Header */}
+            <StoreHeader
+                cartCount={cartItems.length}
+                // No search on cart page, but keep props for consistency
+                searchValue=""
+                onSearchChange={() => { }}
+            />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">

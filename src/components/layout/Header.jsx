@@ -5,6 +5,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { DashboardToggle } from '@/components/layout/DashboardToggle';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -95,8 +96,14 @@ export default function Header() {
                     <img
                         src={Logo}
                         alt="Swasthya Connect Logo"
-                        className="w-auto h-16 object-contain"
+                        className="w-auto h-16 object-contain cursor-pointer"
+                        onClick={() => navigate('/')}
                     />
+                </div>
+
+                {/* Dashboard <-> Store Toggle */}
+                <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+                    <DashboardToggle />
                 </div>
 
                 {/* User Actions */}
@@ -113,7 +120,7 @@ export default function Header() {
                                 )}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-96 bg-white p-0">
+                        <DropdownMenuContent align="end" className="w-96 bg-white rounded-2xl shadow-xl border border-gray-100 p-0 mt-2 overflow-hidden">
                             {/* Header */}
                             <div className="flex items-center justify-between px-4 py-3 border-b">
                                 <h3 className="font-semibold text-gray-900">Notifications</h3>
@@ -157,7 +164,7 @@ export default function Header() {
                                         {notifications.map((notification) => (
                                             <div
                                                 key={notification.id}
-                                                className={`p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50/50' : ''}`}
+                                                className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/50' : ''}`}
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1 pr-3">
@@ -229,9 +236,9 @@ export default function Header() {
                                 <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" alignOffset={-10} className="w-56 bg-white">
-                            <DropdownMenuLabel className="text-gray-900">My Account</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
+                        <DropdownMenuContent align="end" alignOffset={-10} className="w-60 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2">
+                            <DropdownMenuLabel className="text-gray-900 font-semibold px-3 py-2">My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-gray-100 my-1" />
                             <DropdownMenuItem
                                 onClick={() => {
                                     // Admin exception - show coming soon toast
@@ -251,7 +258,8 @@ export default function Header() {
                                         navigate('/dashboard/profile'); // Patient profile
                                     }
                                 }}
-                                className="cursor-pointer"
+
+                                className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600"
                             >
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Profile Settings</span>
@@ -262,21 +270,21 @@ export default function Header() {
                                 <>
                                     <DropdownMenuItem
                                         onClick={() => navigate('/settings')}
-                                        className="cursor-pointer"
+                                        className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600"
                                     >
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>Account Settings</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-gray-100 my-1" />
                                 </>
                             )}
 
                             {/* Show separator for admin before Sign Out */}
-                            {user?.role === 'admin' && <DropdownMenuSeparator />}
+                            {user?.role === 'admin' && <DropdownMenuSeparator className="bg-gray-100 my-1" />}
 
                             <DropdownMenuItem
                                 onClick={() => setShowLogoutDialog(true)}
-                                className="cursor-pointer text-red-600 focus:text-red-600"
+                                className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50 rounded-xl px-3 py-2.5 font-medium transition-colors"
                             >
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>Sign Out</span>
@@ -308,6 +316,6 @@ export default function Header() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </header>
+        </header >
     );
 }

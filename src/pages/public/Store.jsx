@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { StoreHeader } from '@/components/layout/StoreHeader';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { storeAPI } from '@/services/api';
@@ -112,47 +113,11 @@ export default function Store() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
             {/* Header Section */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-teal-50 rounded-lg">
-                            <PackageX className="w-6 h-6 text-teal-600" />
-                        </div>
-                        <h1 className="text-xl font-bold text-gray-900">Pharmacy Store</h1>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="flex-1 max-w-2xl relative group hidden md:block">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
-                        </div>
-                        <Input
-                            type="text"
-                            placeholder="Search medicines, brands, or categories..."
-                            className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="relative"
-                            onClick={() => navigate('/cart')}
-                        >
-                            <ShoppingCart className="h-5 w-5 text-gray-600" />
-                            {cartItems.length > 0 && (
-                                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold border-2 border-white">
-                                    {cartItems.length}
-                                </span>
-                            )}
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <StoreHeader
+                cartCount={cartItems.length}
+                searchValue={search}
+                onSearchChange={setSearch}
+            />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Mobile Search - Visible only on small screens */}

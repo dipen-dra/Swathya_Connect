@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { StoreHeader } from '@/components/layout/StoreHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { medicineOrderAPI, profileAPI } from '@/services/api';
@@ -147,20 +148,17 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans pb-20">
-            {/* Simple Header */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-30 mb-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-teal-50 rounded-lg">
-                            <Banknote className="w-5 h-5 text-teal-600" />
-                        </div>
-                        <h1 className="text-xl font-bold text-gray-900">Secure Checkout</h1>
-                    </div>
-                </div>
-            </div>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <>=
+            {/* Unified Store Header */}
+            <StoreHeader
+                cartCount={cartItems.length}
+                // Search props not strictly needed for checkout but good for consistency
+                searchValue=""
+                onSearchChange={() => { }}
+            />
+
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Delivery Form (Full Width / Left) */}
                     <div className="lg:col-span-8 space-y-6">
@@ -274,16 +272,16 @@ export default function CheckoutPage() {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Payment Dialog */}
-            <PharmacyPaymentDialog
-                open={showPaymentDialog}
-                onOpenChange={setShowPaymentDialog}
-                orderDetails={orderDetails}
-                onPaymentSuccess={handlePaymentSuccess}
-                onPaymentError={handlePaymentError}
-            />
-        </div>
+                {/* Payment Dialog */}
+                <PharmacyPaymentDialog
+                    open={showPaymentDialog}
+                    onOpenChange={setShowPaymentDialog}
+                    orderDetails={orderDetails}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                />
+            </div>
+        </>
     );
 }

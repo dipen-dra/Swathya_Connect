@@ -196,7 +196,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative">
       <Button
         variant="ghost"
-        onClick={() => navigate("/")}
+        onClick={() => navigate(from || "/")}
         className="absolute top-6 left-6 text-gray-600 hover:text-gray-900"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
