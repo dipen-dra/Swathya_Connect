@@ -8,6 +8,10 @@ import { Upload, X, FileImage, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { medicineOrderAPI } from '@/services/api';
 
+// Default Pharmacy ID (HealthPlus Pharmacy - from seeding/DB)
+const DEFAULT_PHARMACY_ID = '676ad5a33c0429188e998a1a';
+const DEFAULT_PHARMACY_NAME = 'Swasthya Connect Store';
+
 export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
     const [prescriptionFile, setPrescriptionFile] = useState(null);
     const [prescriptionPreview, setPrescriptionPreview] = useState(null);
@@ -15,6 +19,10 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
     const [deliveryNotes, setDeliveryNotes] = useState('');
     const [loading, setLoading] = useState(false);
     const [fetchingLocation, setFetchingLocation] = useState(false);
+
+    // Use passed pharmacy or default
+    const targetPharmacyId = pharmacy?.userId || pharmacy?._id || DEFAULT_PHARMACY_ID;
+    const targetPharmacyName = pharmacy?.name || DEFAULT_PHARMACY_NAME;
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -125,7 +133,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
 
             const formData = new FormData();
             formData.append('prescription', prescriptionFile);
-            formData.append('pharmacyId', pharmacy.userId);
+            formData.append('pharmacyId', targetPharmacyId);
             formData.append('deliveryAddress', deliveryAddress);
             if (deliveryNotes.trim()) {
                 formData.append('deliveryNotes', deliveryNotes);
@@ -134,7 +142,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
             const response = await medicineOrderAPI.createOrder(formData);
 
             if (response.data.success) {
-                toast.success('Prescription uploaded successfully! Waiting for pharmacy verification.');
+                toast.success(`Request sent to ${targetPharmacyName} successfully!`);
                 onOpenChange(false);
                 // Reset form
                 setPrescriptionFile(null);
@@ -161,7 +169,7 @@ export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {
                     {/* Pharmacy Info */}
                     <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
                         <p className="text-sm text-gray-600">Requesting from:</p>
-                        <p className="font-semibold text-gray-900">{pharmacy?.name}</p>
+                        <p className="font-semibold text-gray-900">{targetPharmacyName}</p>
                     </div>
 
                     {/* Prescription Upload */}

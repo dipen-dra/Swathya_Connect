@@ -70,17 +70,27 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
                         {/* Unit/Type text if available could go here */}
                     </div>
 
-                    <Button
-                        size="sm"
-                        className={`h-7 px-3 text-xs rounded-md transition-colors ${outOfStock
-                            ? 'bg-gray-100 text-gray-400 hover:bg-gray-100 cursor-not-allowed'
-                            : 'bg-teal-600 hover:bg-teal-700 text-white shadow-none'
-                            }`}
-                        onClick={() => onAddToCart(product)}
-                        disabled={outOfStock}
-                    >
-                        Add
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs rounded-md border-gray-200 text-gray-600 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50 shadow-none"
+                            onClick={() => onViewDetails(_id)}
+                        >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> View
+                        </Button>
+                        <Button
+                            size="sm"
+                            className={`h-7 px-3 text-xs rounded-md transition-colors ${outOfStock
+                                ? 'bg-gray-100 text-gray-400 hover:bg-gray-100 cursor-not-allowed'
+                                : 'bg-teal-600 hover:bg-teal-700 text-white shadow-none'
+                                }`}
+                            onClick={() => onAddToCart(product)}
+                            disabled={outOfStock}
+                        >
+                            Add
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

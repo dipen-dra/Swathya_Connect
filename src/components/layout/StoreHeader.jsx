@@ -31,11 +31,13 @@ import {
     Activity,
     ChevronDown,
     Search,
-    ShoppingCart
+    ShoppingCart,
+    Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import Logo from '@/assets/swasthyalogo.png';
+import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 
 export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
     const { user, logout } = useAuth();
@@ -43,6 +45,7 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [showRequestMedicine, setShowRequestMedicine] = useState(false);
 
     const handleLogout = async () => {
         await logout();
@@ -113,6 +116,17 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                     {cartCount}
                                 </span>
                             )}
+                        </Button>
+
+                        {/* Upload Prescription Button */}
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setShowRequestMedicine(true)}
+                            className="hidden md:flex bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md rounded-xl"
+                        >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Prescription
                         </Button>
 
                         {user ? (
@@ -198,6 +212,11 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <RequestMedicineDialog
+                open={showRequestMedicine}
+                onOpenChange={setShowRequestMedicine}
+            />
         </header>
     );
 }

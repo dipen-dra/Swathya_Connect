@@ -26,10 +26,12 @@ import {
     ChevronDown,
     Heart,
     Check,
-    X
+    X,
+    Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/assets/swasthyalogo.png';
+import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 
 export default function Header() {
     const { user, logout } = useAuth();
@@ -38,6 +40,7 @@ export default function Header() {
     const navigate = useNavigate();
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+    const [showRequestMedicine, setShowRequestMedicine] = React.useState(false);
 
     const handleLogout = async () => {
         setShowLogoutDialog(false);
@@ -214,6 +217,17 @@ export default function Header() {
                     </DropdownMenu>
 
                     {/* User Menu */}
+                    {/* Upload Prescription Button - visible on desktop */}
+                    <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setShowRequestMedicine(true)}
+                        className="hidden md:flex bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md rounded-xl mr-3"
+                    >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Prescription
+                    </Button>
+
                     <DropdownMenu onOpenChange={setIsDropdownOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2 h-auto">
@@ -318,6 +332,11 @@ export default function Header() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </header >
+
+            <RequestMedicineDialog
+                open={showRequestMedicine}
+                onOpenChange={setShowRequestMedicine}
+            />
+        </header>
     );
 }

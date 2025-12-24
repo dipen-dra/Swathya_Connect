@@ -37,6 +37,8 @@ export default function Store() {
     const [loading, setLoading] = useState(true);
     const [totalProducts, setTotalProducts] = useState(0);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
 
     // Filter State
     const [search, setSearch] = useState('');
@@ -52,8 +54,8 @@ export default function Store() {
     });
 
     useEffect(() => {
-        fetchProducts();
-        fetchCategories(); // Fetch categories on mount
+        fetchProducts(true); // Initial fetch, reset
+        fetchCategories();
     }, []);
 
     // Update localStorage when cart changes
@@ -69,24 +71,37 @@ export default function Store() {
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            // Fallback is handled by merging 'all' + fetched categories
         }
     };
 
-    const fetchProducts = async () => {
+    const fetchProducts = async (reset = false) => {
         try {
             setLoading(true);
+            const currentPage = reset ? 1 : page;
+
             const params = {
                 search,
                 category: category !== 'all' ? category : undefined,
                 minPrice: priceRange[0],
                 maxPrice: priceRange[1],
-                sort
+                sort,
+                page: currentPage,
+                limit: 12
             };
             const response = await storeAPI.getProducts(params);
             if (response.data.success) {
-                setProducts(response.data.data);
-                setTotalProducts(response.data.total);
+                const newProducts = response.data.data;
+                const total = response.data.total;
+
+                if (reset) {
+                    setProducts(newProducts);
+                    setPage(1); // Ensure we are at page 1
+                } else {
+                    setProducts(prev => [...prev, ...newProducts]);
+                }
+
+                setTotalProducts(total);
+                setHasMore(newProducts.length === 12); // Assuming limit is 12
             }
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -96,10 +111,21 @@ export default function Store() {
         }
     };
 
-    // Debounce search
+    const loadMore = () => {
+        setPage(prev => prev + 1);
+    };
+
+    // Trigger fetch on page change (for Load More)
+    useEffect(() => {
+        if (page > 1) {
+            fetchProducts(false);
+        }
+    }, [page]);
+
+    // Debounce search and Filter changes
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchProducts();
+            fetchProducts(true); // Reset on filter change
         }, 500);
         return () => clearTimeout(timer);
     }, [search, category, sort]);
@@ -376,6 +402,23 @@ export default function Store() {
                                     ))}
                                 </div>
                             )}
+
+                            {hasMore && !loading && (
+                                <div className="flex justify-center mt-12 mb-8">
+                                    <Button
+                                        variant="outline"
+                                        onClick={loadMore}
+                                        className="h-12 px-8 rounded-full border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm hover:shadow-md active:scale-95"
+                                    >
+                                        Load More Products
+                                    </Button>
+                                </div>
+                            )}
+                            {loading && products.length > 0 && (
+                                <div className="flex justify-center mt-12 mb-8">
+                                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -421,11 +464,6 @@ export default function Store() {
                                             <Badge variant={selectedProduct.category === 'prescription' ? "destructive" : "secondary"} className="uppercase tracking-wide text-[10px] font-bold px-2 py-1">
                                                 {selectedProduct.category}
                                             </Badge>
-                                            <div className="flex items-center text-yellow-400">
-                                                {[1, 2, 3, 4].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-                                                <Star className="w-4 h-4 fill-current text-gray-200" />
-                                                <span className="text-xs text-gray-400 ml-1 font-medium">(4.0)</span>
-                                            </div>
                                         </div>
 
                                         <h2 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">{selectedProduct.medicineName}</h2>
@@ -460,7 +498,7 @@ export default function Store() {
                                         <div className="flex items-end justify-between gap-4">
                                             <div>
                                                 <p className="text-sm text-gray-500 mb-1">Price per unit</p>
-                                                <p className="text-3xl font-bold text-blue-600 tracking-tight">
+                                                <p className="text-3xl font-bold text-gray-900 tracking-tight">
                                                     NPR {selectedProduct.price.toLocaleString()}
                                                 </p>
                                                 <p className={`text-xs font-medium mt-1 pl-1 flex items-center gap-1 ${selectedProduct.quantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
