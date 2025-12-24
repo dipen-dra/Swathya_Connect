@@ -255,7 +255,7 @@ export default function Header() {
                                     if (user?.role === 'doctor') {
                                         navigate('/doctor/dashboard'); // Doctor dashboard has profile tab
                                     } else if (user?.role === 'pharmacy') {
-                                        navigate('/pharmacy-dashboard');
+                                        navigate('/pharmacy-dashboard/profile');
                                     } else {
                                         navigate('/dashboard/profile'); // Patient profile
                                     }

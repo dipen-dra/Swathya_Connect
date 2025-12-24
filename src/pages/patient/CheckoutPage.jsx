@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PharmacyPaymentDialog } from '@/components/ui/pharmacy-payment-dialog';
 import { toast } from 'sonner';
-import { Truck, Banknote, MapPin, ArrowRight } from 'lucide-react';
+import { Truck, Banknote, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function CheckoutPage() {
     const [orderDetails, setOrderDetails] = useState(null);
 
     // Form State
+    const [fullName, setFullName] = useState('');
     const [address, setAddress] = useState('');
     const [city, setCity] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -46,6 +47,9 @@ export default function CheckoutPage() {
                 const response = await profileAPI.getProfile();
                 if (response.data.success) {
                     const userData = response.data.data;
+                    if (userData.firstName) setFullName(`${userData.firstName} ${userData.lastName || ''}`.trim());
+                    else if (user.name) setFullName(user.name);
+
                     if (userData.address) setAddress(userData.address);
                     if (userData.city) setCity(userData.city);
                     if (userData.phoneNumber) setPhoneNumber(userData.phoneNumber);
@@ -53,6 +57,7 @@ export default function CheckoutPage() {
             } catch (error) {
                 console.error("Failed to fetch profile for checkout autofill:", error);
                 // Fallback to auth context
+                setFullName(user.name || '');
                 setAddress(user.address || '');
                 setCity(user.city || '');
                 setPhoneNumber(user.phoneNumber || '');
@@ -77,7 +82,7 @@ export default function CheckoutPage() {
     const total = subtotal + deliveryCharge;
 
     const handleProceedToPayment = async () => {
-        if (!address || !city || !phoneNumber) {
+        if (!fullName || !address || !city || !phoneNumber) {
             toast.error('Please fill in all delivery details');
             return;
         }
@@ -102,6 +107,7 @@ export default function CheckoutPage() {
                 items,
                 deliveryAddress: `${address}, ${city}`,
                 contactNumber: phoneNumber,
+                patientName: fullName, // Add patient name to order data
                 paymentMethod: null, // Initial creation has no payment method yet
                 totalAmount: total,
                 deliveryCharge: deliveryCharge, // Pass calculated charge
@@ -149,7 +155,7 @@ export default function CheckoutPage() {
 
     return (
 
-        <>=
+        <>
             {/* Unified Store Header */}
             <StoreHeader
                 cartCount={cartItems.length}
@@ -159,6 +165,15 @@ export default function CheckoutPage() {
             />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-gray-600 hover:text-teal-600 font-medium mb-6 transition-colors w-fit"
+                >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Back
+                </button>
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Delivery Form (Full Width / Left) */}
                     <div className="lg:col-span-8 space-y-6">
@@ -169,6 +184,15 @@ export default function CheckoutPage() {
                                 Delivery Details
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-700">Full Name</Label>
+                                    <Input
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        placeholder="Enter your full name"
+                                        className="h-11 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
+                                    />
+                                </div>
                                 <div className="space-y-2">
                                     <Label className="text-sm font-medium text-gray-700">Phone Number</Label>
                                     <Input
@@ -187,7 +211,7 @@ export default function CheckoutPage() {
                                         className="h-11 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
                                     />
                                 </div>
-                                <div className="md:col-span-2 space-y-2">
+                                <div className="space-y-2"> {/* Changed from md:col-span-2 to ensure consistent grid */}
                                     <Label className="text-sm font-medium text-gray-700">Street Address</Label>
                                     <Input
                                         value={address}

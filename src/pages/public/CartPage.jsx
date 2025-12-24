@@ -94,6 +94,15 @@ export default function CartPage() {
             />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-gray-600 hover:text-teal-600 font-medium mb-6 transition-colors w-fit"
+                >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Back
+                </button>
+
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Cart Items List */}
                     <div className="flex-1 space-y-4">

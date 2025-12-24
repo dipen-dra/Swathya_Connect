@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronRight, Home } from 'lucide-react';
 import { StoreHeader } from '@/components/layout/StoreHeader';
 import { StoreHero } from '@/components/store/StoreHero';
 import { HealthConcerns } from '@/components/store/HealthConcerns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
-import { storeAPI } from '@/services/api';
+import { storeAPI, categoryAPI } from '@/services/api';
 import ProductCard from '@/components/store/ProductCard';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -40,6 +41,7 @@ export default function Store() {
     // Filter State
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('all');
+    const [categories, setCategories] = useState([]); // Dynamic Categories State
     const [priceRange, setPriceRange] = useState([0, 10000]);
     const [sort, setSort] = useState('newest');
 
@@ -51,12 +53,25 @@ export default function Store() {
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories(); // Fetch categories on mount
     }, []);
 
     // Update localStorage when cart changes
     useEffect(() => {
         localStorage.setItem('swasthya_cart', JSON.stringify(cartItems));
     }, [cartItems]);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await categoryAPI.getAll();
+            if (response.data.success) {
+                setCategories(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            // Fallback is handled by merging 'all' + fetched categories
+        }
+    };
 
     const fetchProducts = async () => {
         try {
@@ -112,7 +127,19 @@ export default function Store() {
         }
     };
 
+    // Helper to merge static 'all' with dynamic categories
+    const getFilterCategories = () => {
+        const dynamicCats = categories.map(c => c.name);
+        // Combine with standard types if they aren't in dynamic list yet (optional, but safer to rely on API)
+        // For now, let's just use 'all' + dynamic ones.
+        // If the API returns empty, we might want to keep the defaults.
+        if (dynamicCats.length === 0) {
+            return ['all', 'otc', 'prescription', 'supplement', 'other'];
+        }
+        return ['all', ...dynamicCats];
+    };
 
+    const filterCategories = getFilterCategories();
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
@@ -124,6 +151,38 @@ export default function Store() {
             />
 
             <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Breadcrumbs */}
+                <nav className="flex items-center text-sm text-gray-500 mb-6 animate-fade-in">
+                    <button
+                        onClick={() => { setCategory('all'); setSearch(''); setSelectedProduct(null); }}
+                        className="flex items-center hover:text-teal-600 transition-colors"
+                    >
+                        <Home className="w-4 h-4 mr-1" />
+                        Store
+                    </button>
+                    {category !== 'all' && (
+                        <>
+                            <ChevronRight className="w-4 h-4 mx-2" />
+                            <span className="font-medium text-gray-900 capitalize">{category}</span>
+                        </>
+                    )}
+                    {selectedProduct && (
+                        <>
+                            {category === 'all' && (
+                                <>
+                                    <ChevronRight className="w-4 h-4 mx-2" />
+                                    <span className="capitalize hover:text-teal-600 cursor-pointer" onClick={() => { setSelectedProduct(null); setCategory(selectedProduct.category); }}>
+                                        {selectedProduct.category}
+                                    </span>
+                                </>
+                            )}
+                            <ChevronRight className="w-4 h-4 mx-2" />
+                            <span className="font-medium text-gray-900 truncate max-w-[200px]">
+                                {selectedProduct.medicineName}
+                            </span>
+                        </>
+                    )}
+                </nav>
                 {/* Mobile Search - Visible only on small screens */}
                 <div className="mb-6 md:hidden">
                     <div className="relative">
@@ -141,7 +200,7 @@ export default function Store() {
                 {category === 'all' && !search && (
                     <div className="mb-12 animate-fade-in">
                         <StoreHero />
-                        <HealthConcerns />
+                        <HealthConcerns onCategorySelect={(cat) => setCategory(cat)} />
                         <div className="h-px bg-gray-200 my-8"></div>
                         <h3 className="text-xl font-bold text-gray-900 mb-6">Explore Products</h3>
                     </div>
@@ -173,7 +232,7 @@ export default function Store() {
                                     <div>
                                         <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 block">Categories</Label>
                                         <div className="space-y-1">
-                                            {['all', 'otc', 'prescription', 'supplement', 'other'].map(cat => (
+                                            {filterCategories.map(cat => (
                                                 <button
                                                     key={cat}
                                                     onClick={() => setCategory(cat)}
@@ -226,7 +285,7 @@ export default function Store() {
                                         <div className="space-y-3">
                                             <Label>Category</Label>
                                             <div className="grid grid-cols-2 gap-2">
-                                                {['all', 'otc', 'prescription', 'supplement', 'other'].map(cat => (
+                                                {filterCategories.map(cat => (
                                                     <Button
                                                         key={cat}
                                                         variant={category === cat ? "default" : "outline"}
@@ -344,7 +403,19 @@ export default function Store() {
                                     )}
                                 </div>
 
+
                                 <div className="w-full md:w-1/2 p-8 flex flex-col h-full bg-white relative">
+                                    {/* Modal Breadcrumb */}
+                                    <div className="flex items-center text-xs text-gray-500 mb-4">
+                                        <span className="hover:text-teal-600 cursor-pointer" onClick={() => { setSelectedProduct(null); setCategory('all'); }}>Store</span>
+                                        <ChevronRight className="w-3 h-3 mx-1" />
+                                        <span className="capitalize hover:text-teal-600 cursor-pointer" onClick={() => { setSelectedProduct(null); setCategory(selectedProduct.category); }}>
+                                            {selectedProduct.category}
+                                        </span>
+                                        <ChevronRight className="w-3 h-3 mx-1" />
+                                        <span className="font-medium text-gray-900 truncate max-w-[150px]">{selectedProduct.medicineName}</span>
+                                    </div>
+
                                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                                         <div className="flex items-start justify-between mb-4">
                                             <Badge variant={selectedProduct.category === 'prescription' ? "destructive" : "secondary"} className="uppercase tracking-wide text-[10px] font-bold px-2 py-1">
@@ -417,6 +488,6 @@ export default function Store() {
                     </DialogContent>
                 </Dialog>
             </div>
-        </div>
+        </div >
     );
 }

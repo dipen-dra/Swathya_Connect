@@ -62,7 +62,7 @@ export default function PharmacyDashboard() {
     // Inventory dialog states
     const [showInventoryDialog, setShowInventoryDialog] = useState(false);
     const [showCategoryDialog, setShowCategoryDialog] = useState(false); // New Category Dialog
-    const [newCategoryForm, setNewCategoryForm] = useState({ name: '', image: null, description: '' }); // New Category Form
+    const [newCategoryForm, setNewCategoryForm] = useState({ name: '', description: '', image: '', imageFile: null, uploadMode: 'url' }); // New Category Form
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
@@ -480,7 +480,9 @@ export default function PharmacyDashboard() {
             const formData = new FormData();
             formData.append('name', newCategoryForm.name);
             formData.append('description', newCategoryForm.description);
-            if (newCategoryForm.image) {
+            if (newCategoryForm.imageFile) {
+                formData.append('image', newCategoryForm.imageFile);
+            } else if (newCategoryForm.image) {
                 formData.append('image', newCategoryForm.image);
             }
 
@@ -488,7 +490,7 @@ export default function PharmacyDashboard() {
             if (response.data.success) {
                 toast.success('Category created successfully');
                 setShowCategoryDialog(false);
-                setNewCategoryForm({ name: '', image: null, description: '' });
+                setNewCategoryForm({ name: '', description: '', image: '', imageFile: null, uploadMode: 'url' });
                 fetchCategories();
                 // Auto-select the new category
                 setInventoryForm(prev => ({ ...prev, category: response.data.data.name }));
@@ -1513,7 +1515,7 @@ export default function PharmacyDashboard() {
                                 value={inventoryForm.category}
                                 onValueChange={(value) => {
                                     if (value === 'new_category') {
-                                        setNewCategoryForm({ name: '', image: null, description: '' });
+                                        setNewCategoryForm({ name: '', description: '', image: '', imageFile: null, uploadMode: 'url' });
                                         setShowCategoryDialog(true);
                                     } else {
                                         setInventoryForm({ ...inventoryForm, category: value });
@@ -1784,19 +1786,113 @@ export default function PharmacyDashboard() {
                                 placeholder="Brief description..."
                             />
                         </div>
-                        <div>
+                        <div className="space-y-3">
                             <Label>Category Image</Label>
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setNewCategoryForm({ ...newCategoryForm, image: e.target.files[0] })}
-                                className="mt-1"
-                            />
+
+                            {/* Toggle Switch */}
+                            <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
+                                <button
+                                    type="button"
+                                    onClick={() => setNewCategoryForm({ ...newCategoryForm, uploadMode: 'url', imageFile: null })}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${newCategoryForm.uploadMode === 'url'
+                                        ? 'bg-white text-teal-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    <Link className="w-4 h-4" />
+                                    <span>Image URL</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setNewCategoryForm({ ...newCategoryForm, uploadMode: 'file', image: '' })}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${newCategoryForm.uploadMode === 'file'
+                                        ? 'bg-white text-teal-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    <span>Upload File</span>
+                                </button>
+                            </div>
+
+                            {/* Content Area */}
+                            <div className="mt-2">
+                                {newCategoryForm.uploadMode === 'url' ? (
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Link className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                                            <Input
+                                                value={newCategoryForm.image}
+                                                onChange={(e) => setNewCategoryForm({ ...newCategoryForm, image: e.target.value })}
+                                                placeholder="https://example.com/category-image.png"
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500">
+                                            Enter a direct URL to an image hosted online.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {!newCategoryForm.imageFile ? (
+                                            <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:bg-gray-50 transition-colors text-center cursor-pointer group">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setNewCategoryForm({ ...newCategoryForm, imageFile: file, image: '' });
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="flex flex-col items-center space-y-2">
+                                                    <div className="p-3 bg-teal-50 rounded-full group-hover:bg-teal-100 transition-colors">
+                                                        <ImageIcon className="w-6 h-6 text-teal-600" />
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        <span className="font-semibold text-teal-600">Click to upload</span>
+                                                        <span className="text-gray-500"> or drag and drop</span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400">
+                                                        SVG, PNG, JPG or GIF (max. 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between p-3 border rounded-lg bg-teal-50 border-teal-100">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="p-2 bg-white rounded-md border border-teal-100">
+                                                        <ImageIcon className="w-5 h-5 text-teal-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                                                            {newCategoryForm.imageFile.name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {(newCategoryForm.imageFile.size / 1024).toFixed(0)} KB
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setNewCategoryForm({ ...newCategoryForm, imageFile: null })}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>Cancel</Button>
-                        <Button onClick={handleAddCategory} className="bg-teal-600">Create</Button>
+                        <Button onClick={handleAddCategory} className="bg-teal-600 text-white">Create</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
