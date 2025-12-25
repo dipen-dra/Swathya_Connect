@@ -217,16 +217,18 @@ export default function Header() {
                     </DropdownMenu>
 
                     {/* User Menu */}
-                    {/* Upload Prescription Button - visible on desktop */}
-                    <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => setShowRequestMedicine(true)}
-                        className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 mr-4 font-medium"
-                    >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Prescription
-                    </Button>
+                    {/* Upload Prescription Button - visible on desktop (Patients Only) */}
+                    {user?.role === 'patient' && (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setShowRequestMedicine(true)}
+                            className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 mr-4 font-medium"
+                        >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Prescription
+                        </Button>
+                    )}
 
                     <DropdownMenu onOpenChange={setIsDropdownOpen}>
                         <DropdownMenuTrigger asChild>

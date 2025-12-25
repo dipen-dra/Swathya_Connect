@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { medicineOrderAPI } from '@/services/api';
 
 // Default Pharmacy ID (HealthPlus Pharmacy - from seeding/DB)
-const DEFAULT_PHARMACY_ID = '676ad5a33c0429188e998a1a';
+const DEFAULT_PHARMACY_ID = '6939144c1660f91d615f09a7';
 const DEFAULT_PHARMACY_NAME = 'Swasthya Connect Store';
 
 export function RequestMedicineDialog({ open, onOpenChange, pharmacy }) {

@@ -118,16 +118,18 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                             )}
                         </Button>
 
-                        {/* Upload Prescription Button */}
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => setShowRequestMedicine(true)}
-                            className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 font-medium"
-                        >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload Prescription
-                        </Button>
+                        {/* Upload Prescription Button (Patients Only) */}
+                        {user?.role === 'patient' && (
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => setShowRequestMedicine(true)}
+                                className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 font-medium"
+                            >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload Prescription
+                            </Button>
+                        )}
 
                         {user ? (
                             <DropdownMenu onOpenChange={setIsDropdownOpen}>
