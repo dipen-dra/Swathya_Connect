@@ -116,7 +116,7 @@ export default function Header() {
                     {/* Notifications */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="relative">
+                            <Button variant="ghost" size="icon" className="relative hidden lg:flex">
                                 <Bell className="h-5 w-5" />
                                 {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
@@ -223,7 +223,7 @@ export default function Header() {
                             variant="default"
                             size="sm"
                             onClick={() => setShowRequestMedicine(true)}
-                            className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 mr-4 font-medium"
+                            className="hidden lg:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 mr-4 font-medium"
                         >
                             <Upload className="h-4 w-4 mr-2" />
                             Upload Prescription

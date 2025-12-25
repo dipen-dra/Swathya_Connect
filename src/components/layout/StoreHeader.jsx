@@ -91,8 +91,8 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                             className="w-auto h-10 object-contain cursor-pointer"
                             onClick={() => navigate('/')}
                         />
-                        <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
-                        <span className="font-bold text-gray-700 hidden md:block text-lg">Swasthya Connect Store</span>
+                        <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
+                        <span className="font-bold text-gray-700 hidden lg:block text-lg">Swasthya Connect Store</span>
                     </div>
 
                     {/* Dashboard <-> Store Toggle (Absolutely Centered) - Only for Patients */}
@@ -124,7 +124,7 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                 variant="default"
                                 size="sm"
                                 onClick={() => setShowRequestMedicine(true)}
-                                className="hidden md:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 font-medium"
+                                className="hidden lg:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 font-medium"
                             >
                                 <Upload className="h-4 w-4 mr-2" />
                                 Upload Prescription
