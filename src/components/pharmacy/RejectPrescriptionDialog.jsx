@@ -39,7 +39,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white">
                 <DialogHeader>
                     <DialogTitle>Reject Prescription</DialogTitle>
                 </DialogHeader>
@@ -79,7 +79,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
                         </Button>
                         <Button
                             onClick={handleReject}
-                            className="flex-1 bg-red-600 hover:bg-red-700"
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                             disabled={loading}
                         >
                             {loading ? 'Rejecting...' : 'Reject Prescription'}
