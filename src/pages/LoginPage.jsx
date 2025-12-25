@@ -244,7 +244,7 @@ export default function LoginPage() {
         </div>
 
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-8">
+          <CardContent className="p-6 md:p-8">
             <div className="flex justify-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
             </div>

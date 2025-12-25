@@ -82,11 +82,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "@/assets/swasthyalogo.png"; // <-- Add your logo import here
+import { Menu, X } from "lucide-react";
+import Logo from "@/assets/swasthyalogo.png";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -95,6 +97,7 @@ export default function Navbar() {
   }, []);
 
   const scrollToId = (id) => {
+    setMobileMenuOpen(false);
     const element = document.getElementById(id);
     if (!element) return;
 
@@ -117,7 +120,7 @@ export default function Navbar() {
       className={`fixed top-0 w-full z-50 transition-all ${scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur"
         }`}
     >
-      <div className="max-w-[1350px] mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-[1350px] mx-auto px-6 h-20 flex items-center justify-between relative z-50">
 
         {/* Logo */}
         <div
@@ -131,7 +134,7 @@ export default function Navbar() {
           />
         </div>
 
-        {/* Navigation */}
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex gap-8">
           <a href="/store" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Store</a>
           {navItems.map((item) => (
@@ -145,7 +148,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Actions */}
+        {/* Desktop Actions */}
         <div className="hidden md:flex gap-3">
           <button
             onClick={() => navigate("/login")}
@@ -155,7 +158,42 @@ export default function Navbar() {
           </button>
         </div>
 
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-gray-600 focus:outline-none"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-white z-40 pt-24 px-6 md:hidden flex flex-col items-center gap-6 animate-in slide-in-from-top-10 duration-200">
+          <a href="/store" className="text-lg font-medium text-gray-800 hover:text-blue-600" onClick={() => setMobileMenuOpen(false)}>Store</a>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToId(item.id)}
+              className="text-lg font-medium text-gray-800 hover:text-blue-600"
+            >
+              {item.label}
+            </button>
+          ))}
+          <div className="w-full h-px bg-gray-100 my-2"></div>
+          <button
+            onClick={() => {
+              navigate("/login");
+              setMobileMenuOpen(false);
+            }}
+            className="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-md w-full max-w-xs"
+          >
+            Sign In
+          </button>
+        </div>
+      )}
     </header>
   );
 }

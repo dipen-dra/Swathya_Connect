@@ -1142,7 +1142,7 @@ export function PatientDashboard() {
 
                 <div className="space-y-6">
                     <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                        <nav className="-mb-px flex space-x-8 overflow-x-auto pb-2 scrollbar-none" aria-label="Tabs">
                             <button
                                 onClick={() => navigate('/dashboard/doctors')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'doctors'

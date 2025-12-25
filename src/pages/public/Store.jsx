@@ -303,7 +303,7 @@ export default function Store() {
                                         <SlidersHorizontal className="mr-2 h-4 w-4" /> Filters & Sort
                                     </Button>
                                 </SheetTrigger>
-                                <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl">
+                                <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl bg-white">
                                     <SheetHeader>
                                         <SheetTitle>Filters</SheetTitle>
                                     </SheetHeader>

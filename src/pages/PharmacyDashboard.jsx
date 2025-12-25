@@ -718,7 +718,7 @@ export default function PharmacyDashboard() {
                 {/* Tabs */}
                 <Card className="border-0 shadow-sm">
                     <CardHeader>
-                        <div className="flex space-x-8 border-b border-gray-200">
+                        <div className="flex space-x-8 border-b border-gray-200 overflow-x-auto pb-2 scrollbar-none">
                             <button
                                 onClick={() => handleTabChange('orders')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders'
