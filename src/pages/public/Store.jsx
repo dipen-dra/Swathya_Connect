@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
+import Logo from '@/assets/swasthyalogo.png';
 import { StoreHeader } from '@/components/layout/StoreHeader';
 import { StoreHero } from '@/components/store/StoreHero';
 import { HealthConcerns } from '@/components/store/HealthConcerns';
@@ -437,6 +438,7 @@ export default function Store() {
                                             src={selectedProduct.image.startsWith('http') ? selectedProduct.image : `http://localhost:5000${selectedProduct.image}`}
                                             alt={selectedProduct.medicineName}
                                             className="max-h-[350px] w-full object-contain relative z-10 mix-blend-multiply group-hover:scale-110 transition-transform duration-500 ease-in-out"
+                                            onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
                                         />
                                     ) : (
                                         <div className="relative z-10 flex flex-col items-center text-gray-300">

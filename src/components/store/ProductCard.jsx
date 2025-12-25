@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+import Logo from '@/assets/swasthyalogo.png';
+
 export default function ProductCard({ product, onAddToCart, onViewDetails }) {
     const {
         _id,
@@ -27,6 +29,7 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
                         src={image.startsWith('http') ? image : `http://localhost:5000${image}`}
                         alt={medicineName}
                         className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
                     />
                 ) : (
                     <ShoppingCart className="w-10 h-10 text-gray-200" />

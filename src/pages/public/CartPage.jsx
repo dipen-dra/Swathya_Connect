@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
+import Logo from '@/assets/swasthyalogo.png';
+
 export default function CartPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -115,6 +117,7 @@ export default function CartPage() {
                                             src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
                                             alt={item.medicineName}
                                             className="w-full h-full object-contain mix-blend-multiply"
+                                            onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
                                         />
                                     ) : (
                                         <ShoppingBag className="w-8 h-8 text-gray-300" />

@@ -13,6 +13,7 @@ import {
     Apple,
     Stethoscope
 } from 'lucide-react';
+import Logo from '@/assets/swasthyalogo.png';
 
 // Static mapping for legacy categories to maintain icons if they exist in DB by name
 const iconMapping = {
@@ -100,7 +101,12 @@ export function HealthConcerns({ onCategorySelect }) {
                         >
                             <div className={`w-16 h-16 rounded-full ${!imageUrl ? bgColor : 'bg-white border border-gray-100'} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 overflow-hidden`}>
                                 {imageUrl ? (
-                                    <img src={imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                    <img
+                                        src={imageUrl}
+                                        alt={item.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
+                                    />
                                 ) : (
                                     <Icon className={`h-8 w-8 ${iconColor}`} />
                                 )}
