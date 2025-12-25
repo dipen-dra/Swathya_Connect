@@ -31,6 +31,9 @@ const Label = ({ children, className, ...props }) => (
   </label>
 );
 
+import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -81,8 +84,8 @@ export default function RegisterPage() {
         type="button"
         onClick={() => onSelect(role.id)}
         className={`p-3 rounded-xl border-2 flex flex-col items-center transition ${isSelected
-            ? `${colors[role.id].border} ${colors[role.id].bg}`
-            : "border-gray-200 bg-white hover:border-gray-300"
+          ? `${colors[role.id].border} ${colors[role.id].bg}`
+          : "border-gray-200 bg-white hover:border-gray-300"
           }`}
       >
         <role.icon
@@ -171,6 +174,37 @@ export default function RegisterPage() {
       toast.error("Error", {
         description: "Something went wrong. Please try again.",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleRegister = async (credentialResponse) => {
+    try {
+      if ((selectedRole === 'doctor' || selectedRole === 'pharmacy')) {
+        toast.info("Signing up with Google", {
+          description: "Document verification will be skipped. Currently set as unverified.",
+          duration: 4000
+        });
+      }
+
+      setIsLoading(true);
+      const res = await axios.post('http://localhost:5000/api/auth/google', {
+        idToken: credentialResponse.credential,
+        role: selectedRole
+      });
+
+      if (res.data.success) {
+        toast.success("Registration Successful");
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('swasthya_user', JSON.stringify(res.data.user));
+
+        // Redirect logic
+        window.location.href = '/dashboard'; // Simple redirect for now
+      }
+    } catch (error) {
+      console.error('Google Registration Error:', error);
+      toast.error(error.response?.data?.message || "Google Registration Failed");
     } finally {
       setIsLoading(false);
     }
@@ -402,6 +436,27 @@ export default function RegisterPage() {
               >
                 {isLoading ? "Creating account…" : "Create Account"}
               </Button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or sign up with</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleRegister}
+                  onError={() => toast.error("Google Sign Up Failed")}
+                  useOneTap
+                  theme="outline"
+                  shape="circle"
+                  text="signup_with"
+                  width="100%"
+                />
+              </div>
             </form>
 
             <div className="text-center mt-6">

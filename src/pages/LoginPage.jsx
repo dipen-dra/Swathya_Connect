@@ -28,6 +28,9 @@ const Label = ({ children, className, ...props }) => (
   </label>
 );
 
+import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -189,6 +192,31 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      const res = await axios.post('http://localhost:5000/api/auth/google', {
+        idToken: credentialResponse.credential,
+        role: selectedLoginRole
+      });
+
+      if (res.data.success) {
+        toast.success("Login Successful");
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('swasthya_user', JSON.stringify(res.data.user));
+
+        // Force reload or use context update if available
+        // Simple reload to ensure context picks up new token/user
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      toast.error(error.response?.data?.message || "Google Login Failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const inputStyle =
     "pl-10 pr-10 h-12 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white placeholder:text-gray-400";
 
@@ -294,6 +322,27 @@ export default function LoginPage() {
               >
                 {isLoading ? "Signing in…" : "Sign In"}
               </Button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => toast.error("Google Login Failed")}
+                  useOneTap
+                  theme="outline"
+                  shape="circle"
+                  text="signin_with"
+                  width="100%"
+                />
+              </div>
             </form>
 
             <div className="text-center space-y-4 mt-6">
