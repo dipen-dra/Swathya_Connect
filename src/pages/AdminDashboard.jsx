@@ -220,16 +220,19 @@ export default function AdminDashboard() {
                 <AdminStats stats={stats} />
 
                 {/* Tabs */}
-                <AdminTabs
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    counts={{
-                        pending: stats.pending,
-                        approved: stats.approved,
-                        rejected: stats.rejected,
-                        total: stats.totalUsers
-                    }}
-                />
+                {/* Tabs - Scrollable on mobile */}
+                <div className="overflow-x-auto pb-2 -mx-6 px-6 md:mx-0 md:px-0">
+                    <AdminTabs
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        counts={{
+                            pending: stats.pending,
+                            approved: stats.approved,
+                            rejected: stats.rejected,
+                            total: stats.totalUsers
+                        }}
+                    />
+                </div>
 
                 {/* Tab Content */}
                 <div className="mt-6">
