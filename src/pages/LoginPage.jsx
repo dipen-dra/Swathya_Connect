@@ -341,6 +341,8 @@ export default function LoginPage() {
                   shape="circle"
                   text="signin_with"
                   width="100%"
+                  locale="en_US"
+                  key="google-login-btn"
                 />
               </div>
             </form>

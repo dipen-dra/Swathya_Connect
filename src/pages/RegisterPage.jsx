@@ -455,6 +455,8 @@ export default function RegisterPage() {
                   shape="circle"
                   text="signup_with"
                   width="100%"
+                  locale="en_US"
+                  key="google-login-btn"
                 />
               </div>
             </form>
