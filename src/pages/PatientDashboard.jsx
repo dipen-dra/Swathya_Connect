@@ -2167,9 +2167,15 @@ export function PatientDashboard() {
                                                 <span className="text-gray-600">Delivery Charges</span>
                                                 <span className="font-semibold">NPR {selectedMedicineOrder.deliveryCharges || 0}</span>
                                             </div>
+                                            {selectedMedicineOrder.discountAmount > 0 && (
+                                                <div className="flex justify-between text-red-600">
+                                                    <span>Discount {selectedMedicineOrder.promoCode ? `(${selectedMedicineOrder.promoCode})` : ''}</span>
+                                                    <span className="font-semibold">- NPR {selectedMedicineOrder.discountAmount}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                                 <span>Total Amount</span>
-                                                <span className="text-purple-600">NPR {selectedMedicineOrder.totalAmount}</span>
+                                                <span className="text-purple-600">NPR {Number(selectedMedicineOrder.totalAmount).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

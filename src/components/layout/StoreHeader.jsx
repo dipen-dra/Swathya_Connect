@@ -105,6 +105,14 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                     {/* Right Actions */}
                     <div className="flex items-center gap-3">
                         <Button
+                            variant="ghost"
+                            onClick={() => navigate('/home')}
+                            className="hidden lg:flex text-gray-600 hover:text-teal-600 font-medium mr-1"
+                        >
+                            Home
+                        </Button>
+
+                        <Button
                             variant="outline"
                             size="icon"
                             className="relative rounded-xl border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors"

@@ -73,9 +73,12 @@ export default function App() {
 
                   <Router>
                     <Routes>
-                      {/* Landing Page - Redirect authenticated users to dashboard */}
+                      {/* Main Route - Store is now default */}
+                      <Route path="/" element={<Store />} />
+
+                      {/* Landing Page - Moved to /home */}
                       <Route
-                        path="/"
+                        path="/home"
                         element={
                           <PublicRoute>
                             <Home />
@@ -83,7 +86,7 @@ export default function App() {
                         }
                       />
 
-                      {/* Store Page - Accessible to everyone */}
+                      {/* Store Page - Specific route (optional alias) */}
                       <Route path="/store" element={<Store />} />
                       <Route path="/cart" element={<CartPage />} />
 

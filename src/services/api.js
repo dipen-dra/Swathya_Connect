@@ -199,9 +199,7 @@ export const consultationChatAPI = {
 // Medicine Order API
 export const medicineOrderAPI = {
     // Patient endpoints
-    createOrder: (formData) => api.post('/medicine-orders', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    createOrder: (formData) => api.post('/medicine-orders', formData),
     getPatientOrders: () => api.get('/medicine-orders'),
     cancelOrder: (orderId) => api.put(`/medicine-orders/${orderId}/cancel`),
     confirmPayment: (orderId, paymentData) => api.put(`/medicine-orders/${orderId}/confirm-payment`, paymentData),
@@ -239,7 +237,9 @@ export const pharmacyAPI = {
 // Store API
 export const storeAPI = {
     getProducts: (params) => api.get('/store/products', { params }),
-    getProductDetails: (id) => api.get(`/store/products/${id}`)
+    getProduct: (id) => api.get(`/store/products/${id}`),
+    getCategories: () => api.get('/store/categories'),
+    validatePromo: (code) => api.post('/store/promo/validate', { code })
 };
 
 export default api;

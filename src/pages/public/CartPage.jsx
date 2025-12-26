@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-import Logo from '@/assets/swasthyalogo.png';
+import { storeAPI } from '@/services/api';
+import ProductCard from '@/components/store/ProductCard';
 
 export default function CartPage() {
     const navigate = useNavigate();
@@ -17,6 +18,63 @@ export default function CartPage() {
         const savedCart = localStorage.getItem('swasthya_cart');
         return savedCart ? JSON.parse(savedCart) : [];
     });
+    const [similarProducts, setSimilarProducts] = useState([]);
+
+    // Fetch similar products based on cart categories
+    useEffect(() => {
+        const fetchSimilar = async () => {
+            if (cartItems.length === 0) return;
+
+            try {
+                const categories = [...new Set(cartItems.map(item => item.category))];
+                if (categories.length === 0) return;
+
+                console.log('🛒 Cart Items:', cartItems);
+
+                // 1. Try fetching by Category
+                let response = await storeAPI.getProducts({
+                    category: categories[0],
+                    limit: 8
+                });
+
+                let recommendations = [];
+                const cartIds = new Set(cartItems.map(item => item._id));
+
+                if (response.data && response.data.data) {
+                    recommendations = response.data.data.filter(p => !cartIds.has(p._id));
+                }
+
+                console.log('🎯 Category Matches (after filter):', recommendations.length);
+
+                // 2. Fallback: If not enough related products, fetch generic "New Arrivals"
+                // This handles the "Seeded Data" issue where a category might only have 1 item
+                if (recommendations.length < 2) {
+                    console.log('⚠️ Not enough matches, fetching generic products...');
+                    const fallbackResponse = await storeAPI.getProducts({
+                        limit: 8,
+                        sort: 'newest'
+                    });
+
+                    if (fallbackResponse.data && fallbackResponse.data.data) {
+                        const fallbackItems = fallbackResponse.data.data.filter(p =>
+                            !cartIds.has(p._id) &&
+                            !recommendations.find(r => r._id === p._id) // Avoid duplicates from existing recommendations
+                        );
+
+                        // Combine logic: Keep distinct category matches, fill rest with generic
+                        recommendations = [...recommendations, ...fallbackItems];
+                    }
+                }
+
+                setSimilarProducts(recommendations.slice(0, 4));
+
+            } catch (error) {
+                console.error("Failed to fetch similar products", error);
+            }
+        };
+
+        fetchSimilar();
+    }, [cartItems.length]); // Re-run when cart size changes (e.g. added new item type, or cleared)
 
     // Update localStorage when cart changes
     useEffect(() => {
@@ -45,8 +103,8 @@ export default function CartPage() {
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.cartQuantity), 0);
-    const shipping = 0; // Free shipping for now
-    const total = subtotal + shipping;
+    const deliveryCharge = 50;
+    const total = subtotal + deliveryCharge;
 
     const handleCheckout = () => {
         if (cartItems.length === 0) {
@@ -190,44 +248,112 @@ export default function CartPage() {
                     {/* Order Summary */}
                     <div className="w-full lg:w-96 flex-shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-                            <h2 className="text-lg font-bold text-gray-900 mb-6">Order Summary</h2>
+                            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                                Order Summary
+                            </h2>
 
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between text-gray-600">
+                            <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                {cartItems.map(item => (
+                                    <div key={item._id} className="flex gap-3">
+                                        <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 p-1 flex-shrink-0">
+                                            {item.image ? (
+                                                <img
+                                                    src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                                                    alt=""
+                                                    className="h-full w-full object-contain mix-blend-multiply"
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center text-gray-300"><ShoppingBag className="w-4 h-4" /></div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">{item.medicineName}</p>
+                                            <p className="text-xs text-gray-500">Qty: {item.cartQuantity}</p>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            NPR {(item.price * item.cartQuantity).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="border-t border-gray-100 pt-4 space-y-3 mb-6">
+                                <div className="flex justify-between text-sm text-gray-600">
                                     <span>Subtotal</span>
-                                    <span className="font-medium text-gray-900">NPR {subtotal.toLocaleString()}</span>
+                                    <span className="font-medium">NPR {subtotal.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Shipping</span>
-                                    <span className="text-green-600 font-medium">Free</span>
+                                <div className="flex justify-between text-sm text-gray-600">
+                                    <span>Delivery Charge</span>
+                                    <span className="font-medium text-gray-900">NPR {deliveryCharge.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Tax</span>
-                                    <span className="text-gray-400 text-sm">Calculated at checkout</span>
-                                </div>
-                                <Separator />
-                                <div className="flex justify-between items-end">
-                                    <span className="text-lg font-bold text-gray-900">Total</span>
-                                    <span className="text-2xl font-bold text-teal-600">NPR {total.toLocaleString()}</span>
+                                <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-50">
+                                    <span>Total Amount</span>
+                                    <span className="text-teal-600">NPR {total.toLocaleString()}</span>
                                 </div>
                             </div>
 
                             <Button
                                 onClick={handleCheckout}
-                                className="w-full h-12 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-xl text-lg font-bold shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] mb-4"
+                                className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-lg font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.98] mb-4 group"
                             >
                                 Proceed to Checkout
-                                <ArrowRight className="w-5 h-5 ml-2" />
+                                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                             </Button>
 
-                            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 bg-gray-50 py-3 rounded-lg border border-gray-100">
+                            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 bg-gray-50 py-3 rounded-xl border border-gray-100 font-medium">
                                 <ShieldCheck className="w-4 h-4 text-green-500" />
                                 Secure Checkout & Payment
                             </div>
                         </div>
                     </div>
+
+                    {/* Similar Products Section */}
+                    {/* Only show if we have similar products */}
                 </div>
             </div>
-        </div>
+
+            {/* Recommendations Section - Placed Below Cart & Summary for better flow on mobile, or bottom of page */}
+            {/* Actually, let's put it below the main flex container so it spans full width */}
+
+
+            {/* You Might Also Like Section */}
+            {
+                similarProducts.length > 0 && (
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 mb-12">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="h-8 w-1 bg-teal-500 rounded-full"></div>
+                            <h2 className="text-2xl font-bold text-gray-900">You Might Also Like</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {similarProducts.map(product => (
+                                <ProductCard
+                                    key={product._id}
+                                    product={product}
+                                    onAddToCart={(p) => {
+                                        // Add to cart logic reusing existing state setter
+                                        setCartItems(prev => {
+                                            const existing = prev.find(item => item._id === p._id);
+                                            if (existing) {
+                                                if (existing.cartQuantity >= existing.quantity) {
+                                                    toast.error('Max quantity reached');
+                                                    return prev;
+                                                }
+                                                toast.success('Quantity updated in cart');
+                                                return prev.map(item => item._id === p._id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item);
+                                            }
+                                            toast.success('Added to cart');
+                                            return [...prev, { ...p, cartQuantity: 1 }];
+                                        });
+                                    }}
+                                    onViewDetails={(id) => navigate('/store')} // Simple redirect for now
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }

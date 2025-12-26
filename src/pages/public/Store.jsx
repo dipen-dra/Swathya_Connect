@@ -510,7 +510,7 @@ export default function Store() {
                                             </div>
 
                                             <Button
-                                                className="h-14 px-8 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white shadow-lg shadow-blue-200 rounded-xl text-lg font-bold flex-1 max-w-[200px] transition-all duration-300 transform hover:-translate-y-1"
+                                                className="h-14 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg rounded-xl text-lg font-bold flex-1 max-w-[200px] transition-all active:scale-95"
                                                 onClick={() => {
                                                     addToCart(selectedProduct);
                                                     setSelectedProduct(null);

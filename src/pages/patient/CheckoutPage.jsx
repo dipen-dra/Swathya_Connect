@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StoreHeader } from '@/components/layout/StoreHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
-import { medicineOrderAPI, profileAPI } from '@/services/api';
+import { medicineOrderAPI, profileAPI, storeAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PharmacyPaymentDialog } from '@/components/ui/pharmacy-payment-dialog';
 import { toast } from 'sonner';
 import { Truck, Banknote, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Separator } from "@/components/ui/separator";
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
@@ -19,6 +20,8 @@ export default function CheckoutPage() {
     // Payment Dialog State
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
     const [orderDetails, setOrderDetails] = useState(null);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [createdOrder, setCreatedOrder] = useState(null);
 
     // Form State
     const [fullName, setFullName] = useState('');
@@ -26,16 +29,22 @@ export default function CheckoutPage() {
     const [city, setCity] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
 
+    // Promo Code State
+    const [promoCode, setPromoCode] = useState('');
+    const [discount, setDiscount] = useState(0);
+    const [isPromoApplied, setIsPromoApplied] = useState(false);
+
     useEffect(() => {
         // Load cart
         const savedCart = localStorage.getItem('swasthya_cart');
         if (savedCart) {
             setCartItems(JSON.parse(savedCart));
-        } else {
+        } else if (!orderSuccess) {
+            // Only redirect if not in success state
             toast.error('Your cart is empty');
             navigate('/store');
         }
-    }, [navigate]);
+    }, [navigate, orderSuccess]);
 
     // Fetch latest user profile data
     useEffect(() => {
@@ -79,7 +88,40 @@ export default function CheckoutPage() {
     const deliveryCharge = 50; // Fixed delivery charge as per user request
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.cartQuantity), 0);
-    const total = subtotal + deliveryCharge;
+    const total = subtotal + deliveryCharge - discount;
+
+    const handleApplyPromo = async () => {
+        if (!promoCode) return;
+
+        try {
+            const response = await storeAPI.validatePromo(promoCode);
+            if (response.data.success) {
+                const { discountType, discountValue } = response.data.data;
+
+                let calculatedDiscount = 0;
+                if (discountType === 'percentage') {
+                    calculatedDiscount = subtotal * (discountValue / 100);
+                } else {
+                    calculatedDiscount = discountValue;
+                }
+
+                setDiscount(calculatedDiscount);
+                setIsPromoApplied(true);
+                toast.success(`Promo code applied! ${discountValue}${discountType === 'percentage' ? '%' : ' NPR'} discount added.`);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Invalid promo code');
+            setDiscount(0);
+            setIsPromoApplied(false);
+        }
+    };
+
+    const handleRemovePromo = () => {
+        setDiscount(0);
+        setIsPromoApplied(false);
+        setPromoCode('');
+        toast.info('Promo code removed');
+    };
 
     const handleProceedToPayment = async () => {
         if (!fullName || !address || !city || !phoneNumber) {
@@ -108,40 +150,66 @@ export default function CheckoutPage() {
                 deliveryAddress: `${address}, ${city}`,
                 contactNumber: phoneNumber,
                 patientName: fullName, // Add patient name to order data
-                paymentMethod: null, // Initial creation has no payment method yet
                 totalAmount: total,
                 deliveryCharge: deliveryCharge, // Pass calculated charge
                 type: 'ecommerce', // New type for direct orders
-                prescriptionImage: 'ecommerce_order' // Placeholder to satisfy strict backend if schema update lags
+                prescriptionImage: 'ecommerce_order', // Placeholder
+                promoCode: isPromoApplied ? promoCode : null // Send promo code if applied
             };
 
-            const response = await medicineOrderAPI.createOrder(orderData);
+            // STORE DATA FOR LATER (Post-Payment Creation)
+            sessionStorage.setItem('swasthya_checkout_temp', JSON.stringify(orderData));
 
-            if (response.data.success) {
-                const newOrder = response.data.data || response.data.order;
-                localStorage.removeItem('swasthya_cart'); // Clear cart
+            // Generate Temporary Order ID for Payment Gateways
+            const tempOrderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
-                // Prepare details for payment dialog
-                setOrderDetails({
-                    orderId: newOrder._id,
-                    amount: total,
-                    pharmacyName: pharmacyName,
-                    medicineCount: items.length
-                });
+            // Prepare details for payment dialog
+            setOrderDetails({
+                orderId: tempOrderId,
+                amount: total,
+                pharmacyName: pharmacyName,
+                medicineCount: items.length
+            });
 
-                setShowPaymentDialog(true);
-            }
+            setOrderSuccess(true); // Switch view to "Order Placed" (actually "Ready to Pay")
+            setShowPaymentDialog(true);
         } catch (error) {
-            console.error('Order creation error:', error);
-            toast.error(error.response?.data?.message || 'Failed to create order');
+            console.error('Checkout preparation error:', error);
+            toast.error('Failed to prepare checkout');
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePaymentSuccess = () => {
-        toast.success('Payment successful!');
-        navigate('/dashboard/medicine-orders');
+    const handlePaymentSuccess = async (paymentData) => {
+        try {
+            // paymentData comes from Khalti success
+            const savedOrderData = sessionStorage.getItem('swasthya_checkout_temp');
+            if (!savedOrderData) {
+                toast.error('Session expired. Please try again.');
+                return;
+            }
+
+            const orderData = JSON.parse(savedOrderData);
+
+            // Add Payment Info
+            orderData.paymentMethod = 'khalti'; // Assuming Khalti if coming here directly via callback
+            orderData.paymentStatus = 'paid';
+            orderData.paymentTransactionId = paymentData?.token || paymentData?.idx || 'khalti_tx';
+
+            // Create Order NOW
+            const response = await medicineOrderAPI.createOrder(orderData);
+
+            if (response.data.success) {
+                localStorage.removeItem('swasthya_cart'); // Clear cart
+                sessionStorage.removeItem('swasthya_checkout_temp'); // Clear temp data
+                toast.success('Payment successful! Order created.');
+                navigate('/dashboard/medicine-orders');
+            }
+        } catch (error) {
+            console.error('Final order creation failed:', error);
+            toast.error('Payment succeeded but order creation failed. Please contact support.');
+        }
     };
 
     const handlePaymentError = (errorMessage) => {
@@ -151,7 +219,58 @@ export default function CheckoutPage() {
         navigate('/dashboard/medicine-orders');
     };
 
-    if (cartItems.length === 0) return null;
+    if (!orderSuccess && cartItems.length === 0) return null;
+
+    if (orderSuccess) {
+        return (
+            <>
+                <StoreHeader cartCount={0} />
+                <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+                    <div className="bg-white rounded-3xl p-10 shadow-xl border border-teal-100">
+                        <div className="w-24 h-24 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Truck className="w-12 h-12 text-teal-600" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-4">Almost There!</h1>
+                        <p className="text-gray-600 mb-8 text-lg">
+                            Your order details are ready.
+                            <br />Please complete the payment to place your order.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <Button
+                                variant="outline"
+                                className="h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
+                                onClick={() => navigate('/store')}
+                            >
+                                Continue Shopping
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-12 border-teal-200 text-teal-700 hover:bg-teal-50"
+                                onClick={() => navigate('/dashboard/medicine-orders')}
+                            >
+                                Go to My Orders
+                            </Button>
+                            <Button
+                                className="h-12 bg-teal-600 hover:bg-teal-700 text-white min-w-[200px]"
+                                onClick={() => setShowPaymentDialog(true)}
+                            >
+                                Pay Now (NPR {orderDetails?.amount?.toLocaleString()})
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <PharmacyPaymentDialog
+                    open={showPaymentDialog}
+                    onOpenChange={setShowPaymentDialog}
+                    orderDetails={orderDetails}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                />
+            </>
+        );
+    }
 
     return (
 
@@ -267,14 +386,48 @@ export default function CheckoutPage() {
                             </div>
 
                             <div className="border-t border-gray-100 pt-4 space-y-3 mb-6">
+                                {/* Promo Code Input */}
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value)}
+                                        placeholder="Enter Promo Code"
+                                        className="h-10 text-sm rounded-lg"
+                                        disabled={isPromoApplied}
+                                    />
+                                    {isPromoApplied ? (
+                                        <Button
+                                            onClick={handleRemovePromo}
+                                            variant="outline"
+                                            className="h-10 text-red-500 border-red-200 hover:bg-red-50"
+                                        >
+                                            Remove
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            onClick={handleApplyPromo}
+                                            className="h-10 bg-teal-600 hover:bg-teal-700 text-white"
+                                        >
+                                            Apply
+                                        </Button>
+                                    )}
+                                </div>
+                                <Separator className="my-2" />
+
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Subtotal</span>
                                     <span className="font-medium">NPR {subtotal.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Delivery Charge</span>
-                                    <span className="text-green-600 font-medium">NPR {deliveryCharge.toLocaleString()}</span>
+                                    <span className="font-medium text-gray-900">NPR {deliveryCharge.toLocaleString()}</span>
                                 </div>
+                                {isPromoApplied && (
+                                    <div className="flex justify-between text-sm text-teal-600 font-medium bg-teal-50 p-2 rounded-lg">
+                                        <span>Discount (10%)</span>
+                                        <span>- NPR {discount.toLocaleString()}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-50">
                                     <span>Total Amount</span>
                                     <span className="text-teal-600">NPR {total.toLocaleString()}</span>
