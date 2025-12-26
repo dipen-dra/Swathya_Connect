@@ -36,6 +36,7 @@ import CheckoutPage from './pages/patient/CheckoutPage';
 
 import Store from './pages/public/Store';
 import CartPage from './pages/public/CartPage';
+import NotFound from './pages/NotFound';
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -344,6 +345,8 @@ export default function App() {
                           </ProtectedRoute>
                         }
                       />
+                      {/* 404 Not Found Route - THIS MUST BE LAST */}
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Router>
                 </SocketProvider>
