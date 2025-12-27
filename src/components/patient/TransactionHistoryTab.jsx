@@ -176,7 +176,7 @@ const TransactionHistoryTab = () => {
                                             <TableHead>Type</TableHead>
                                             <TableHead>Reference</TableHead>
                                             <TableHead>Payment Method</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
+                                            <TableHead>Amount</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Action</TableHead>
                                         </TableRow>
@@ -216,7 +216,7 @@ const TransactionHistoryTab = () => {
                                                 <TableCell className="capitalize text-gray-600">
                                                     {tx.paymentMethod || 'N/A'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-medium">
+                                                <TableCell className="font-medium">
                                                     NPR {Number(tx.amount).toLocaleString()}
                                                 </TableCell>
                                                 <TableCell>{getStatusBadge(tx.status)}</TableCell>
