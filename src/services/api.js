@@ -171,6 +171,11 @@ export const categoryAPI = {
     })
 };
 
+// Transaction API
+export const transactionAPI = {
+    getAll: () => api.get('/transactions/patient'),
+};
+
 // Chat API
 export const chatAPI = {
     getChats: () => api.get('/chats'),

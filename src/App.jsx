@@ -193,6 +193,14 @@ export default function App() {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/dashboard/transactions"
+                        element={
+                          <ProtectedRoute allowedRoles={['patient']}>
+                            <PatientDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Doctor Dashboard Routes - Doctor Only */}
                       <Route

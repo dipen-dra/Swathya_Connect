@@ -61,6 +61,7 @@ import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
+import TransactionHistoryTab from '@/components/patient/TransactionHistoryTab';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI, medicineOrderAPI } from '@/services/api';
@@ -95,6 +96,7 @@ export function PatientDashboard() {
         if (pathname.includes('/medicine-orders')) return 'medicine-orders';
         if (pathname.includes('/profile')) return 'profile';
         if (pathname.includes('/health-records')) return 'health-records';
+        if (pathname.includes('/transactions')) return 'transactions';
         return 'doctors'; // default tab
     };
 
@@ -1142,7 +1144,7 @@ export function PatientDashboard() {
 
                 <div className="space-y-6">
                     <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8 overflow-x-auto pb-2 scrollbar-none" aria-label="Tabs">
+                        <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none" aria-label="Tabs">
                             <button
                                 onClick={() => navigate('/dashboard/doctors')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'doctors'
@@ -1205,6 +1207,15 @@ export function PatientDashboard() {
                                     }`}
                             >
                                 Health Records
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/transactions')}
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-[15px] ${activeTab === 'transactions'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                Transactions
                             </button>
                         </nav>
                     </div>
@@ -1599,6 +1610,9 @@ export function PatientDashboard() {
                             />
                         )
                     }
+
+                    {/* Transaction History Tab */}
+                    {activeTab === 'transactions' && <TransactionHistoryTab />}
 
                     {/* Medicine Orders Tab */}
                     {activeTab === 'medicine-orders' && (
@@ -2010,7 +2024,16 @@ export function PatientDashboard() {
 
                         <div className="flex justify-end space-x-2">
                             <Button
-                                variant="outline"
+                                variant={activeTab === 'transactions' ? 'secondary' : 'ghost'}
+                                className="w-full justify-start gap-2"
+                                onClick={() => navigate('/dashboard/transactions')}
+                            >
+                                <CreditCard className="h-4 w-4" />
+                                Transactions
+                            </Button>
+
+                            <Button
+                                variant={activeTab === 'profile' ? 'secondary' : 'ghost'}
                                 onClick={() => {
                                     setRatingDialog(false);
                                     setRating(0);
