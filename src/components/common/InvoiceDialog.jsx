@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, Download, X } from 'lucide-react';
 import swasthyaLogo from '../../assets/swasthyalogo.png';
 
-const InvoiceDialog = ({ open, onOpenChange, transaction }) => {
+const InvoiceDialog = ({ open, onOpenChange, transaction, patientName }) => {
     const invoiceRef = useRef();
 
     if (!transaction) return null;
@@ -61,9 +61,9 @@ const InvoiceDialog = ({ open, onOpenChange, transaction }) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
                 {/* Actions Header */}
-                <div className="flex justify-end gap-2 mb-4 no-print">
+                <div className="flex justify-start gap-2 mb-4 mt-2 no-print">
                     <Button variant="outline" size="sm" onClick={handlePrint}>
                         <Printer className="w-4 h-4 mr-2" />
                         Print Invoice
@@ -95,7 +95,7 @@ const InvoiceDialog = ({ open, onOpenChange, transaction }) => {
                         </div>
                         <div className="info">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 section-title">Billed To</h3>
-                            <p className="font-semibold text-gray-900">Patient</p>
+                            <p className="font-semibold text-gray-900">{patientName || 'Patient'}</p>
                             {/* We could pass actual patient name if available, for now Generic or relying on context */}
                             {isOrder && transaction.invoiceData?.deliveryAddress && (
                                 <p className="text-gray-600 text-sm mt-1">{transaction.invoiceData.deliveryAddress}</p>

@@ -174,6 +174,8 @@ export const categoryAPI = {
 // Transaction API
 export const transactionAPI = {
     getAll: () => api.get('/transactions/patient'),
+    delete: (id, type) => api.delete(`/transactions/${id}`, { params: { type } }),
+    downloadPDF: (id, type) => api.get(`/transactions/${id}/invoice`, { params: { type }, responseType: 'blob' })
 };
 
 // Chat API
