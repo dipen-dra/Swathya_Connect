@@ -186,7 +186,8 @@ export const chatAPI = {
     markAsRead: (chatId) => api.put(`/chats/${chatId}/read`),
     uploadFile: (formData) => api.post('/chats/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    }),
+    clearChatHistory: (chatId) => api.put(`/chats/${chatId}/clear`)
 };
 
 // Consultation Chat API (for doctor-patient consultations)
@@ -199,6 +200,7 @@ export const consultationChatAPI = {
     uploadFile: (formData) => api.post('/consultation-chat/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+    clearChatHistory: (id) => api.put(`/consultation-chat/${id}/clear`),
     generateAgoraToken: (consultationId) => api.post(`/consultation-chat/${consultationId}/agora-token`),
     startCallTimer: (consultationId) => api.post(`/consultation-chat/${consultationId}/start-timer`)
 };

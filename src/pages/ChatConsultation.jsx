@@ -14,8 +14,24 @@ import {
     ArrowLeft,
     Loader2,
     CheckCheck,
-    Check
+    Check,
+    Mic,
+    Trash2,
+    X,
+    Play,
+    Square
 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 import { consultationChatAPI } from '@/services/api';
 import consultationSocket from '@/services/consultationSocket';
@@ -154,6 +170,96 @@ export default function ChatConsultation() {
         }
     };
 
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const timerRef = useRef(null);
+
+    // Audio Recording
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            toast.error('Could not access microphone');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+    };
+
+    const cancelRecording = () => {
+        stopRecording();
+        setAudioBlob(null);
+    };
+
+    const handleSendAudio = async () => {
+        if (!audioBlob) return;
+
+        try {
+            setSending(true);
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'voice-message.webm');
+            formData.append('type', 'audio');
+
+            const uploadResponse = await consultationChatAPI.uploadFile(formData);
+
+            if (uploadResponse.data.success) {
+                const messageData = {
+                    consultationId,
+                    content: 'Voice Message',
+                    messageType: 'audio',
+                    fileUrl: uploadResponse.data.file.url,
+                    fileType: 'audio/webm'
+                };
+                consultationSocket.sendMessage(messageData);
+                setAudioBlob(null);
+            }
+        } catch (error) {
+            console.error('Error sending audio:', error);
+            toast.error('Failed to send voice message');
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleClearChat = async () => {
+        try {
+            await consultationChatAPI.clearChatHistory(consultationId);
+            setMessages([]);
+            toast.success('Chat history cleared');
+        } catch (error) {
+            toast.error('Failed to clear chat history');
+        }
+    };
+
     const handleTyping = () => {
         consultationSocket.startTyping(consultationId);
 
@@ -209,11 +315,17 @@ export default function ChatConsultation() {
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                         <div
                             className={`px-4 py-2 rounded-2xl ${isOwnMessage
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-900'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-900'
                                 }`}
                         >
-                            <p className="text-sm">{message.content}</p>
+                            {message.messageType === 'audio' ? (
+                                <div className="flex items-center gap-2 min-w-[200px]">
+                                    <audio controls src={`http://localhost:5000${message.fileUrl}`} className="h-8 w-full" />
+                                </div>
+                            ) : (
+                                <p className="text-sm">{message.content}</p>
+                            )}
                         </div>
                         <div className="flex items-center space-x-1 mt-1">
                             <span className="text-xs text-gray-500">
@@ -281,9 +393,32 @@ export default function ChatConsultation() {
                                 <Video className="h-5 w-5" />
                             </Button>
                         )}
-                        <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-5 w-5" />
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    title="Clear Chat History"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will clear your copy of the chat history. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleClearChat} className="bg-red-600 hover:bg-red-700 text-white">
+                                        Clear History
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </div>
             </div>
@@ -308,39 +443,89 @@ export default function ChatConsultation() {
 
             {/* Input */}
             <div className="bg-white border-t px-4 py-3">
-                <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-gray-500"
-                    >
-                        <Paperclip className="h-5 w-5" />
-                    </Button>
+                {audioBlob ? (
+                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg">
+                        <Button variant="ghost" size="icon" onClick={() => setAudioBlob(null)} className="text-red-500">
+                            <Trash2 className="h-5 w-5" />
+                        </Button>
+                        <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1 h-8" />
+                        <Button onClick={handleSendAudio} disabled={sending} className="bg-blue-600">
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-500"
+                        >
+                            <Paperclip className="h-5 w-5" />
+                        </Button>
 
-                    <Input
-                        value={messageInput}
-                        onChange={(e) => {
-                            setMessageInput(e.target.value);
-                            handleTyping();
-                        }}
-                        placeholder="Type a message..."
-                        className="flex-1"
-                        disabled={sending}
-                    />
-
-                    <Button
-                        type="submit"
-                        disabled={!messageInput.trim() || sending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
-                        {sending ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
+                        {isRecording ? (
+                            <div className="flex-1 flex items-center gap-2 bg-red-50 px-3 py-2 rounded-md">
+                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                <span className="text-red-600 font-medium text-sm">
+                                    {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={stopRecording}
+                                    className="ml-auto text-red-600 hover:bg-red-100"
+                                >
+                                    <Square className="h-4 w-4 fill-current" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={cancelRecording}
+                                    className="text-gray-500 hover:bg-gray-200"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
                         ) : (
-                            <Send className="h-5 w-5" />
+                            <>
+                                <Input
+                                    value={messageInput}
+                                    onChange={(e) => {
+                                        setMessageInput(e.target.value);
+                                        handleTyping();
+                                    }}
+                                    placeholder="Type a message..."
+                                    className="flex-1"
+                                    disabled={sending}
+                                />
+                                {messageInput.trim() ? (
+                                    <Button
+                                        type="submit"
+                                        disabled={sending}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {sending ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <Send className="h-5 w-5" />
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        onClick={startRecording}
+                                        className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                    >
+                                        <Mic className="h-5 w-5" />
+                                    </Button>
+                                )}
+                            </>
                         )}
-                    </Button>
-                </form>
+                    </form>
+                )}
             </div>
         </div>
     );

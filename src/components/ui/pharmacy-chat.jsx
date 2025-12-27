@@ -4,11 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Send, Loader2, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { MessageCircle, Send, Loader2, Paperclip, X, Image as ImageIcon, FileText, Mic, Trash2, MoreVertical, Play, Square } from 'lucide-react';
 import { useSocket } from '@/contexts/SocketContext';
 import { chatAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pharmacyImage, chatId: existingChatId }) {
     const [messages, setMessages] = useState([]);
@@ -197,6 +209,100 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
         }, 1000);
     };
 
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const timerRef = useRef(null);
+
+    // Audio Recording
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            toast.error('Could not access microphone');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+    };
+
+    const cancelRecording = () => {
+        stopRecording();
+        setAudioBlob(null);
+    };
+
+    const handleSendAudio = async () => {
+        if (!audioBlob) return;
+        if (!socket || !chatId) {
+            toast.error('Chat not initialized');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'voice-message.webm');
+            formData.append('type', 'audio'); // Hint for backend
+
+            toast.loading('Uploading voice message...');
+            const uploadResponse = await chatAPI.uploadFile(formData);
+            toast.dismiss();
+
+            if (uploadResponse.data.success) {
+                const attachment = uploadResponse.data.file;
+                socket.emit('message:send', {
+                    chatId,
+                    content: 'Voice Message',
+                    type: 'audio',
+                    attachment: attachment
+                });
+                setAudioBlob(null);
+            }
+        } catch (error) {
+            console.error('Error sending audio:', error);
+            toast.error('Failed to send voice message');
+        }
+    };
+
+    const handleClearChat = async () => {
+        if (!chatId) return;
+        try {
+            await chatAPI.clearChatHistory(chatId);
+            setMessages([]);
+            toast.success('Chat history cleared');
+        } catch (error) {
+            console.error('Error clearing chat:', error);
+            toast.error('Failed to clear chat history');
+        }
+    };
+
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -321,9 +427,37 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <DialogTitle className="flex items-center space-x-2 text-xl">
-                                <MessageCircle className="h-5 w-5 text-purple-600" />
-                                <span>{pharmacyName || 'Pharmacy Chat'}</span>
+                            <DialogTitle className="flex items-center justify-between text-xl">
+                                <div className="flex items-center space-x-2">
+                                    <MessageCircle className="h-5 w-5 text-purple-600" />
+                                    <span>{pharmacyName || 'Pharmacy Chat'}</span>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            title="Clear Chat History"
+                                        >
+                                            <Trash2 className="h-5 w-5" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will clear your copy of the chat history. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleClearChat} className="bg-red-600 hover:bg-red-700 text-white">
+                                                Clear History
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </DialogTitle>
                             <DialogDescription className="mt-1">
                                 {connected ? (
@@ -412,8 +546,15 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                             </a>
                                                         )}
 
+                                                        {/* Audio Attachment */}
+                                                        {message.type === 'audio' && message.attachment?.url && (
+                                                            <div className="flex items-center gap-2 min-w-[200px] mb-2">
+                                                                <audio controls src={`http://localhost:5000${message.attachment.url}`} className="h-8 w-full" />
+                                                            </div>
+                                                        )}
+
                                                         {/* Text Content */}
-                                                        {message.content && (
+                                                        {message.content && message.type !== 'audio' && (
                                                             <p className="text-sm break-words">{message.content}</p>
                                                         )}
                                                     </div>
@@ -474,43 +615,96 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
 
                         {/* Input Area */}
                         <div className="flex items-center space-x-2 px-6 py-4 border-t border-gray-100 bg-gray-50">
-                            {/* Hidden File Input */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*,.pdf,.doc,.docx"
-                                onChange={handleFileSelect}
-                                className="hidden"
-                            />
+                            {audioBlob ? (
+                                <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg flex-1">
+                                    <Button variant="ghost" size="icon" onClick={() => setAudioBlob(null)} className="text-red-500">
+                                        <Trash2 className="h-5 w-5" />
+                                    </Button>
+                                    <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1 h-8" />
+                                    <Button onClick={handleSendAudio} className="bg-purple-600 hover:bg-purple-700">
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Hidden File Input */}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*,.pdf,.doc,.docx"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
 
-                            {/* Attach File Button */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={!connected}
-                                className="text-gray-500 hover:text-purple-600"
-                            >
-                                <Paperclip className="h-5 w-5" />
-                            </Button>
+                                    {/* Attach File Button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={!connected || isRecording}
+                                        className="text-gray-500 hover:text-purple-600"
+                                    >
+                                        <Paperclip className="h-5 w-5" />
+                                    </Button>
 
-                            <Input
-                                placeholder="Type your message..."
-                                value={newMessage}
-                                onChange={handleTyping}
-                                onKeyPress={handleKeyPress}
-                                disabled={!connected}
-                                className="flex-1 bg-white"
-                            />
-                            <Button
-                                onClick={selectedFile ? handleSendWithFile : handleSendMessage}
-                                disabled={(!newMessage.trim() && !selectedFile) || !connected}
-                                className="bg-purple-600 hover:bg-purple-700"
-                                size="icon"
-                                type="button"
-                            >
-                                <Send className="h-4 w-4" />
-                            </Button>
+                                    {isRecording ? (
+                                        <div className="flex-1 flex items-center gap-2 bg-red-50 px-3 py-2 rounded-md">
+                                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                            <span className="text-red-600 font-medium text-sm">
+                                                {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={stopRecording}
+                                                className="ml-auto text-red-600 hover:bg-red-100"
+                                            >
+                                                <Square className="h-4 w-4 fill-current" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={cancelRecording}
+                                                className="text-gray-500 hover:bg-gray-200"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Input
+                                                placeholder="Type your message..."
+                                                value={newMessage}
+                                                onChange={handleTyping}
+                                                onKeyPress={handleKeyPress}
+                                                disabled={!connected}
+                                                className="flex-1 bg-white"
+                                            />
+                                            {newMessage.trim() || selectedFile ? (
+                                                <Button
+                                                    onClick={selectedFile ? handleSendWithFile : handleSendMessage}
+                                                    disabled={(!newMessage.trim() && !selectedFile) || !connected}
+                                                    className="bg-purple-600 hover:bg-purple-700"
+                                                    size="icon"
+                                                    type="button"
+                                                >
+                                                    <Send className="h-4 w-4" />
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    onClick={startRecording}
+                                                    className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                                >
+                                                    <Mic className="h-5 w-5" />
+                                                </Button>
+                                            )}
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </>
                 )}
