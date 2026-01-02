@@ -119,7 +119,7 @@ export default function Header() {
                             variant="default"
                             size="sm"
                             onClick={() => setShowRequestMedicine(true)}
-                            className="hidden lg:flex bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-full px-6 transition-all duration-300 transform hover:scale-105 mr-4 font-medium"
+                            className="hidden lg:flex bg-teal-600 hover:bg-teal-700 text-white mr-4"
                         >
                             <Upload className="h-4 w-4 mr-2" />
                             Upload Prescription
