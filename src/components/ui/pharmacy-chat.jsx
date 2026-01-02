@@ -443,10 +443,15 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                             <Trash2 className="h-5 w-5" />
                                         </Button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent>
+                                    <AlertDialogContent className="border-gray-100" overlayClassName="bg-black/20 backdrop-blur-[2px]">
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
-                                            <AlertDialogDescription>
+                                            <div className="flex items-center justify-center mb-2">
+                                                <div className="rounded-full bg-red-100 p-3">
+                                                    <Trash2 className="h-6 w-6 text-red-600" />
+                                                </div>
+                                            </div>
+                                            <AlertDialogTitle className="text-center">Clear Chat History?</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-center">
                                                 This will clear your copy of the chat history. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
