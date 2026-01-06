@@ -154,6 +154,16 @@ export default function Store() {
         }
     };
 
+    const handleBuyNow = (product) => {
+        addToCart(product);
+        if (!user) {
+            toast.error("Please login to proceed to checkout");
+            navigate('/login', { state: { from: { pathname: '/patient/checkout' } } });
+            return;
+        }
+        navigate('/patient/checkout');
+    };
+
     // Helper to merge static 'all' with dynamic categories
     const getFilterCategories = () => {
         const dynamicCats = categories.map(c => c.name);
@@ -510,15 +520,26 @@ export default function Store() {
                                             </div>
 
                                             <Button
-                                                className="h-14 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg rounded-xl text-lg font-bold flex-1 max-w-[200px] transition-all active:scale-95"
+                                                className="h-14 px-6 bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 shadow-sm hover:shadow-md rounded-xl text-md font-bold transition-all active:scale-95"
                                                 onClick={() => {
                                                     addToCart(selectedProduct);
                                                     setSelectedProduct(null);
                                                 }}
                                                 disabled={selectedProduct.quantity <= 0}
+                                                title="Add to Cart"
                                             >
                                                 <ShoppingCart className="w-5 h-5 mr-2" />
-                                                Add to Cart
+                                                Add
+                                            </Button>
+                                            <Button
+                                                className="h-14 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg rounded-xl text-lg font-bold flex-1 max-w-[200px] transition-all active:scale-95"
+                                                onClick={() => {
+                                                    handleBuyNow(selectedProduct);
+                                                    setSelectedProduct(null);
+                                                }}
+                                                disabled={selectedProduct.quantity <= 0}
+                                            >
+                                                Buy Now
                                             </Button>
                                         </div>
                                     </div>

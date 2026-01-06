@@ -70,7 +70,6 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
                         <p className="text-sm font-bold text-gray-900 tracking-tight">
                             NPR {price.toLocaleString()}
                         </p>
-                        {/* Unit/Type text if available could go here */}
                     </div>
 
                     <div className="flex items-center gap-2">
