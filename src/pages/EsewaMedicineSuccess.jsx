@@ -29,26 +29,63 @@ export default function EsewaMedicineSuccess() {
                 }
 
                 // Call backend to verify payment (GET request with query param)
+                // This checks the eSewa signature.
                 const response = await paymentAPI.verifyEsewaMedicine({ params: { data } });
 
                 if (response.data.success) {
-                    setStatus('success');
-                    setMessage('Payment successful! Your medicine order has been placed.');
+                    // Check if we need to create the order locally (New Flow)
+                    if (response.data.orderCreated === false) {
+                        try {
+                            const savedOrder = sessionStorage.getItem('swasthya_checkout_temp');
+                            if (!savedOrder) {
+                                throw new Error('Order details expired. Please contact support with your payment ID.');
+                            }
 
-                    // Show success toast
-                    toast.success('Payment completed successfully!');
+                            const orderData = JSON.parse(savedOrder);
+                            const transactionId = response.data.data.transaction_uuid || response.data.data.transaction_code;
 
-                    // Add notification
-                    addNotification({
-                        type: 'success',
-                        title: 'Order Placed!',
-                        message: 'Your medicine order has been successfully placed and paid via eSewa.'
-                    });
+                            // Add payment info
+                            orderData.paymentStatus = 'paid';
+                            orderData.paymentMethod = 'esewa';
+                            orderData.paymentTransactionId = transactionId;
 
-                    // Redirect to orders after 3 seconds
-                    setTimeout(() => {
-                        navigate('/dashboard');
-                    }, 3000);
+                            // Create Order
+                            const createRes = await import('@/services/api').then(m => m.medicineOrderAPI.createOrder(orderData));
+
+                            if (createRes.data.success) {
+                                localStorage.removeItem('swasthya_cart');
+                                sessionStorage.removeItem('swasthya_checkout_temp');
+                                setStatus('success');
+                                setMessage('Payment verified and Order Created successfully!');
+
+                                addNotification({
+                                    type: 'success',
+                                    title: 'Order Placed!',
+                                    message: 'Your medicine order has been successfully placed via eSewa.'
+                                });
+
+                                setTimeout(() => navigate('/dashboard/medicine-orders'), 3000);
+                            } else {
+                                throw new Error('Failed to create order record');
+                            }
+
+                        } catch (err) {
+                            console.error('Frontend Order Creation Error:', err);
+                            setStatus('error');
+                            setMessage('Payment verified but failed to create order record. Please contact support.');
+                        }
+                    } else {
+                        // Legacy/Fallback (Order was updated on backend)
+                        setStatus('success');
+                        setMessage('Payment successful! Your medicine order has been placed.');
+                        localStorage.removeItem('swasthya_cart'); // Safe to clear
+                        addNotification({
+                            type: 'success',
+                            title: 'Order Placed!',
+                            message: 'Your medicine order has been successfully placed.'
+                        });
+                        setTimeout(() => navigate('/dashboard/medicine-orders'), 3000);
+                    }
                 } else {
                     setStatus('error');
                     setMessage(response.data.message || 'Payment verification failed');

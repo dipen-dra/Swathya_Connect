@@ -156,7 +156,7 @@ export default function ForgotPassword() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="p-8">
+          <CardContent className="p-6 md:p-8">
             {!isEmailSent ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">

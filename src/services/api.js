@@ -160,6 +160,24 @@ export const adminAPI = {
     getAnalytics: () => api.get('/admin/analytics')
 };
 
+// Category API
+export const categoryAPI = {
+    getAll: () => api.get('/categories'),
+    create: (formData) => api.post('/categories', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    update: (id, formData) => api.put(`/categories/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+};
+
+// Transaction API
+export const transactionAPI = {
+    getAll: () => api.get('/transactions/patient'),
+    delete: (id, type) => api.delete(`/transactions/${id}`, { params: { type } }),
+    downloadPDF: (id, type) => api.get(`/transactions/${id}/invoice`, { params: { type }, responseType: 'blob' })
+};
+
 // Chat API
 export const chatAPI = {
     getChats: () => api.get('/chats'),
@@ -168,7 +186,8 @@ export const chatAPI = {
     markAsRead: (chatId) => api.put(`/chats/${chatId}/read`),
     uploadFile: (formData) => api.post('/chats/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    }),
+    clearChatHistory: (chatId) => api.put(`/chats/${chatId}/clear`)
 };
 
 // Consultation Chat API (for doctor-patient consultations)
@@ -181,6 +200,7 @@ export const consultationChatAPI = {
     uploadFile: (formData) => api.post('/consultation-chat/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+    clearChatHistory: (id) => api.put(`/consultation-chat/${id}/clear`),
     generateAgoraToken: (consultationId) => api.post(`/consultation-chat/${consultationId}/agora-token`),
     startCallTimer: (consultationId) => api.post(`/consultation-chat/${consultationId}/start-timer`)
 };
@@ -188,21 +208,47 @@ export const consultationChatAPI = {
 // Medicine Order API
 export const medicineOrderAPI = {
     // Patient endpoints
-    createOrder: (formData) => api.post('/medicine-orders', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    createOrder: (formData) => api.post('/medicine-orders', formData),
     getPatientOrders: () => api.get('/medicine-orders'),
     cancelOrder: (orderId) => api.put(`/medicine-orders/${orderId}/cancel`),
     confirmPayment: (orderId, paymentData) => api.put(`/medicine-orders/${orderId}/confirm-payment`, paymentData),
 
     // Pharmacy endpoints
-    getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }),
-    verifyPrescription: (orderId, data) => api.put(`/medicine-orders/${orderId}/verify`, data),
-    rejectPrescription: (orderId, reason) => api.put(`/medicine-orders/${orderId}/reject`, { reason }),
-    updateOrderStatus: (orderId, status, notes) => api.put(`/medicine-orders/${orderId}/status`, { status, notes }),
-
     // Shared
     getOrderById: (orderId) => api.get(`/medicine-orders/${orderId}`)
+};
+
+// Pharmacy API
+export const pharmacyAPI = {
+    // Inventory
+    getInventory: () => api.get('/pharmacies/dashboard/inventory'),
+    addInventory: (data) => {
+        const isFormData = data instanceof FormData;
+        return api.post('/pharmacies/dashboard/inventory', data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
+    },
+    updateInventory: (id, data) => {
+        const isFormData = data instanceof FormData;
+        return api.put(`/pharmacies/dashboard/inventory/${id}`, data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
+    },
+    deleteInventory: (id) => api.delete(`/pharmacies/dashboard/inventory/${id}`),
+
+    // Order Management
+    getPharmacyOrders: (status) => api.get('/medicine-orders/pharmacy', { params: { status } }), // This stands correct as per medicineOrderRoutes
+    updateOrderStatus: (orderId, status) => api.put(`/medicine-orders/${orderId}/status`, { status }),
+    verifyPrescription: (orderId, data) => api.put(`/medicine-orders/${orderId}/verify`, data),
+    rejectPrescription: (orderId, reason) => api.put(`/medicine-orders/${orderId}/reject`, { reason }),
+};
+
+// Store API
+export const storeAPI = {
+    getProducts: (params) => api.get('/store/products', { params }),
+    getProduct: (id) => api.get(`/store/products/${id}`),
+    getCategories: () => api.get('/store/categories'),
+    validatePromo: (code) => api.post('/store/promo/validate', { code })
 };
 
 export default api;

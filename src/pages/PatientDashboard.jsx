@@ -61,6 +61,7 @@ import { PharmacyChat } from '@/components/ui/pharmacy-chat';
 import { MedicineReminderDialog } from '@/components/ui/medicine-reminder-dialog';
 import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
 import { HealthRecordsTab } from '@/components/dashboard/tabs/HealthRecordsTab';
+import TransactionHistoryTab from '@/components/patient/TransactionHistoryTab';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { doctorsAPI, consultationsAPI, statsAPI, pharmaciesAPI, chatAPI, medicineOrderAPI } from '@/services/api';
@@ -95,6 +96,7 @@ export function PatientDashboard() {
         if (pathname.includes('/medicine-orders')) return 'medicine-orders';
         if (pathname.includes('/profile')) return 'profile';
         if (pathname.includes('/health-records')) return 'health-records';
+        if (pathname.includes('/transactions')) return 'transactions';
         return 'doctors'; // default tab
     };
 
@@ -1142,7 +1144,7 @@ export function PatientDashboard() {
 
                 <div className="space-y-6">
                     <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                        <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none" aria-label="Tabs">
                             <button
                                 onClick={() => navigate('/dashboard/doctors')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'doctors'
@@ -1205,6 +1207,15 @@ export function PatientDashboard() {
                                     }`}
                             >
                                 Health Records
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/transactions')}
+                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-[15px] ${activeTab === 'transactions'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                Transactions
                             </button>
                         </nav>
                     </div>
@@ -1600,6 +1611,9 @@ export function PatientDashboard() {
                         )
                     }
 
+                    {/* Transaction History Tab */}
+                    {activeTab === 'transactions' && <TransactionHistoryTab />}
+
                     {/* Medicine Orders Tab */}
                     {activeTab === 'medicine-orders' && (
                         <div className="space-y-6">
@@ -1632,6 +1646,9 @@ export function PatientDashboard() {
                                                                                 'bg-yellow-100 text-yellow-700'
                                                             }>
                                                                 {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                            </Badge>
+                                                            <Badge variant="outline" className={`ml-2 ${order.type === 'ecommerce' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                                                {order.type === 'ecommerce' ? 'Store Order' : 'Prescription'}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-sm text-gray-600">
@@ -2007,7 +2024,16 @@ export function PatientDashboard() {
 
                         <div className="flex justify-end space-x-2">
                             <Button
-                                variant="outline"
+                                variant={activeTab === 'transactions' ? 'secondary' : 'ghost'}
+                                className="w-full justify-start gap-2"
+                                onClick={() => navigate('/dashboard/transactions')}
+                            >
+                                <CreditCard className="h-4 w-4" />
+                                Transactions
+                            </Button>
+
+                            <Button
+                                variant={activeTab === 'profile' ? 'secondary' : 'ghost'}
                                 onClick={() => {
                                     setRatingDialog(false);
                                     setRating(0);
@@ -2164,9 +2190,15 @@ export function PatientDashboard() {
                                                 <span className="text-gray-600">Delivery Charges</span>
                                                 <span className="font-semibold">NPR {selectedMedicineOrder.deliveryCharges || 0}</span>
                                             </div>
+                                            {selectedMedicineOrder.discountAmount > 0 && (
+                                                <div className="flex justify-between text-red-600">
+                                                    <span>Discount {selectedMedicineOrder.promoCode ? `(${selectedMedicineOrder.promoCode})` : ''}</span>
+                                                    <span className="font-semibold">- NPR {selectedMedicineOrder.discountAmount}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                                 <span>Total Amount</span>
-                                                <span className="text-purple-600">NPR {selectedMedicineOrder.totalAmount}</span>
+                                                <span className="text-purple-600">NPR {Number(selectedMedicineOrder.totalAmount).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

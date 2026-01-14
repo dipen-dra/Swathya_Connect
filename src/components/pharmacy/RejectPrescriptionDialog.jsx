@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { medicineOrderAPI } from '@/services/api';
+import { pharmacyAPI } from '@/services/api';
 
 export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected }) {
     const [reason, setReason] = useState('');
@@ -19,7 +19,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
         try {
             setLoading(true);
 
-            const response = await medicineOrderAPI.rejectPrescription(order._id, reason);
+            const response = await pharmacyAPI.rejectPrescription(order._id, reason);
 
             if (response.data.success) {
                 toast.success('Prescription rejected');
@@ -39,7 +39,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white">
                 <DialogHeader>
                     <DialogTitle>Reject Prescription</DialogTitle>
                 </DialogHeader>
@@ -79,7 +79,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
                         </Button>
                         <Button
                             onClick={handleReject}
-                            className="flex-1 bg-red-600 hover:bg-red-700"
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                             disabled={loading}
                         >
                             {loading ? 'Rejecting...' : 'Reject Prescription'}
