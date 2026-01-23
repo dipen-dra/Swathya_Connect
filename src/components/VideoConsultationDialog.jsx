@@ -160,33 +160,64 @@ const VideoConsultationDialog = ({ open, onOpenChange, consultationId, userRole,
             if (response.data.success) {
                 const { token, channelName, uid, appId, remainingSeconds } = response.data.data;
 
+                console.log('🎥 Joining video call with Agora credentials');
+                console.log('🎥 Channel:', channelName, 'UID:', uid);
+
                 // Set timer from backend (persistent timer)
                 setTimeRemaining(remainingSeconds);
 
                 // Join channel
                 await clientRef.current.join(appId, channelName, token, uid);
+                console.log('✅ Successfully joined Agora channel');
 
-                // Create and publish local tracks
-                // NOTE: Agora returns [audioTrack, videoTrack] from createMicrophoneAndCameraTracks!
-                const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                // Create and publish local tracks with error handling
+                try {
+                    console.log('🎥 Requesting camera and microphone access...');
+                    const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
-                localVideoTrackRef.current = videoTrack;
-                localAudioTrackRef.current = audioTrack;
+                    localVideoTrackRef.current = videoTrack;
+                    localAudioTrackRef.current = audioTrack;
 
-                // Publish tracks first
-                await clientRef.current.publish([videoTrack, audioTrack]);
+                    // Publish tracks
+                    await clientRef.current.publish([videoTrack, audioTrack]);
+                    console.log('✅ Published video and audio tracks');
 
-                setJoined(true);
+                    setJoined(true);
 
-                // Play local video after state update (wait for DOM)
-                setTimeout(() => {
-                    if (localVideoContainerRef.current && videoTrack) {
-                        videoTrack.play(localVideoContainerRef.current);
+                    // Play local video after state update (wait for DOM)
+                    setTimeout(() => {
+                        if (localVideoContainerRef.current && videoTrack) {
+                            videoTrack.play(localVideoContainerRef.current);
+                        }
+                    }, 100);
+
+                    toast.success('Joined video consultation');
+                } catch (mediaError) {
+                    console.error('❌ Camera/Microphone access error:', mediaError);
+
+                    // Handle specific camera/microphone errors
+                    if (mediaError.code === 'NOT_READABLE' || mediaError.message?.includes('Could not start video source')) {
+                        toast.error('Camera is already in use by another application. Joining with audio only...', { duration: 5000 });
+
+                        // Try audio-only fallback
+                        try {
+                            const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                            localAudioTrackRef.current = audioTrack;
+                            await clientRef.current.publish([audioTrack]);
+                            setJoined(true);
+                            setCameraOff(true); // Mark camera as off
+                            toast.success('Joined with audio only');
+                        } catch (audioError) {
+                            throw new Error('Could not access microphone. Please check permissions and close other apps using your microphone.');
+                        }
+                    } else if (mediaError.code === 'PERMISSION_DENIED' || mediaError.message?.includes('Permission denied')) {
+                        throw new Error('Camera/Microphone permission denied. Please allow access in your browser settings.');
+                    } else {
+                        throw new Error(`Media device error: ${mediaError.message || 'Could not access camera/microphone'}`);
                     }
-                }, 100);
-                setLoading(false);
+                }
 
-                toast.success('Joined video consultation');
+                setLoading(false);
 
                 // If doctor joins, start the timer immediately (allows patient to join)
                 if (userRole === 'doctor') {
@@ -199,15 +230,22 @@ const VideoConsultationDialog = ({ open, onOpenChange, consultationId, userRole,
                 }
             }
         } catch (error) {
-            console.error('Error joining call:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to join video call';
-            toast.error(errorMessage);
-            setLoading(false);
+            console.error('❌ Error joining call:', error);
 
-            // Close dialog if patient trying to join before doctor starts
+            let errorMessage = 'Failed to join video call';
+
+            // Handle different error types
             if (error.response?.status === 403) {
+                errorMessage = error.response?.data?.message || 'Please wait for the doctor to start the consultation';
                 setTimeout(() => onOpenChange(false), 2000);
+            } else if (error.message) {
+                errorMessage = error.message;
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
             }
+
+            toast.error(errorMessage, { duration: 6000 });
+            setLoading(false);
         }
     };
 

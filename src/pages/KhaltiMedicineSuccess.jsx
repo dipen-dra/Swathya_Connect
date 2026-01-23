@@ -22,7 +22,9 @@ export default function KhaltiMedicineSuccess() {
             try {
                 const token = searchParams.get('token');
                 const amount = searchParams.get('amount');
-                const orderData = JSON.parse(sessionStorage.getItem('khaltiMedicineOrderData') || '{}');
+
+                // Get the ACTUAL order data from checkout, not the temp orderDetails
+                const checkoutData = sessionStorage.getItem('swasthya_checkout_temp');
 
                 if (!token || !amount) {
                     setStatus('error');
@@ -30,10 +32,20 @@ export default function KhaltiMedicineSuccess() {
                     return;
                 }
 
+                if (!checkoutData) {
+                    setStatus('error');
+                    setMessage('Order data not found. Please try again.');
+                    return;
+                }
+
+                const orderData = JSON.parse(checkoutData);
+                console.log('📦 Sending order data for verification:', orderData);
+
                 // Clear session storage
+                sessionStorage.removeItem('swasthya_checkout_temp');
                 sessionStorage.removeItem('khaltiMedicineOrderData');
 
-                // Call backend to verify payment
+                // Call backend to verify payment and create order
                 const response = await paymentAPI.verifyKhaltiMedicine(token, amount, orderData);
 
                 if (response.data.success) {
@@ -49,6 +61,9 @@ export default function KhaltiMedicineSuccess() {
                         title: 'Order Placed!',
                         message: 'Your medicine order has been successfully placed and paid via Khalti.'
                     });
+
+                    // Clear cart
+                    localStorage.removeItem('swasthya_cart');
 
                     // Redirect to dashboard after 3 seconds
                     setTimeout(() => {
@@ -99,8 +114,8 @@ export default function KhaltiMedicineSuccess() {
                 {/* Status Message */}
                 <div className="text-center mb-8">
                     <h1 className={`text-2xl font-bold mb-2 ${status === 'verifying' ? 'text-purple-900' :
-                            status === 'success' ? 'text-purple-900' :
-                                'text-red-900'
+                        status === 'success' ? 'text-purple-900' :
+                            'text-red-900'
                         }`}>
                         {status === 'verifying' && 'Verifying Payment'}
                         {status === 'success' && 'Order Placed Successfully!'}
@@ -135,8 +150,8 @@ export default function KhaltiMedicineSuccess() {
                         <button
                             onClick={handleReturnToDashboard}
                             className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${status === 'success'
-                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
                                 }`}
                         >
                             {status === 'success' ? 'View Dashboard' : 'Return to Dashboard'}
