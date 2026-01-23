@@ -69,8 +69,8 @@ export function PharmacyPaymentDialog({ open, onOpenChange, orderDetails, onPaym
                             amount: payload.amount
                         });
 
-                        // Store order data temporarily
-                        sessionStorage.setItem('khaltiMedicineOrderData', JSON.stringify(orderDetails));
+                        // Note: Order data is already stored in sessionStorage as 'swasthya_checkout_temp' by CheckoutPage
+                        // No need to store orderDetails here - it only has temp ID and summary info
 
                         // Immediate redirect - no waiting!
                         window.location.href = `/khalti-medicine-success?${params.toString()}`;

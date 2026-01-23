@@ -5,10 +5,7 @@ const API_URL = 'http://localhost:5000/api';
 // Create axios instance
 const api = axios.create({
     baseURL: API_URL,
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json'
-    }
+    withCredentials: true
 });
 
 // Add token to requests
@@ -20,8 +17,14 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Set Content-Type only if not already set and not FormData
+        if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+            config.headers['Content-Type'] = 'application/json';
+        }
+
         if (config.data) {
-            console.log('📤 Request data:', config.data);
+            console.log('📤 Request data:', config.data instanceof FormData ? 'FormData' : config.data);
         }
         return config;
     },
