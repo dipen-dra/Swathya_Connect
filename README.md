@@ -1,0 +1,376 @@
+# 🏥 SwasthyaConnect - Telemedicine Platform
+
+**SwasthyaConnect** is a comprehensive telemedicine platform that connects patients with healthcare providers, enabling remote consultations, medicine reminders, and pharmacy services.
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [API Documentation](#-api-documentation)
+- [Payment Integration](#-payment-integration)
+- [Email Notifications](#-email-notifications)
+- [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
+
+## ✨ Features
+
+### 👨‍⚕️ For Patients
+- **User Authentication** - Secure registration and login with JWT
+- **Doctor Discovery** - Browse and search doctors by specialty, rating, and availability
+- **Multi-Type Consultations**
+  - 📹 Video Consultations
+  - 📞 Audio Consultations
+  - 💬 Text Chat Consultations
+- **Dynamic Pricing** - Different pricing tiers based on consultation type
+  - Video: 100% of base fee
+  - Audio: 80% of base fee
+  - Chat: 60% of base fee
+- **Payment Integration**
+  - eSewa (Nepal's leading payment gateway)
+  - Khalti (Digital wallet payment)
+  - Secure payment verification
+- **Medicine Reminders** - Set and manage medication schedules with email notifications
+- **Health Records** - Upload and manage medical documents
+- **Consultation History** - View past and upcoming consultations
+- **Email Notifications** - Automated booking confirmations with complete details
+
+### 🏪 For Pharmacies
+- **Pharmacy Listings** - Display pharmacy information and services
+- **Chat Support** - Direct communication with patients
+
+### 🔔 Notifications System
+- Real-time in-app notifications
+- Email notifications for:
+  - Consultation bookings
+  - Medicine reminders
+  - Payment confirmations
+
+## 🛠 Tech Stack
+
+### Frontend
+- **React 18** - UI library
+- **Vite** - Build tool and dev server
+- **React Router** - Client-side routing
+- **TailwindCSS** - Utility-first CSS framework
+- **Shadcn/ui** - Re-usable component library
+- **Lucide React** - Icon library
+- **Sonner** - Toast notifications
+- **Axios** - HTTP client
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **MongoDB** - NoSQL database
+- **Mongoose** - ODM for MongoDB
+- **JWT** - Authentication
+- **Nodemailer** - Email service
+- **Multer** - File upload handling
+- **Bcrypt** - Password hashing
+
+### Payment Gateways
+- **eSewa** - Nepal's payment gateway (Test Mode)
+- **Khalti** - Digital wallet (Test Mode)
+
+## 🏗 Architecture
+
+```
+SwasthyaConnect/
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   │   ├── ui/         # Shadcn components
+│   │   │   ├── dashboard/  # Dashboard-specific components
+│   │   │   └── layout/     # Layout components (Header, etc.)
+│   │   ├── contexts/       # React Context providers
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API service layer
+│   │   └── assets/         # Static assets
+│   └── public/             # Public assets
+│
+└── backend/                 # Express backend application
+    ├── src/
+    │   ├── controllers/    # Route controllers
+    │   ├── models/         # Mongoose models
+    │   ├── routes/         # API routes
+    │   ├── middleware/     # Custom middleware
+    │   └── utils/          # Utility functions
+    └── uploads/            # File upload directory
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v16 or higher)
+- MongoDB (local or Atlas)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/dipen-dra/Swathya_Connect.git
+cd SwasthyaConnect
+```
+
+2. **Install Backend Dependencies**
+```bash
+cd backend
+npm install
+```
+
+3. **Install Frontend Dependencies**
+```bash
+cd ../frontend
+npm install
+```
+
+4. **Set up Environment Variables** (see [Environment Variables](#-environment-variables))
+
+5. **Seed the Database** (Optional)
+```bash
+cd backend
+node seeder.js
+```
+
+6. **Start Development Servers**
+
+Backend:
+```bash
+cd backend
+npm run dev
+```
+
+Frontend:
+```bash
+cd frontend
+npm run dev
+```
+
+The application will be available at:
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
+
+## 🔐 Environment Variables
+
+### Backend (.env)
+```env
+# Server
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGO_URI=your_mongodb_connection_string
+
+# JWT
+JWT_SECRET=your_jwt_secret_key
+
+# Email Service (Gmail)
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_specific_password
+
+# Payment Gateways (Test Mode)
+# eSewa
+ESEWA_URL=https://rc-epay.esewa.com.np/api/epay/main/v2/form
+ESEWA_SCD=EPAYTEST
+ESEWA_SECRET=8gBm/:&EnhH.1/q
+
+# Khalti
+KHALTI_PUBLIC_KEY=test_public_key_617c4c6fe77c441d88451ec1408a0c0e
+KHALTI_SECRET_KEY=test_secret_key_3f78fb6364ef4bd1b5fc670ce33a06f5
+```
+
+### Frontend (.env)
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+## 📚 API Documentation
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
+
+### Doctors
+- `GET /api/doctors` - Get all doctors
+- `GET /api/doctors/:id` - Get doctor by ID
+
+### Consultations
+- `POST /api/consultations` - Book consultation
+- `GET /api/consultations` - Get user consultations
+- `GET /api/consultations/:id` - Get consultation details
+- `PATCH /api/consultations/:id/status` - Update consultation status
+
+### Payments
+- `POST /api/payment/esewa/initiate` - Initiate eSewa payment
+- `POST /api/payment/esewa/verify` - Verify eSewa payment
+- `POST /api/payment/khalti/verify` - Verify Khalti payment
+
+### Reminders
+- `POST /api/reminders` - Create medicine reminder
+- `GET /api/reminders` - Get user reminders
+- `PUT /api/reminders/:id` - Update reminder
+- `DELETE /api/reminders/:id` - Delete reminder
+
+## 💳 Payment Integration
+
+### eSewa Integration
+- Test mode enabled for development
+- Automatic redirect to eSewa payment page
+- Callback verification with backend
+- Success/failure page handling
+
+### Khalti Integration
+- Widget-based payment flow
+- In-app payment modal
+- Real-time payment verification
+- Test credentials provided for development
+
+### Payment Flow
+1. User selects consultation type and doctor
+2. System calculates fee based on consultation type
+3. User chooses payment method (eSewa/Khalti)
+4. Payment gateway processes transaction
+5. Backend verifies payment
+6. Consultation status updated to "paid"
+7. Confirmation email sent to user
+
+### Test Doctor for Khalti
+**Dr. Sunita Maharjan** has a base fee of NPR 100:
+- Video: NPR 100
+- Audio: NPR 80
+- Chat: NPR 60
+
+(Khalti test mode has a maximum limit of NPR 200)
+
+## 📧 Email Notifications
+
+### Consultation Confirmation Email
+Automatically sent after successful payment with:
+- Doctor name and specialty
+- Consultation type (Video/Audio/Chat)
+- Date and time
+- Consultation fee
+- Payment method
+- Booking ID
+- Important reminders
+- Direct link to consultations dashboard
+
+### Medicine Reminder Email
+Sent 10 minutes before scheduled medication time with:
+- Medicine name and dosage
+- Scheduled times
+- Special instructions
+- Link to dashboard
+
+### Email Configuration
+Uses Gmail SMTP with app-specific password. Configure in backend `.env`:
+```env
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_specific_password
+```
+
+## 📁 Project Structure
+
+### Key Components
+
+#### Frontend
+- `PatientDashboard.jsx` - Main dashboard with tabs
+- `ConsultationTypeDialog.jsx` - Consultation type selection
+- `PaymentDialog.jsx` - Payment method selection
+- `EsewaSuccess.jsx` - eSewa payment callback
+- `KhaltiSuccess.jsx` - Khalti payment success page
+- `MedicineReminderDialog.jsx` - Medicine reminder management
+
+#### Backend
+- `consultationController.js` - Consultation booking logic
+- `esewaController.js` - eSewa payment handling
+- `khaltiController.js` - Khalti payment handling
+- `emailService.js` - Email notification service
+- `reminderScheduler.js` - Automated reminder scheduling
+
+### Database Models
+- `User` - User authentication and profile
+- `Profile` - Extended user profile information
+- `Doctor` - Doctor information and availability
+- `Consultation` - Consultation bookings
+- `Reminder` - Medicine reminders
+- `Pharmacy` - Pharmacy listings
+- `Notification` - In-app notifications
+
+## 🎨 UI/UX Features
+
+- **Responsive Design** - Mobile-first approach
+- **Modern Aesthetics** - Gradient themes and smooth animations
+- **Dark Mode Ready** - Component structure supports theming
+- **Accessibility** - ARIA labels and keyboard navigation
+- **Toast Notifications** - Real-time feedback with Sonner
+- **Loading States** - Skeleton loaders and spinners
+- **Error Handling** - User-friendly error messages
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Protected API routes
+- Input validation and sanitization
+- CORS configuration
+- Secure payment verification
+- File upload restrictions
+
+## 🐛 Known Issues & Solutions
+
+### Duplicate Notifications (Fixed)
+- **Issue**: React StrictMode causes useEffect to run twice in development
+- **Solution**: Implemented useRef guards to prevent duplicate API calls and toasts
+
+### Payment Verification
+- **Issue**: Multiple verification calls could send duplicate emails
+- **Solution**: Backend checks payment status before sending emails
+
+## 🚧 Future Enhancements
+
+- [ ] Video call integration (WebRTC)
+- [ ] Real-time chat messaging
+- [ ] Doctor dashboard
+- [ ] Admin panel
+- [ ] Prescription management
+- [ ] Lab test integration
+- [ ] Insurance integration
+- [ ] Multi-language support
+- [ ] Mobile app (React Native)
+
+## 👥 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 Developer
+
+**Dipen Dra**
+- GitHub: [@dipen-dra](https://github.com/dipen-dra)
+- Repository: [Swathya_Connect](https://github.com/dipen-dra/Swathya_Connect)
+
+## 🙏 Acknowledgments
+
+- Shadcn/ui for the beautiful component library
+- Lucide for the icon set
+- eSewa and Khalti for payment gateway integration
+- MongoDB Atlas for database hosting
+
+---
+
+**Made with ❤️ for better healthcare accessibility in Nepal**
