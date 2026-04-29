@@ -87,7 +87,7 @@ export default function VerifyOTP() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/verify-otp', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ export default function VerifyOTP() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

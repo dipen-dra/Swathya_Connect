@@ -90,7 +90,7 @@ export function HealthConcerns({ onCategorySelect }) {
                     // Handle Image URL or File Path
                     let imageUrl = null;
                     if (item.image) {
-                        imageUrl = item.image.startsWith('http') ? item.image : `http://localhost:8080${item.image}`;
+                        imageUrl = item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${item.image}`;
                     }
 
                     return (

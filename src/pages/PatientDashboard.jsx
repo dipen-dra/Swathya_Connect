@@ -70,12 +70,13 @@ import { useReminders } from '@/contexts/RemindersContext';
 import { prescriptionsAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import PrescriptionPreview from '@/components/dashboard/PrescriptionPreview';
+import { SkeletonCard, SkeletonStat, SkeletonRow } from '@/components/ui/SkeletonCard';
 
 // Helper function to get full image URL
 const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:8080${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 };
 
 export function PatientDashboard() {
@@ -460,7 +461,7 @@ export function PatientDashboard() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8080/api/consultations/${selectedConsultation._id}/rate`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/consultations/${selectedConsultation._id}/rate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -989,14 +990,7 @@ export function PatientDashboard() {
                     {loadingStats ? (
                         // Loading skeleton
                         [1, 2, 3, 4].map((i) => (
-                            <Card key={i} className="border-0 shadow-sm">
-                                <CardContent className="p-6">
-                                    <div className="animate-pulse space-y-3">
-                                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                        <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <SkeletonStat key={i} />
                         ))
                     ) : stats ? (
                         // Display stats from API - MGX Design
@@ -1223,8 +1217,16 @@ export function PatientDashboard() {
                     {/* Consultations Tab */}
                     {activeTab === 'consultations' && (
                         <div className="space-y-6">
-                            {/* Upcoming Consultations */}
-                            {upcomingConsultations.length > 0 && (
+                            {loadingConsultations ? (
+                                <div className="space-y-4">
+                                    {[1, 2, 3].map((i) => (
+                                        <SkeletonCard key={i} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Upcoming Consultations */}
+                                    {upcomingConsultations.length > 0 && (
                                 <div className="bg-white rounded-lg p-6 border border-gray-200">
                                     <div className="flex items-center space-x-2 mb-4">
                                         <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -1293,12 +1295,14 @@ export function PatientDashboard() {
                                 </div>
                             )}
 
-                            {sortedConsultations.length === 0 && (
-                                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                                    <Stethoscope className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                                    <p className="text-gray-600 font-medium">No consultations found</p>
-                                    <p className="text-sm text-gray-500 mt-1">Book your first consultation with our expert doctors</p>
-                                </div>
+                                    {sortedConsultations.length === 0 && (
+                                        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                                            <Stethoscope className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                                            <p className="text-gray-600 font-medium">No consultations found</p>
+                                            <p className="text-sm text-gray-500 mt-1">Book your first consultation with our expert doctors</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}
@@ -1337,8 +1341,13 @@ export function PatientDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {sortedDoctors.map((doctor) => (
-                                    <Card key={doctor.id} className="border border-gray-200 hover:shadow-lg transition-all duration-200">
+                                {loadingDoctors ? (
+                                    [1, 2, 3, 4].map((i) => (
+                                        <SkeletonCard key={i} />
+                                    ))
+                                ) : (
+                                    sortedDoctors.map((doctor) => (
+                                        <Card key={doctor.id} className="border border-gray-200 hover:shadow-lg transition-all duration-200">
                                         <CardContent className="p-6">
                                             <div className="space-y-4">
                                                 {/* Doctor Header */}
@@ -1429,7 +1438,7 @@ export function PatientDashboard() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                ))}
+                                )))}
                             </div>
 
                             {sortedDoctors.length === 0 && (
@@ -1459,10 +1468,9 @@ export function PatientDashboard() {
                                 {/* Pharmacy Cards */}
                                 <div className="space-y-4">
                                     {loadingPharmacies ? (
-                                        <div className="flex justify-center items-center py-12">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                            <span className="ml-3 text-gray-600">Loading pharmacies...</span>
-                                        </div>
+                                        [1, 2, 3].map((i) => (
+                                            <SkeletonCard key={i} />
+                                        ))
                                     ) : pharmacies.length > 0 ? (
                                         pharmacies.map((pharmacy, index) => {
                                             const initials = pharmacy.name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 3);
@@ -1476,7 +1484,7 @@ export function PatientDashboard() {
                                                             <div className="flex items-start space-x-4 flex-1">
                                                                 <div className="relative">
                                                                     <Avatar className="h-14 w-14">
-                                                                        <AvatarImage src={pharmacy.profileImage ? `http://localhost:8080${pharmacy.profileImage}` : undefined} />
+                                                                        <AvatarImage src={pharmacy.profileImage ? `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${pharmacy.profileImage}` : undefined} />
                                                                         <AvatarFallback className={`bg-gradient-to-br ${gradient} text-white font-bold text-lg`}>
                                                                             {initials}
                                                                         </AvatarFallback>
@@ -2128,7 +2136,7 @@ export function PatientDashboard() {
                                                 <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                                 <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
                                                 <a
-                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:8080${selectedMedicineOrder.prescriptionImage}`}
+                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -2139,7 +2147,7 @@ export function PatientDashboard() {
                                             </div>
                                         ) : (
                                             <img
-                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:8080${selectedMedicineOrder.prescriptionImage}`}
+                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}
                                                 alt="Prescription"
                                                 className="max-w-full h-auto rounded-lg border"
                                             />

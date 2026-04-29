@@ -27,20 +27,30 @@ import {
     Heart,
     Check,
     X,
-    Upload
+    Upload,
+    Moon,
+    Sun
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/assets/swasthyalogo.png';
 import { RequestMedicineDialog } from '@/components/patient/RequestMedicineDialog';
+import { useTheme } from 'next-themes';
 
 export default function Header() {
     const { user, logout } = useAuth();
     const { profile } = useProfile();
     const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
     const navigate = useNavigate();
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
     const [showRequestMedicine, setShowRequestMedicine] = React.useState(false);
+
+    // Avoid hydration mismatch
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleLogout = async () => {
         setShowLogoutDialog(false);
@@ -88,11 +98,11 @@ export default function Header() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:8080${imagePath}`; // Prepend backend URL
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath}`; // Prepend backend URL
     };
 
     return (
-        <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-950/60 border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
             <div className="container mx-auto flex h-16 items-center justify-between px-6">
                 {/* Logo */}
                 <div className="flex items-center space-x-3">
@@ -123,6 +133,22 @@ export default function Header() {
                         >
                             <Upload className="h-4 w-4 mr-2" />
                             Upload Prescription
+                        </Button>
+                    )}
+
+                    {/* Theme Toggle */}
+                    {mounted && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            className="hidden lg:flex"
+                        >
+                            {theme === 'dark' ? (
+                                <Sun className="h-5 w-5 text-yellow-500" />
+                            ) : (
+                                <Moon className="h-5 w-5 text-slate-700" />
+                            )}
                         </Button>
                     )}
 

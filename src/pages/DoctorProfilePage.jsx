@@ -156,7 +156,7 @@ export default function DoctorProfilePage() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:8080${imagePath}`;
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath}`;
     };
 
     const getCurrentLocation = () => {

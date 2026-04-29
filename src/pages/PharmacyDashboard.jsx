@@ -151,7 +151,7 @@ export default function PharmacyDashboard() {
         try {
             setIsLoading(true);
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/api/pharmacies/dashboard/inventory', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/pharmacies/dashboard/inventory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -411,7 +411,7 @@ export default function PharmacyDashboard() {
     const handleDeleteInventory = async (itemId) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/pharmacies/dashboard/inventory/${itemId}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/pharmacies/dashboard/inventory/${itemId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -1105,7 +1105,7 @@ export default function PharmacyDashboard() {
                                     <CardContent className="p-6">
                                         <div className="flex items-center space-x-4">
                                             <Avatar className="h-20 w-20">
-                                                <AvatarImage src={profile?.profileImage ? `http://localhost:8080${profile.profileImage}` : undefined} />
+                                                <AvatarImage src={profile?.profileImage ? `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${profile.profileImage}` : undefined} />
                                                 <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-2xl">
                                                     {profile?.firstName?.[0] || user?.fullName?.[0] || 'P'}
                                                 </AvatarFallback>
@@ -1329,7 +1329,7 @@ export default function PharmacyDashboard() {
                                                                 </div>
                                                             </div>
                                                             <a
-                                                                href={`http://localhost:8080${profile.verificationDocument}`}
+                                                                href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${profile.verificationDocument}`}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="text-sm font-medium text-blue-600 hover:text-blue-800 underline"
@@ -1947,7 +1947,7 @@ export default function PharmacyDashboard() {
                                             <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                             <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
                                             <a
-                                                href={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:8080${selectedOrder.prescriptionImage}`}
+                                                href={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -1959,7 +1959,7 @@ export default function PharmacyDashboard() {
                                     ) : (
                                         // Image file - display inline
                                         <img
-                                            src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `http://localhost:8080${selectedOrder.prescriptionImage}`}
+                                            src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}
                                             alt="Prescription"
                                             className="max-w-full h-auto rounded-lg border"
                                             onError={(e) => {

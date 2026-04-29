@@ -25,7 +25,7 @@ export const SocketProvider = ({ children }) => {
         if (token && user && (user.role === 'patient' || user.role === 'pharmacy' || user.role === 'doctor')) {
             console.log('🔌 Initializing socket connection for:', user.role);
 
-            const newSocket = io('http://localhost:8080', {
+            const newSocket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8080', {
                 auth: {
                     token: token
                 },

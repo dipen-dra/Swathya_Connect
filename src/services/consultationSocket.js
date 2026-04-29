@@ -12,7 +12,7 @@ class ConsultationSocketService {
             return this.socket;
         }
 
-        this.socket = io('http://localhost:8080', {
+        this.socket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8080', {
             auth: {
                 token
             },

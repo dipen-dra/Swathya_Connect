@@ -199,7 +199,7 @@ const TransactionHistoryTab = () => {
                                                             <img src={swasthyaLogo} alt="Swasthya Connect" className="w-6 h-6 rounded-full object-cover" />
                                                         ) : tx.referenceImage ? (
                                                             <img
-                                                                src={tx.referenceImage.startsWith('http') ? tx.referenceImage : `http://localhost:8080${tx.referenceImage}`}
+                                                                src={tx.referenceImage.startsWith('http') ? tx.referenceImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${tx.referenceImage}`}
                                                                 alt=""
                                                                 className="w-6 h-6 rounded-full object-cover"
                                                             />

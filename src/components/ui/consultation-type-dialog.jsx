@@ -20,7 +20,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:8080${imagePath}`; // Prepend backend URL
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath}`; // Prepend backend URL
     };
 
     const consultationTypes = [

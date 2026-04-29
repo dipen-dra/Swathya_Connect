@@ -195,7 +195,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setIsLoading(true);
-      const res = await axios.post('http://localhost:8080/api/auth/google', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/google`, {
         idToken: credentialResponse.credential,
         role: selectedLoginRole
       });
