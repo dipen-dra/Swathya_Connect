@@ -125,6 +125,12 @@ export function AuthProvider({ children }) {
         setUser(null);
         localStorage.removeItem('swasthya_user');
         localStorage.removeItem('token');
+
+        Object.keys(sessionStorage).forEach((key) => {
+            if (key.startsWith('patient-dashboard-welcome-shown-') || key.startsWith('doctor-dashboard-welcome-shown-')) {
+                sessionStorage.removeItem(key);
+            }
+        });
     };
 
     const value = {

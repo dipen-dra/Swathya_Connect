@@ -41,18 +41,24 @@ import NotFound from './pages/NotFound';
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export default function App() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    // Check if splash has already been shown in this session
+    return !sessionStorage.getItem('splashShown');
+  });
 
   useEffect(() => {
-    // Simulate initial app loading (checking auth, loading configs, etc.)
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Show loader for 2 seconds
+    if (loading) {
+      // Simulate initial app loading
+      const timer = setTimeout(() => {
+        setLoading(false);
+        sessionStorage.setItem('splashShown', 'true');
+      }, 2000); // Show loader for 2 seconds
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
-  // Show loading screen while app initializes
+  // Show loading screen while app initializes (only if not shown before in this session)
   if (loading) {
     return <LoadingScreen />;
   }

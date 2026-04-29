@@ -185,7 +185,7 @@ export function PatientDashboard() {
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('all');
 
-    const welcomeNotificationShown = useRef(false);
+    const welcomeNotificationKey = user?.id ? `patient-dashboard-welcome-shown-${user.id}` : null;
 
     // Helper function to get full image URL
 
@@ -348,15 +348,21 @@ export function PatientDashboard() {
     }, [selectedSpecialty, doctorSearchTerm]);
 
     useEffect(() => {
-        if (user && profile && !welcomeNotificationShown.current) {
-            welcomeNotificationShown.current = true;
-            addNotification({
-                title: 'Welcome to your dashboard',
-                message: `Hello ${profile.firstName || user.name}, welcome back!`,
-                type: 'info',
-            });
+        if (!user || !profile || !welcomeNotificationKey) {
+            return;
         }
-    }, [user?.id, profile?.firstName, addNotification]);
+
+        if (sessionStorage.getItem(welcomeNotificationKey)) {
+            return;
+        }
+
+        sessionStorage.setItem(welcomeNotificationKey, 'true');
+        addNotification({
+            title: 'Welcome to your dashboard',
+            message: `Hello ${profile.firstName || user.name}, welcome back!`,
+            type: 'info',
+        });
+    }, [user?.id, profile?.firstName, addNotification, welcomeNotificationKey]);
 
     // Fetch consultations on mount
     useEffect(() => {
@@ -401,6 +407,9 @@ export function PatientDashboard() {
 
     const handleLogout = async () => {
         try {
+            if (welcomeNotificationKey) {
+                sessionStorage.removeItem(welcomeNotificationKey);
+            }
             await logout();
             navigate('/');
             addNotification({

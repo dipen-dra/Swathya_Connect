@@ -110,7 +110,7 @@ export default function DoctorDashboard() {
     const [consultations, setConsultations] = useState([]);
     const [loadingConsultations, setLoadingConsultations] = useState(true);
 
-    const welcomeNotificationShown = useRef(false);
+    const welcomeNotificationKey = user?.id ? `doctor-dashboard-welcome-shown-${user.id}` : null;
 
     // Fetch consultations from backend
     useEffect(() => {
@@ -476,15 +476,21 @@ export default function DoctorDashboard() {
     ];
 
     useEffect(() => {
-        if (user && profile && !welcomeNotificationShown.current) {
-            welcomeNotificationShown.current = true;
-            addNotification({
-                title: 'Welcome to your dashboard',
-                message: `Hello Dr. ${profile.firstName || user.name}, you have ${pendingRequests.length} pending consultation requests.`,
-                type: 'info',
-            });
+        if (!user || !profile || !welcomeNotificationKey) {
+            return;
         }
-    }, [user?.id, profile?.firstName, addNotification, pendingRequests.length]);
+
+        if (sessionStorage.getItem(welcomeNotificationKey)) {
+            return;
+        }
+
+        sessionStorage.setItem(welcomeNotificationKey, 'true');
+        addNotification({
+            title: 'Welcome to your dashboard',
+            message: `Hello Dr. ${profile.firstName || user.name}, you have ${pendingRequests.length} pending consultation requests.`,
+            type: 'info',
+        });
+    }, [user?.id, profile?.firstName, addNotification, pendingRequests.length, welcomeNotificationKey]);
 
     // Sync activeTab with URL parameter
     useEffect(() => {
@@ -688,6 +694,9 @@ export default function DoctorDashboard() {
 
     const handleLogout = async () => {
         try {
+            if (welcomeNotificationKey) {
+                sessionStorage.removeItem(welcomeNotificationKey);
+            }
             await logout();
             navigate('/');
             addNotification({
