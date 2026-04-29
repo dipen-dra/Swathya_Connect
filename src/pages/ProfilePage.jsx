@@ -63,7 +63,7 @@ export function ProfilePage() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:5000${imagePath}`; // Prepend backend URL
+        return `http://localhost:8080${imagePath}`; // Prepend backend URL
     };
 
     const handleChange = (field, value) => {

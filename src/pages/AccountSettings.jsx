@@ -55,7 +55,7 @@ export default function AccountSettings() {
     const fetchSettings = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/auth/settings', {
+            const response = await fetch('http://localhost:8080/api/auth/settings', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -98,7 +98,7 @@ export default function AccountSettings() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/auth/change-password', {
+            const response = await fetch('http://localhost:8080/api/auth/change-password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export default function AccountSettings() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/auth/settings/notifications', {
+            const response = await fetch('http://localhost:8080/api/auth/settings/notifications', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ export default function AccountSettings() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/auth/account/deactivate', {
+            const response = await fetch('http://localhost:8080/api/auth/account/deactivate', {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -222,7 +222,7 @@ export default function AccountSettings() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/auth/account', {
+            const response = await fetch('http://localhost:8080/api/auth/account', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

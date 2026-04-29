@@ -25,7 +25,7 @@ export const SocketProvider = ({ children }) => {
         if (token && user && (user.role === 'patient' || user.role === 'pharmacy' || user.role === 'doctor')) {
             console.log('🔌 Initializing socket connection for:', user.role);
 
-            const newSocket = io('http://localhost:5000', {
+            const newSocket = io('http://localhost:8080', {
                 auth: {
                     token: token
                 },

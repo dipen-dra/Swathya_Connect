@@ -75,7 +75,7 @@ import PrescriptionPreview from '@/components/dashboard/PrescriptionPreview';
 const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:5000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return `http://localhost:8080${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 };
 
 export function PatientDashboard() {
@@ -460,7 +460,7 @@ export function PatientDashboard() {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/consultations/${selectedConsultation._id}/rate`, {
+            const response = await fetch(`http://localhost:8080/api/consultations/${selectedConsultation._id}/rate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1476,7 +1476,7 @@ export function PatientDashboard() {
                                                             <div className="flex items-start space-x-4 flex-1">
                                                                 <div className="relative">
                                                                     <Avatar className="h-14 w-14">
-                                                                        <AvatarImage src={pharmacy.profileImage ? `http://localhost:5000${pharmacy.profileImage}` : undefined} />
+                                                                        <AvatarImage src={pharmacy.profileImage ? `http://localhost:8080${pharmacy.profileImage}` : undefined} />
                                                                         <AvatarFallback className={`bg-gradient-to-br ${gradient} text-white font-bold text-lg`}>
                                                                             {initials}
                                                                         </AvatarFallback>
@@ -2128,7 +2128,7 @@ export function PatientDashboard() {
                                                 <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                                 <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
                                                 <a
-                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:8080${selectedMedicineOrder.prescriptionImage}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -2139,7 +2139,7 @@ export function PatientDashboard() {
                                             </div>
                                         ) : (
                                             <img
-                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:5000${selectedMedicineOrder.prescriptionImage}`}
+                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `http://localhost:8080${selectedMedicineOrder.prescriptionImage}`}
                                                 alt="Prescription"
                                                 className="max-w-full h-auto rounded-lg border"
                                             />

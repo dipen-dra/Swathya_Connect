@@ -26,7 +26,7 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
             <div className="relative h-40 bg-white p-3 flex items-center justify-center overflow-hidden border-b border-gray-100">
                 {image ? (
                     <img
-                        src={image.startsWith('http') ? image : `http://localhost:5000${image}`}
+                        src={image.startsWith('http') ? image : `http://localhost:8080${image}`}
                         alt={medicineName}
                         className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}

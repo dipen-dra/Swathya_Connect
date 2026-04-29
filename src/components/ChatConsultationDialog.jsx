@@ -407,7 +407,7 @@ export default function ChatConsultationDialog({ consultationId, open, onClose }
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:5000${imagePath}`;
+        return `http://localhost:8080${imagePath}`;
     };
 
     return (

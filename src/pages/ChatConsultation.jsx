@@ -321,7 +321,7 @@ export default function ChatConsultation() {
                         >
                             {message.messageType === 'audio' ? (
                                 <div className="flex items-center gap-2 min-w-[200px]">
-                                    <audio controls src={`http://localhost:5000${message.fileUrl}`} className="h-8 w-full" />
+                                    <audio controls src={`http://localhost:8080${message.fileUrl}`} className="h-8 w-full" />
                                 </div>
                             ) : (
                                 <p className="text-sm">{message.content}</p>

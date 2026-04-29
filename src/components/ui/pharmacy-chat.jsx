@@ -40,7 +40,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:5000${imagePath}`;
+        return `http://localhost:8080${imagePath}`;
     };
 
     // Initialize or get existing chat
@@ -527,10 +527,10 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                         {message.type === 'image' && message.attachment?.url && (
                                                             <div className="mb-2">
                                                                 <img
-                                                                    src={`http://localhost:5000${message.attachment.url}`}
+                                                                    src={`http://localhost:8080${message.attachment.url}`}
                                                                     alt={message.attachment.filename}
                                                                     className="max-w-full max-h-64 rounded cursor-pointer"
-                                                                    onClick={() => window.open(`http://localhost:5000${message.attachment.url}`, '_blank')}
+                                                                    onClick={() => window.open(`http://localhost:8080${message.attachment.url}`, '_blank')}
                                                                 />
                                                             </div>
                                                         )}
@@ -538,7 +538,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                         {/* File Attachment */}
                                                         {message.type === 'file' && message.attachment?.url && (
                                                             <a
-                                                                href={`http://localhost:5000${message.attachment.url}`}
+                                                                href={`http://localhost:8080${message.attachment.url}`}
                                                                 download={message.attachment.filename}
                                                                 className={`flex items-center space-x-2 mb-2 p-2 rounded ${isOwnMessage ? 'bg-blue-700' : 'bg-gray-200'
                                                                     }`}
@@ -554,7 +554,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                         {/* Audio Attachment */}
                                                         {message.type === 'audio' && message.attachment?.url && (
                                                             <div className="flex items-center gap-2 min-w-[200px] mb-2">
-                                                                <audio controls src={`http://localhost:5000${message.attachment.url}`} className="h-8 w-full" />
+                                                                <audio controls src={`http://localhost:8080${message.attachment.url}`} className="h-8 w-full" />
                                                             </div>
                                                         )}
 

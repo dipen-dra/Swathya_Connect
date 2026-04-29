@@ -49,7 +49,7 @@ export default function CartDrawer({ open, onOpenChange, cartItems, onUpdateQuan
                                         <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-2">
                                             {item.image ? (
                                                 <img
-                                                    src={`http://localhost:5000${item.image}`}
+                                                    src={`http://localhost:8080${item.image}`}
                                                     alt={item.medicineName}
                                                     className="h-full w-full object-contain mix-blend-multiply"
                                                 />

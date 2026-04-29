@@ -126,7 +126,7 @@ export default function PharmacyProfile() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:5000${imagePath}`;
+        return `http://localhost:8080${imagePath}`;
     };
 
     const handleBackToDashboard = () => {

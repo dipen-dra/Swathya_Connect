@@ -172,7 +172,7 @@ export default function CartPage() {
                                 <div className="w-full sm:w-32 h-32 bg-gray-50 rounded-xl flex items-center justify-center p-4 border border-gray-50">
                                     {item.image ? (
                                         <img
-                                            src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                                            src={item.image.startsWith('http') ? item.image : `http://localhost:8080${item.image}`}
                                             alt={item.medicineName}
                                             className="w-full h-full object-contain mix-blend-multiply"
                                             onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
@@ -258,7 +258,7 @@ export default function CartPage() {
                                         <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 p-1 flex-shrink-0">
                                             {item.image ? (
                                                 <img
-                                                    src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                                                    src={item.image.startsWith('http') ? item.image : `http://localhost:8080${item.image}`}
                                                     alt=""
                                                     className="h-full w-full object-contain mix-blend-multiply"
                                                     onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}

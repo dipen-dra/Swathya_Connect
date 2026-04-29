@@ -445,7 +445,7 @@ export default function Store() {
                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-gray-50 to-gray-100 opacity-50"></div>
                                     {selectedProduct.image ? (
                                         <img
-                                            src={selectedProduct.image.startsWith('http') ? selectedProduct.image : `http://localhost:5000${selectedProduct.image}`}
+                                            src={selectedProduct.image.startsWith('http') ? selectedProduct.image : `http://localhost:8080${selectedProduct.image}`}
                                             alt={selectedProduct.medicineName}
                                             className="max-h-[350px] w-full object-contain relative z-10 mix-blend-multiply group-hover:scale-110 transition-transform duration-500 ease-in-out"
                                             onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}

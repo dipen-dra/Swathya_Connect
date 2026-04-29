@@ -146,7 +146,7 @@ export default function AdminDashboard() {
         // Ensure proper URL format with slash
         const fullUrl = documentUrl.startsWith('http')
             ? documentUrl
-            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${documentUrl.startsWith('/') ? '' : '/'}${documentUrl}`;
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${documentUrl.startsWith('/') ? '' : '/'}${documentUrl}`;
         window.open(fullUrl, '_blank');
     };
 

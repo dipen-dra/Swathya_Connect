@@ -12,7 +12,7 @@ class ConsultationSocketService {
             return this.socket;
         }
 
-        this.socket = io('http://localhost:5000', {
+        this.socket = io('http://localhost:8080', {
             auth: {
                 token
             },

@@ -603,7 +603,7 @@ export default function DoctorDashboard() {
         if (actionType === 'approve') {
             try {
                 // Call approve API
-                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest._id}/approve`, {
+                const response = await fetch(`http://localhost:8080/api/consultations/${selectedRequest._id}/approve`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ export default function DoctorDashboard() {
 
             try {
                 // Call rejection API
-                const response = await fetch(`http://localhost:5000/api/consultations/${selectedRequest._id}/reject`, {
+                const response = await fetch(`http://localhost:8080/api/consultations/${selectedRequest._id}/reject`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -852,7 +852,7 @@ export default function DoctorDashboard() {
                             <Avatar className="h-12 w-12">
                                 {request.patientId?.profileImage && (
                                     <AvatarImage
-                                        src={`http://localhost:5000${request.patientId.profileImage}`}
+                                        src={`http://localhost:8080${request.patientId.profileImage}`}
                                         alt={request.patientId?.fullName || request.patientId?.name}
                                     />
                                 )}
@@ -1144,7 +1144,7 @@ export default function DoctorDashboard() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:5000${imagePath}`;
+        return `http://localhost:8080${imagePath}`;
     };
 
     return (

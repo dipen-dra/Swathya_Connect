@@ -369,7 +369,7 @@ export default function CheckoutPage() {
                                     <div key={item._id} className="flex gap-3">
                                         <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 p-1 flex-shrink-0">
                                             {item.image ? (
-                                                <img src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} alt="" className="h-full w-full object-contain mix-blend-multiply" />
+                                                <img src={item.image.startsWith('http') ? item.image : `http://localhost:8080${item.image}`} alt="" className="h-full w-full object-contain mix-blend-multiply" />
                                             ) : (
                                                 <div className="h-full w-full flex items-center justify-center text-gray-300"><Banknote className="w-4 h-4" /></div>
                                             )}

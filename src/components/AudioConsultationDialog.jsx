@@ -221,7 +221,7 @@ export default function AudioConsultationDialog({ open, onOpenChange, consultati
                     <div className="relative">
                         {otherUser?.image ? (
                             <img
-                                src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${otherUser.image}`}
+                                src={`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${otherUser.image}`}
                                 alt={otherUser?.name}
                                 className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
                             />
