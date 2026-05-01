@@ -1724,7 +1724,7 @@ export function PatientDashboard() {
                                         <p className="text-gray-600 mb-4">
                                             You haven't requested any medicines yet. Visit the Pharmacy Chat tab to request medicines.
                                         </p>
-                                        <Button onClick={() => navigate('/dashboard/pharmacy')} className="bg-purple-600 hover:bg-purple-700">
+                                        <Button onClick={() => navigate('/dashboard/pharmacy')} className="bg-purple-600 hover:bg-purple-700 text-white">
                                             Browse Pharmacies
                                         </Button>
                                     </CardContent>

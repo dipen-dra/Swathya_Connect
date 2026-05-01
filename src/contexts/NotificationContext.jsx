@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 const NotificationContext = createContext(undefined);
@@ -11,13 +11,32 @@ export const useNotifications = () => {
     return context;
 };
 
-export const NotificationProvider = ({ children }) => {
+// userId prop is required so we namespace storage per user and never leak across accounts
+export const NotificationProvider = ({ children, userId }) => {
     const [notifications, setNotifications] = useState([]);
     const [isInitialized, setIsInitialized] = useState(false);
 
-    // Load notifications from localStorage only once on mount
+    // Build a user-specific storage key so different users never share notifications
+    const storageKey = userId ? `notifications_${userId}` : null;
+
+    // Track the previous userId so we can detect user switches
+    const prevUserIdRef = useRef(userId);
+
+    // Load / reload notifications whenever the logged-in user changes
     useEffect(() => {
-        const saved = localStorage.getItem('notifications');
+        // If user switched (or logged out), wipe current in-memory notifications first
+        if (prevUserIdRef.current !== userId) {
+            setNotifications([]);
+            prevUserIdRef.current = userId;
+        }
+
+        // No user logged in → nothing to restore
+        if (!storageKey) {
+            setIsInitialized(true);
+            return;
+        }
+
+        const saved = localStorage.getItem(storageKey);
         if (saved) {
             try {
                 const parsedNotifications = JSON.parse(saved);
@@ -25,16 +44,19 @@ export const NotificationProvider = ({ children }) => {
             } catch (error) {
                 console.error('Error parsing notifications from localStorage:', error);
             }
+        } else {
+            // Fresh user – start with empty list
+            setNotifications([]);
         }
         setIsInitialized(true);
-    }, []);
+    }, [storageKey]); // re-runs whenever userId changes (storageKey derives from userId)
 
-    // Save notifications to localStorage only after initialization and when notifications change
+    // Persist to the user-specific key whenever notifications change (after init)
     useEffect(() => {
-        if (isInitialized) {
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+        if (isInitialized && storageKey) {
+            localStorage.setItem(storageKey, JSON.stringify(notifications));
         }
-    }, [notifications, isInitialized]);
+    }, [notifications, isInitialized, storageKey]);
 
     // Memoize unreadCount to prevent unnecessary recalculations
     const unreadCount = useMemo(() => {

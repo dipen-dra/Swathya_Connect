@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from "./contexts/AuthContext";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -40,6 +41,17 @@ import NotFound from './pages/NotFound';
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+// Inner component: sits inside AuthProvider so it can read the current user
+// and pass userId into NotificationProvider for per-user localStorage namespacing.
+function AppProviders({ children }) {
+  const { user } = useAuth();
+  return (
+    <NotificationProvider userId={user?.id}>
+      {children}
+    </NotificationProvider>
+  );
+}
+
 export default function App() {
   const [loading, setLoading] = useState(() => {
     // Check if splash has already been shown in this session
@@ -70,7 +82,7 @@ export default function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <ProfileProvider>
-          <NotificationProvider>
+          <AppProviders>
             <ConsultationProvider>
               <RemindersProvider>
                 <SocketProvider>
@@ -369,7 +381,7 @@ export default function App() {
                 </SocketProvider>
               </RemindersProvider>
             </ConsultationProvider>
-          </NotificationProvider>
+          </AppProviders>
         </ProfileProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

@@ -15,12 +15,11 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored user session and token
+        // Check for stored user session (metadata only, token is in HttpOnly cookie)
         const storedUser = localStorage.getItem('swasthya_user');
-        const token = localStorage.getItem('token');
-        console.log('🔐 AuthContext: Checking stored session, user:', storedUser ? 'Yes' : 'No', 'token:', token ? 'Yes' : 'No');
+        console.log('🔐 AuthContext: Checking stored session, user:', storedUser ? 'Yes' : 'No');
 
-        if (storedUser && token) {
+        if (storedUser) {
             try {
                 const userData = JSON.parse(storedUser);
                 console.log('✅ AuthContext: Restored user session:', userData);
@@ -28,10 +27,21 @@ export function AuthProvider({ children }) {
             } catch (error) {
                 console.error('❌ AuthContext: Error parsing stored user data:', error);
                 localStorage.removeItem('swasthya_user');
-                localStorage.removeItem('token');
             }
         }
         setIsLoading(false);
+
+        // Listen for global logout events dispatched by api interceptor
+        const handleGlobalLogout = () => {
+            console.log('🔐 AuthContext: Global logout event received');
+            logout();
+        };
+
+        window.addEventListener('auth:logout', handleGlobalLogout);
+
+        return () => {
+            window.removeEventListener('auth:logout', handleGlobalLogout);
+        };
     }, []);
 
     const login = async (email, password, role) => {
@@ -68,7 +78,7 @@ export function AuthProvider({ children }) {
             console.log('✅ AuthContext: Login successful, storing user:', userData);
             setUser(userData);
             localStorage.setItem('swasthya_user', JSON.stringify(userData));
-            localStorage.setItem('token', data.token);
+            // Token is stored in HttpOnly cookie by the backend, no longer in localStorage
             setIsLoading(false);
         } catch (error) {
             console.error('❌ AuthContext: Login error:', error);
@@ -111,7 +121,7 @@ export function AuthProvider({ children }) {
             console.log('✅ AuthContext: Registration successful, storing user:', newUser);
             setUser(newUser);
             localStorage.setItem('swasthya_user', JSON.stringify(newUser));
-            localStorage.setItem('token', data.token);
+            // Token is stored in HttpOnly cookie by the backend, no longer in localStorage
             setIsLoading(false);
         } catch (error) {
             console.error('❌ AuthContext: Registration error:', error);
@@ -124,7 +134,12 @@ export function AuthProvider({ children }) {
         console.log('🔐 AuthContext: Logging out, clearing session');
         setUser(null);
         localStorage.removeItem('swasthya_user');
-        localStorage.removeItem('token');
+        
+        // Notify backend to clear the cookie as well
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        }).catch(err => console.error('Logout error:', err));
 
         Object.keys(sessionStorage).forEach((key) => {
             if (key.startsWith('patient-dashboard-welcome-shown-') || key.startsWith('doctor-dashboard-welcome-shown-')) {
