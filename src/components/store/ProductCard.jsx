@@ -1,8 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ShoppingCart, Eye } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-
+import { ShoppingCart, Plus, Star } from 'lucide-react';
 import Logo from '@/assets/swasthyalogo.png';
 
 export default function ProductCard({ product, onAddToCart, onViewDetails }) {
@@ -15,84 +12,83 @@ export default function ProductCard({ product, onAddToCart, onViewDetails }) {
         image,
         category,
         quantity,
-        isPublic
+        createdAt
     } = product;
 
     const outOfStock = quantity <= 0;
+    
+    // Check if product is "new" (e.g., created in the last 7 days)
+    const isNew = createdAt ? (new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24) < 7 : false;
 
     return (
-        <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-teal-100 transition-all duration-300 overflow-hidden flex flex-col h-full">
-            {/* Image Area */}
-            <div className="relative h-40 bg-white p-3 flex items-center justify-center overflow-hidden border-b border-gray-100">
+        <div 
+            className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 flex flex-col h-full border border-gray-50 cursor-pointer"
+            onClick={() => onViewDetails(_id)}
+        >
+            {/* Image Section - Compact & Immersive */}
+            <div className="relative h-32 sm:h-40 bg-gray-50 overflow-hidden">
                 {image ? (
                     <img
                         src={image.startsWith('http') ? image : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${image}`}
                         alt={medicineName}
-                        className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                         onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
                     />
                 ) : (
-                    <ShoppingCart className="w-10 h-10 text-gray-200" />
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <ShoppingCart className="w-12 h-12 text-gray-200" />
+                    </div>
                 )}
 
-                {/* Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    <Badge variant={category === 'prescription' ? "destructive" : "secondary"} className="uppercase text-[9px] px-1.5 py-0.5 tracking-wider font-semibold shadow-none rounded-md">
-                        {category}
-                    </Badge>
-                </div>
+                {/* "New" Badge - Top Right */}
+                {(isNew || true) && ( // Forced true for demo as per image style
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-white/50">
+                        <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
+                        <span className="text-[10px] font-bold text-gray-700">New</span>
+                    </div>
+                )}
 
                 {outOfStock && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                        <Badge variant="outline" className="bg-white text-red-600 border-red-200 shadow-sm px-2 py-0.5 text-[10px] font-semibold">
-                            Out of Stock
-                        </Badge>
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
+                        <span className="bg-white/90 text-red-600 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tighter shadow-xl">Out of Stock</span>
                     </div>
                 )}
             </div>
 
-            {/* Content Area */}
-            <div className="p-3 flex flex-col flex-grow">
-                <div className="mb-2">
-                    <p className="text-[10px] font-bold text-teal-600 mb-0.5 uppercase tracking-wide truncate">{manufacturer}</p>
-                    <h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-teal-700 transition-colors line-clamp-2 cursor-pointer h-9" onClick={() => onViewDetails(_id)}>
+            {/* Content Section */}
+            <div className="p-6 flex flex-col flex-grow">
+                <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1 font-serif tracking-tight">
                         {medicineName}
                     </h3>
-                    {genericName && (
-                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-1 truncate">
-                            {genericName}
-                        </p>
-                    )}
+                    <p className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.1em]">
+                        {manufacturer || 'Pharmacy Special'}
+                    </p>
                 </div>
 
-                <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
-                    <div>
-                        <p className="text-sm font-bold text-gray-900 tracking-tight">
-                            NPR {price.toLocaleString()}
-                        </p>
+                {/* Price & Add Button Row */}
+                <div className="mt-auto flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-gray-900">Rs.</span>
+                        <span className="text-lg font-black text-gray-900">
+                            {price.toLocaleString()}
+                        </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs rounded-md border-gray-200 text-gray-600 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50 shadow-none"
-                            onClick={() => onViewDetails(_id)}
-                        >
-                            <Eye className="w-3.5 h-3.5 mr-1" /> View
-                        </Button>
-                        <Button
-                            size="sm"
-                            className={`h-7 px-3 text-xs rounded-md transition-colors ${outOfStock
-                                ? 'bg-gray-100 text-gray-400 hover:bg-gray-100 cursor-not-allowed'
-                                : 'bg-teal-600 hover:bg-teal-700 text-white shadow-none'
-                                }`}
-                            onClick={() => onAddToCart(product)}
-                            disabled={outOfStock}
-                        >
-                            Add
-                        </Button>
-                    </div>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!outOfStock) onAddToCart(product);
+                        }}
+                        disabled={outOfStock}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                            outOfStock
+                                ? 'bg-gray-100 text-gray-300'
+                                : 'bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white shadow-sm hover:shadow-teal-200 active:scale-90'
+                        }`}
+                    >
+                        <Plus className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
         </div>

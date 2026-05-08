@@ -1,80 +1,80 @@
-import { Shield, Video, CreditCard, FileText } from "lucide-react";
+import { Shield, Video, CreditCard, FileText, CheckCircle2 } from "lucide-react";
 
 export default function WhyChoose() {
   const features = [
     {
       icon: Shield,
-      title: "Verified Healthcare Professionals",
-      description:
-        "Connect with board-certified doctors and specialists who have been thoroughly vetted by our medical review team.",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
+      title: "Verified Professionals",
+      description: "Connect with board-certified doctors who have been thoroughly vetted by our review team.",
+      bgColor: "bg-teal-50/50",
     },
     {
       icon: Video,
-      title: "Secure Telemedicine Platform",
-      description:
-        "HIPAA-compliant video consultations with end-to-end encryption ensuring complete privacy & safety.",
-      color: "from-teal-500 to-teal-600",
-      bgColor: "bg-teal-50",
+      title: "Secure Telemedicine",
+      description: "HIPAA-compliant video consultations ensuring complete privacy and patient safety.",
+      bgColor: "bg-slate-50",
     },
     {
       icon: CreditCard,
-      title: "Integrated Payment System",
-      description:
-        "Seamless payments through Khalti and eSewa with transparent pricing and fast transaction processing.",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
+      title: "Integrated Payments",
+      description: "Seamless payments through Khalti and eSewa with transparent transaction processing.",
+      bgColor: "bg-teal-50/50",
     },
     {
       icon: FileText,
-      title: "Digital Health Records",
-      description:
-        "Secure cloud-based medical records with easy access for better continuity of care and future consultations.",
-      color: "from-teal-500 to-teal-600",
-      bgColor: "bg-teal-50",
+      title: "Cloud Health Records",
+      description: "Secure based medical records with easy access for better continuity of care.",
+      bgColor: "bg-slate-50",
     },
   ];
 
   return (
-    <section id="features" className="w-full py-28 bg-white">
+    <section id="features" className="w-full py-32 bg-white scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-8">
         
         {/* Section Header */}
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-            Why Choose <span className="text-teal-600">Swasthya Connect?</span>
+        <div className="text-center mb-24 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full mb-6">
+            <span className="text-[10px] font-black uppercase tracking-widest">Why Swasthya Connect?</span>
+          </div>
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 font-serif tracking-tight leading-tight">
+            Designed for <span className="text-teal-600 italic">Trust</span> & Accessibility.
           </h2>
-          <p className="text-gray-600 text-xl max-w-3xl mx-auto leading-relaxed">
-            Advanced digital healthcare designed for accessibility, quality, and trust.  
+          <p className="text-gray-500 text-xl leading-relaxed font-medium">
+            Advanced digital healthcare designed for accessibility, quality, and trust. 
             Experience the future of medical care in Nepal.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div
                 key={index}
-                className={`${feature.bgColor} rounded-2xl p-10 hover:shadow-xl transition-all duration-300`}
+                className={`${feature.bgColor} group rounded-[3rem] p-10 transition-all duration-500 hover:shadow-[0_40px_80px_rgba(0,0,0,0.03)] border border-transparent hover:border-gray-50`}
               >
-                {/* Icon */}
+                {/* Icon Container */}
                 <div
-                  className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br ${feature.color} rounded-xl mb-6`}
+                  className={`inline-flex items-center justify-center w-20 h-20 bg-white rounded-[2rem] mb-8 shadow-sm group-hover:scale-110 transition-transform duration-500`}
                 >
-                  <Icon className="w-8 h-8 text-white" />
+                  <Icon className="w-9 h-9 text-teal-600" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4 font-serif">
                   {feature.title}
                 </h3>
 
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <p className="text-gray-500 text-lg leading-relaxed font-medium mb-8">
                   {feature.description}
                 </p>
+
+                <div className="flex items-center gap-2 text-teal-600 font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Verified
+                </div>
               </div>
             );
           })}

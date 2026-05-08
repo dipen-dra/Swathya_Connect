@@ -81,33 +81,58 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
     return (
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-100 shadow-sm">
             <div className="flex flex-col">
-                {/* Top Row: Logo, Toggle, Actions */}
-                <div className="container mx-auto flex h-16 items-center justify-between px-6 relative">
-                    {/* Logo & Title */}
+                {/* Main Header Row */}
+                <div className="container mx-auto flex h-16 items-center justify-between px-6 gap-4 md:gap-8">
+                    {/* Left Section: Logo & Title */}
                     <div className="flex items-center gap-4 flex-shrink-0">
                         <img
                             src={Logo}
                             alt="Swasthya Connect"
-                            className="w-auto h-10 object-contain cursor-pointer"
+                            className="w-auto h-9 object-contain cursor-pointer"
                             onClick={() => navigate('/')}
                         />
-                        <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
-                        <span className="font-bold text-gray-700 hidden lg:block text-lg">Swasthya Connect Store</span>
+                        <div className="h-6 w-px bg-gray-200 hidden xl:block"></div>
+                        <span className="font-bold text-gray-700 hidden xl:block text-lg whitespace-nowrap">Swasthya Connect Store</span>
                     </div>
 
-                    {/* Dashboard <-> Store Toggle (Absolutely Centered) - Only for Patients */}
-                    {user?.role === 'patient' && (
-                        <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
-                            <DashboardToggle />
+                    {/* Middle Section: Search Bar (Desktop) */}
+                    <div className="hidden md:flex flex-1 max-w-2xl relative group items-center">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-4 w-4 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
                         </div>
-                    )}
+                        <Input
+                            type="text"
+                            placeholder="Search medicines, categories, or brands..."
+                            className="pl-10 pr-10 h-10 bg-gray-50 border-gray-100 focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full text-sm shadow-sm hover:shadow-md focus:shadow-md"
+                            value={searchValue}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                        />
+                        {searchValue && (
+                            <button
+                                onClick={() => onSearchChange('')}
+                                className="absolute right-3 p-1 rounded-full hover:bg-gray-200 text-gray-400 transition-colors"
+                                title="Clear search"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
 
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-3">
+                    {/* Right Section: Actions */}
+                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        {/* Dashboard Toggle - Only for Patients */}
+                        {user?.role === 'patient' && (
+                            <div className="hidden md:block mr-2">
+                                <DashboardToggle />
+                            </div>
+                        )}
+
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/home')}
-                            className="hidden lg:flex text-gray-600 hover:text-teal-600 font-medium mr-1"
+                            className="hidden lg:flex text-gray-600 hover:text-teal-600 font-medium"
                         >
                             Home
                         </Button>
@@ -115,12 +140,12 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                         <Button
                             variant="outline"
                             size="icon"
-                            className="relative rounded-xl border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors"
+                            className="relative rounded-xl border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors shadow-sm"
                             onClick={() => navigate('/cart')}
                         >
                             <ShoppingCart className="h-5 w-5" />
                             {cartCount > 0 && (
-                                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold border-2 border-white">
+                                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold border-2 border-white animate-pulse">
                                     {cartCount}
                                 </span>
                             )}
@@ -131,25 +156,25 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                 variant="default"
                                 size="sm"
                                 onClick={() => setShowRequestMedicine(true)}
-                                className="hidden lg:flex bg-teal-600 hover:bg-teal-700 text-white"
+                                className="hidden lg:flex bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/10 transition-all active:scale-95"
                             >
                                 <Upload className="h-4 w-4 mr-2" />
-                                Upload Prescription
+                                Prescription
                             </Button>
                         )}
 
                         {user ? (
                             <DropdownMenu onOpenChange={setIsDropdownOpen}>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="flex items-center space-x-2 px-2 py-1.5 h-auto rounded-xl hover:bg-gray-100">
+                                    <Button variant="ghost" className="flex items-center space-x-2 px-2 py-1.5 h-auto rounded-xl hover:bg-gray-100 transition-colors">
                                         <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
                                             <AvatarImage src={getImageUrl(profile?.profileImage)} />
                                             <AvatarFallback className="bg-gradient-to-tr from-teal-500 to-blue-500 text-white text-xs">
                                                 {(profile?.firstName?.[0] || user?.name?.[0] || 'U')}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <div className="hidden md:flex flex-col items-start text-xs">
-                                            <span className="font-medium text-gray-700">
+                                        <div className="hidden sm:flex flex-col items-start text-xs">
+                                            <span className="font-semibold text-gray-700">
                                                 {profile?.firstName || user?.name?.split(' ')[0] || 'User'}
                                             </span>
                                         </div>
@@ -174,30 +199,15 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                         ) : (
                             <Button
                                 onClick={() => navigate('/login')}
-                                className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg shadow-teal-600/20"
+                                className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg shadow-teal-600/20 px-6 h-10 transition-all active:scale-95"
                             >
                                 Sign In
                             </Button>
                         )}
                     </div>
                 </div>
-
-                {/* Bottom Row: Search Bar */}
-                <div className="container mx-auto px-6 pb-4">
-                    <div className="max-w-3xl mx-auto relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
-                        </div>
-                        <Input
-                            type="text"
-                            placeholder="Search medicines, categories, or brands..."
-                            className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full"
-                            value={searchValue}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                        />
-                    </div>
-                </div>
             </div>
+
 
             {/* Sign Out Confirmation Dialog */}
             <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>

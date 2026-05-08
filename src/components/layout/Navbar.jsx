@@ -82,8 +82,9 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart, User } from "lucide-react";
 import Logo from "@/assets/swasthyalogo.png";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -112,86 +113,122 @@ export default function Navbar() {
     { label: "Services", id: "services" },
     { label: "How It Works", id: "how-it-works" },
     { label: "Reviews", id: "reviews" },
-    { label: "Contact", id: "footer" },
   ];
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all ${scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur"
-        }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+        scrolled 
+          ? "bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] py-3" 
+          : "bg-transparent py-5"
+      }`}
     >
-      <div className="max-w-[1350px] mx-auto px-6 h-20 flex items-center justify-between relative z-50">
-
+      <div className="max-w-[1440px] mx-auto px-8 flex items-center justify-between">
+        
         {/* Logo */}
         <div
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-3 cursor-pointer group transition-transform active:scale-95"
           onClick={() => scrollToId("hero")}
         >
           <img
             src={Logo}
-            alt="Swasthya Connect Logo"
-            className="w-auto h-16 object-contain"
+            alt="Swasthya Connect"
+            className="w-auto h-12 md:h-14 object-contain"
           />
+          <div className="hidden lg:block h-6 w-px bg-gray-200 mx-2"></div>
+          <span className="text-xl font-bold text-gray-900 hidden lg:block tracking-tight">Swasthya <span className="text-teal-600">Connect</span></span>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-8">
-          <a href="/store" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Store</a>
+        <nav className="hidden xl:flex items-center gap-10">
+          <a 
+            href="/store" 
+            className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors flex items-center gap-2 group"
+          >
+            <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            Store
+          </a>
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => scrollToId(item.id)}
-              className="text-gray-700 hover:text-blue-600 transition"
+              className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors"
             >
               {item.label}
             </button>
           ))}
         </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex gap-3">
+        {/* Actions */}
+        <div className="hidden md:flex items-center gap-6">
           <button
             onClick={() => navigate("/login")}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition"
+            className="text-[13px] font-black uppercase tracking-widest text-gray-700 hover:text-teal-600 transition-colors flex items-center gap-2"
           >
+            <User className="w-4 h-4" />
             Sign In
           </button>
+          <Button
+            onClick={() => navigate("/register")}
+            className="bg-teal-600 hover:bg-teal-700 text-white px-8 h-12 rounded-xl font-black text-[12px] uppercase tracking-widest shadow-xl shadow-teal-600/20 transition-all active:scale-95"
+          >
+            Join Now
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-gray-600 focus:outline-none"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-3 rounded-xl bg-gray-50 text-gray-900 hover:bg-gray-100 transition-colors"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-white z-40 pt-24 px-6 md:hidden flex flex-col items-center gap-6 animate-in slide-in-from-top-10 duration-200">
-          <a href="/store" className="text-lg font-medium text-gray-800 hover:text-blue-600" onClick={() => setMobileMenuOpen(false)}>Store</a>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollToId(item.id)}
-              className="text-lg font-medium text-gray-800 hover:text-blue-600"
-            >
-              {item.label}
-            </button>
-          ))}
-          <div className="w-full h-px bg-gray-100 my-2"></div>
-          <button
-            onClick={() => {
-              navigate("/login");
-              setMobileMenuOpen(false);
-            }}
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-md w-full max-w-xs"
+        <div className="fixed inset-0 bg-white z-[60] flex flex-col p-8 pt-24 animate-in slide-in-from-right duration-500">
+          <button 
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute top-8 right-8 p-3 rounded-xl bg-gray-50"
           >
-            Sign In
+            <X className="w-6 h-6" />
           </button>
+
+          <div className="flex flex-col gap-8">
+            <a 
+              href="/store" 
+              className="text-3xl font-black text-gray-900 font-serif"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Health Store
+            </a>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToId(item.id)}
+                className="text-left text-3xl font-black text-gray-900 font-serif"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-auto flex flex-col gap-4">
+            <Button
+              onClick={() => navigate("/login")}
+              variant="outline"
+              className="h-16 rounded-2xl font-black text-lg border-2"
+            >
+              Sign In
+            </Button>
+            <Button
+              onClick={() => navigate("/register")}
+              className="h-16 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100"
+            >
+              Get Started
+            </Button>
+          </div>
         </div>
       )}
     </header>

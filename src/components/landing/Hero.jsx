@@ -1,146 +1,129 @@
-import { Info, Video, CheckCircle2, Calendar } from "lucide-react";
+import { Info, Video, CheckCircle2, Calendar, Star, ShieldCheck, Activity } from "lucide-react";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
   const navigate = useNavigate();
 
-  const handleLoginNavigate = () => {
-    navigate("/login");
-  };
-
   return (
-    <section
-      id="hero"
-      className="w-full py-28 bg-white scroll-mt-24"
-    >
-      <div className="max-w-[1440px] mx-auto px-8 grid lg:grid-cols-2 gap-20 items-center">
-        
-        {/* LEFT CONTENT */}
-        <div>
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-6">
-            <Info className="w-4 h-4" />
-            <span className="text-sm">
-              Nepal's Premier Healthcare Platform • Trusted by 10,000+ Users
-            </span>
-          </div>
-
-          {/* Heading */}
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-            Advanced Healthcare,{" "}
-            <span className="text-blue-600">Digitally Connected</span>
-          </h1>
-
-          {/* Description */}
-          <p className="text-gray-600 text-xl mb-10 leading-relaxed max-w-2xl">
-            Nepal's most advanced telemedicine platform connecting patients with
-            board-certified specialists. Experience world-class healthcare with
-            secure consultations and digital prescriptions.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-4 mb-10">
-            <Button
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white h-12 px-6"
-              onClick={handleLoginNavigate}
-            >
-              <span className="mr-2">→</span>
-              Start Consultation
-            </Button>
-
-            <Button variant="outline" className="h-12 px-6 border-2">
-              <Video className="w-4 h-4 mr-2" />
-              Watch Demo
-            </Button>
-          </div>
-
-          {/* Trust Badges */}
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-gray-700">HIPAA Compliant</span>
+    <section id="hero" className="relative w-full pt-32 pb-20 overflow-hidden bg-white">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-slate-50/50 -skew-x-12 translate-x-20 z-0"></div>
+      <div className="absolute top-40 left-10 w-72 h-72 bg-teal-50 rounded-full blur-3xl opacity-60 z-0"></div>
+      
+      <div className="max-w-[1440px] mx-auto px-8 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+          
+          {/* LEFT CONTENT */}
+          <div className="max-w-2xl">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 text-teal-700 px-4 py-2 rounded-full mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="text-[11px] font-black uppercase tracking-widest">
+                Nepal's Trusted Healthcare Network
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-gray-700">Board Certified Doctors</span>
-            </div>
+            {/* Heading */}
+            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-[1.1] mb-8 font-serif tracking-tight animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
+              Healthcare <br />
+              <span className="text-teal-600 italic">Redefined</span> for <br />
+              Modern Nepal.
+            </h1>
 
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-gray-700">Secure Payments</span>
-            </div>
-          </div>
-        </div>
+            {/* Description */}
+            <p className="text-gray-500 text-xl mb-12 leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+              Experience the future of medical care. Connect with top specialists, 
+              manage prescriptions, and order medicines—all from the comfort of your home.
+            </p>
 
-        {/* RIGHT CONTENT — Dashboard Card */}
-        <div className="relative flex justify-center items-center">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 w-full max-w-md">
-
-            {/* Card Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-teal-500 p-6 text-white">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <span>Patient Dashboard</span>
-              </div>
-            </div>
-
-            {/* Card Content */}
-            <div className="p-6">
-
-              {/* Doctor Info */}
-              <div className="flex items-center justify-between mb-6 p-4 bg-blue-50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
-                    SW
-                  </div>
-                  <div>
-                    <p className="text-gray-900 font-medium">Dr. Sarah Wilson</p>
-                    <p className="text-sm text-gray-600">Cardiologist</p>
-                  </div>
-                </div>
-                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                  Available
-                </span>
-              </div>
-
-              {/* Appointment */}
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                <span className="text-gray-700">Next Appointment</span>
-                <span className="text-teal-600 font-medium">Today, 2:30 PM</span>
-              </div>
-
-              {/* Health Score */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                <span className="text-gray-700">Health Score</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-600 font-medium">85/100</span>
-                  <span className="text-green-500 text-lg">↗</span>
-                </div>
-              </div>
-
-              {/* Button */}
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-5 mb-12 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
               <Button
-                className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
-                onClick={handleLoginNavigate}
+                className="bg-teal-600 hover:bg-teal-700 text-white h-16 px-10 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-teal-600/20 transition-all active:scale-95"
+                onClick={() => navigate("/login")}
               >
-                <Calendar className="w-4 h-4 mr-2" />
-                Book Consultation
+                Book Appointment
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="h-16 px-10 rounded-2xl border-2 border-gray-100 text-gray-700 font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95"
+              >
+                <Video className="w-5 h-5 mr-3 text-teal-600" />
+                Watch Video
               </Button>
             </div>
+
+            {/* Stats/Social Proof */}
+            <div className="flex flex-wrap items-center gap-10 animate-in fade-in slide-in-from-bottom-12 duration-700 delay-400">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-12 h-12 rounded-full border-4 border-white overflow-hidden bg-gray-100">
+                    <img src={`https://i.pravatar.cc/150?u=doc${i}`} alt="User" />
+                  </div>
+                ))}
+                <div className="w-12 h-12 rounded-full border-4 border-white bg-teal-600 flex items-center justify-center text-white text-xs font-bold">
+                  +10k
+                </div>
+              </div>
+              <div className="h-10 w-px bg-gray-100"></div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">4.9/5 Average Rating</p>
+              </div>
+            </div>
           </div>
 
-          {/* Floating Doctor Image */}
-          <div className="hidden lg:block absolute -bottom-10 -left-20 w-36 h-36 rounded-2xl overflow-hidden shadow-lg border border-gray-200">
-            <img
-              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop"
-              alt="Medical Professional"
-              className="w-full h-full object-cover"
-            />
+          {/* RIGHT CONTENT — Modern Dashboard Preview */}
+          <div className="relative group animate-in fade-in zoom-in duration-1000">
+            {/* Main Preview Image */}
+            <div className="relative rounded-[3rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.1)] border-[12px] border-white bg-slate-100">
+              <img
+                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=1000&fit=crop"
+                alt="Healthcare Dashboard"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-teal-900/20 to-transparent"></div>
+            </div>
+
+            {/* Floating Card 1: Appointment */}
+            <div className="absolute -left-12 top-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 flex items-center gap-5 animate-bounce-slow">
+              <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600">
+                <Calendar className="w-7 h-7" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Next Session</p>
+                <p className="text-sm font-bold text-gray-900">Dr. Sarah Wilson</p>
+                <p className="text-xs text-teal-600 font-medium">Today, 2:30 PM</p>
+              </div>
+            </div>
+
+            {/* Floating Card 2: Pulse */}
+            <div className="absolute -right-8 bottom-20 bg-gray-900 p-6 rounded-[2.5rem] shadow-2xl text-white min-w-[200px]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-teal-400" />
+                </div>
+                <span className="text-teal-400 text-xs font-black uppercase tracking-widest animate-pulse">Live</span>
+              </div>
+              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Health Score</p>
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-bold">94%</span>
+                <span className="text-emerald-400 text-sm font-bold mb-1">↑ 12%</span>
+              </div>
+              <div className="mt-4 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-teal-400 w-[94%]"></div>
+              </div>
+            </div>
+
+            {/* Decorative Blobs */}
+            <div className="absolute -z-10 -bottom-20 -right-20 w-80 h-80 bg-teal-100/30 rounded-full blur-[100px]"></div>
           </div>
+
         </div>
-
       </div>
     </section>
   );
