@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
-import { Plus, Minus, HelpCircle } from 'lucide-react';
+import { Plus, Minus, HelpCircle, ChevronDown } from 'lucide-react';
 
 const FAQItem = ({ question, answer, isOpen, onClick }) => {
     return (
-        <div className="border border-gray-100 rounded-2xl bg-white overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div className={`transition-all duration-500 rounded-[2rem] overflow-hidden ${isOpen ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.04)] border-transparent' : 'bg-slate-50/50 border-gray-50 border hover:bg-slate-50'}`}>
             <button
                 onClick={onClick}
-                className="w-full px-6 py-5 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                className="w-full px-10 py-8 text-left flex items-center justify-between transition-colors"
             >
-                <span className="font-semibold text-gray-900 text-lg pr-4">{question}</span>
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-teal-100 text-teal-600 rotate-180' : 'bg-gray-100 text-gray-500'}`}>
-                    {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                <span className={`font-bold text-xl pr-8 transition-colors duration-300 ${isOpen ? 'text-teal-600' : 'text-gray-900'}`}>{question}</span>
+                <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 ${isOpen ? 'bg-teal-600 text-white rotate-180 shadow-lg shadow-teal-200' : 'bg-white text-gray-400 shadow-sm'}`}>
+                    <ChevronDown className="w-5 h-5" />
                 </div>
             </button>
             <div
-                className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}
+                className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
             >
-                <div className="px-6 pb-6 pt-0 text-gray-600 leading-relaxed">
+                <div className="px-10 pb-10 pt-0 text-gray-500 text-lg leading-relaxed font-medium">
                     {answer}
                 </div>
             </div>
@@ -33,15 +33,15 @@ export default function FAQ() {
             answer: "Booking is simple! Just sign up for a free patient account, search for a doctor by specialty or name, view their available slots, and book an appointment instantly. You can choose between text chat or video consultations."
         },
         {
-            question: "Is my medical data and personal information secure?",
+            question: "Is my medical data secure?",
             answer: "Absolutely. We prioritize your privacy with industry-standard encryption for all data. Your medical records and consultation history are strictly confidential and only accessible to you and your authorized doctors."
         },
         {
-            question: "Can I order medicines through the platform?",
+            question: "Can I order medicines online?",
             answer: "Yes! You can browse our online pharmacy for OTC medicines or upload a prescription for verification. Once approved, our partner pharmacies will deliver the medicines directly to your doorstep."
         },
         {
-            question: "Are the doctors on Swasthya Connect verified?",
+            question: "Are the doctors verified?",
             answer: "Every doctor on our platform undergoes a rigorous verification process. We check their medical registration, qualifications, and practice history to ensure you receive care from trusted professionals."
         },
         {
@@ -51,26 +51,25 @@ export default function FAQ() {
     ];
 
     return (
-        <section id="faq" className="py-24 bg-gray-50 relative overflow-hidden">
+        <section id="faq" className="py-32 bg-white relative overflow-hidden">
             {/* Background Decorative Elements */}
-            <div className="absolute top-0 left-0 w-64 h-64 bg-teal-100 rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-30 translate-x-1/3 translate-y-1/3"></div>
-
-            <div className="max-w-4xl mx-auto px-6 relative z-10">
-                <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-sm font-semibold mb-6">
+            <div className="absolute top-40 right-0 w-96 h-96 bg-teal-50 rounded-full blur-[120px] opacity-60 translate-x-1/2"></div>
+            
+            <div className="max-w-5xl mx-auto px-8 relative z-10">
+                <div className="max-w-3xl mb-24">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 text-teal-700 mb-6">
                         <HelpCircle className="w-4 h-4" />
-                        <span>Common Questions</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Support Center</span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                        Frequently Asked Questions
+                    <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 font-serif tracking-tight leading-tight">
+                        Common <span className="text-teal-600 italic">Questions</span>.
                     </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-xl text-gray-500 leading-relaxed font-medium">
                         Everything you need to know about Swasthya Connect. Can't find the answer you're looking for? Feel free to contact our support team.
                     </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {faqs.map((faq, index) => (
                         <FAQItem
                             key={index}
