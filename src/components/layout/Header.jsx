@@ -101,7 +101,6 @@ export default function Header() {
     };
 
     return (
-    return (
         <header className={`fixed z-50 transition-all duration-700 w-full ${
             scrolled ? "top-4 px-4" : "top-0 px-0"
         }`}>
