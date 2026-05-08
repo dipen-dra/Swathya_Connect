@@ -240,6 +240,8 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                 open={showRequestMedicine}
                 onOpenChange={setShowRequestMedicine}
             />
+                </div>
+            </div>
         </header>
     );
 }
