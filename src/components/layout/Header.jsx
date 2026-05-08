@@ -358,7 +358,6 @@ export default function Header() {
                 open={showRequestMedicine}
                 onOpenChange={setShowRequestMedicine}
             />
-                </div>
             </div>
         </header>
     );
