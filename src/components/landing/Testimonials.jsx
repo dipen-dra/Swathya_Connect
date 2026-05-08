@@ -1,19 +1,14 @@
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/pagination";
 
-// IMAGE IMPORTS (your format)
+// IMAGE IMPORTS
 import image1 from "@/assets/image1.jpg";
 import image2 from "@/assets/image2.jpg";
 import image3 from "@/assets/image3.jpg";
-import image4 from "@/assets/image1.jpg";
-import image5 from "@/assets/image2.jpg";
-import image6 from "@/assets/image3.jpg";
-import image7 from "@/assets/image1.jpg";
-import image8 from "@/assets/image2.jpg";
 
 export default function Testimonials() {
   const testimonials = [
@@ -23,8 +18,7 @@ export default function Testimonials() {
       role: "Cardiologist",
       type: "Doctor",
       rating: 5,
-      quote:
-        "Swasthya Connect has transformed my consultation workflow. My patients receive care faster and more efficiently.",
+      quote: "Swasthya Connect has transformed my consultation workflow. My patients receive care faster and more efficiently.",
     },
     {
       avatar: image2,
@@ -32,8 +26,7 @@ export default function Testimonials() {
       role: "Verified Patient",
       type: "Patient",
       rating: 5,
-      quote:
-        "Consulting doctors from home has been life-changing. The platform is simple, smooth, and extremely reliable.",
+      quote: "Consulting doctors from home has been life-changing. The platform is simple, smooth, and extremely reliable.",
     },
     {
       avatar: image3,
@@ -41,111 +34,93 @@ export default function Testimonials() {
       role: "Pharmacy Partner",
       type: "Pharmacy",
       rating: 5,
-      quote:
-        "Digital prescriptions and automated medicine orders have boosted our efficiency. Highly recommended.",
+      quote: "Digital prescriptions and automated medicine orders have boosted our efficiency. Highly recommended.",
     },
     {
-      avatar: image4,
+      avatar: image1,
       name: "Dr. Ishan Thapa",
       role: "Dermatologist",
       type: "Doctor",
-      rating: 4,
-      quote:
-        "A secure and slick platform. Appointment handling and patient history access feel modern and well-built.",
-    },
-    {
-      avatar: image5,
-      name: "Anita Lama",
-      role: "Patient",
-      type: "Patient",
       rating: 5,
-      quote:
-        "The experience feels premium. Reliable consultations and very professional doctors.",
+      quote: "A secure and slick platform. Appointment handling and patient history access feel modern and well-built.",
     },
     {
-      avatar: image6,
+      avatar: image2,
       name: "MedNepal Center",
       role: "Certified Pharmacy",
       type: "Pharmacy",
       rating: 5,
-      quote:
-        "The partner dashboard is clean and helps us track medicine orders smoothly.",
-    },
-    {
-      avatar: image7,
-      name: "Dr. Sanjeev KC",
-      role: "Neurologist",
-      type: "Doctor",
-      rating: 4,
-      quote:
-        "The telemedicine tools are impressive. Video clarity and integrated reports are excellent.",
-    },
-    {
-      avatar: image8,
-      name: "Bikash Rana",
-      role: "Patient",
-      type: "Patient",
-      rating: 5,
-      quote:
-        "Fast consultations, secure payments, and overall a trustworthy healthcare platform.",
+      quote: "The partner dashboard is clean and helps us track medicine orders smoothly and efficiently.",
     },
   ];
 
   return (
-    <section id="reviews" className="w-full py-28 bg-white scroll-mt-24">
+    <section id="reviews" className="w-full py-32 bg-white scroll-mt-24 overflow-hidden">
       <div className="max-w-[1440px] mx-auto px-8">
 
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-            Trusted by Doctors, Patients & Pharmacies
+        <div className="text-center mb-24 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full mb-6">
+            <span className="text-[10px] font-black uppercase tracking-widest">Global Trust</span>
+          </div>
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 font-serif tracking-tight leading-tight">
+            Trusted by <span className="text-teal-600 italic">Thousands</span> of Users.
           </h2>
-          <p className="text-gray-600 text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-gray-500 text-xl leading-relaxed font-medium">
             Real stories from real users across Nepal’s growing digital healthcare ecosystem.
           </p>
         </div>
 
         {/* Swiper */}
-        <Swiper
-          modules={[Autoplay, Pagination]}
-          loop={true}
-          speed={600}
-          spaceBetween={24}
-          autoplay={{
-            delay: 3000,
-            disableOnInteraction: false,
-          }}
-          pagination={{ clickable: true }}
-          slidesPerView={1}
-          breakpoints={{
-            640: { slidesPerView: 1 },
-            768: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-        >
-          {testimonials.map((t, i) => (
-            <SwiperSlide key={i}>
-              <div className="h-full">
-                <div className="bg-white rounded-2xl shadow-md p-8 flex flex-col h-full">
+        <div className="testimonial-swiper relative">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            loop={true}
+            speed={800}
+            spaceBetween={32}
+            autoplay={{
+              delay: 4000,
+              disableOnInteraction: false,
+            }}
+            pagination={{ 
+              clickable: true,
+              dynamicBullets: true 
+            }}
+            slidesPerView={1}
+            breakpoints={{
+              640: { slidesPerView: 1 },
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className="pb-20"
+          >
+            {testimonials.map((t, i) => (
+              <SwiperSlide key={i} className="h-auto">
+                <div className="group h-full bg-slate-50 rounded-[3rem] p-10 transition-all duration-500 hover:bg-white hover:shadow-[0_40px_80px_rgba(0,0,0,0.05)] border border-transparent hover:border-gray-100 flex flex-col">
+                  
+                  {/* Quote Icon */}
+                  <div className="mb-8">
+                    <Quote className="w-10 h-10 text-teal-600/20 group-hover:text-teal-600 transition-colors duration-500" />
+                  </div>
+
+                  {/* Quote */}
+                  <p className="text-gray-900 text-xl leading-relaxed mb-10 font-serif italic flex-grow">
+                    "{t.quote}"
+                  </p>
 
                   {/* Rating */}
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(t.rating)].map((_, i) => (
+                  <div className="flex gap-1 mb-8">
+                    {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                        className={`w-4 h-4 ${i < t.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
                       />
                     ))}
                   </div>
 
-                  {/* Quote */}
-                  <p className="text-gray-700 text-base leading-relaxed mb-6 line-clamp-4">
-                    {t.quote}
-                  </p>
-
                   {/* Footer */}
-                  <div className="mt-auto flex items-center gap-3 pt-4 border-t">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border">
+                  <div className="flex items-center gap-5 pt-8 border-t border-gray-100">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm group-hover:scale-110 transition-transform duration-500">
                       <img
                         src={t.avatar}
                         alt={t.name}
@@ -154,21 +129,35 @@ export default function Testimonials() {
                     </div>
 
                     <div>
-                      <p className="text-gray-900 font-semibold">{t.name}</p>
-                      <p className="text-gray-600 text-sm">
-                        {t.role} • 
-                        <span className="text-teal-600 font-medium ml-1">
+                      <p className="text-lg font-bold text-gray-900">{t.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                          {t.role}
+                        </p>
+                        <div className="h-1 w-1 bg-gray-300 rounded-full"></div>
+                        <span className="text-[11px] font-black text-teal-600 uppercase tracking-widest">
                           {t.type}
                         </span>
-                      </p>
+                      </div>
                     </div>
                   </div>
-
                 </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Custom Swiper Dots CSS (usually in index.css but added here for immediate fix if needed) */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .testimonial-swiper .swiper-pagination-bullet-active {
+            background: #0d9488 !important;
+            width: 24px !important;
+            border-radius: 4px !important;
+          }
+          .testimonial-swiper .swiper-pagination {
+            bottom: 0 !important;
+          }
+        `}} />
 
       </div>
     </section>
