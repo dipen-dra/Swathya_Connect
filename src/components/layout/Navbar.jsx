@@ -166,18 +166,11 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-6">
-            <button
-              onClick={() => navigate("/login")}
-              className="text-[13px] font-black uppercase tracking-widest text-gray-700 hover:text-teal-600 transition-colors flex items-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              Sign In
-            </button>
             <Button
               onClick={() => navigate("/register")}
               className={`bg-teal-600 hover:bg-teal-700 text-white px-8 transition-all duration-700 rounded-xl font-black text-[12px] uppercase tracking-widest shadow-xl shadow-teal-600/20 active:scale-95 ${scrolled ? "h-11" : "h-12"}`}
             >
-              Join Now
+              Get Started
             </Button>
           </div>
 
@@ -221,13 +214,6 @@ export default function Navbar() {
           </div>
 
           <div className="mt-auto flex flex-col gap-4">
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outline"
-              className="h-16 rounded-2xl font-black text-lg border-2"
-            >
-              Sign In
-            </Button>
             <Button
               onClick={() => navigate("/register")}
               className="h-16 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100"
