@@ -117,72 +117,78 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+      className={`fixed z-50 transition-all duration-700 w-full ${
         scrolled 
-          ? "bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] py-3" 
-          : "bg-transparent py-5"
+          ? "top-4 px-4" 
+          : "top-0 px-0"
       }`}
     >
-      <div className="max-w-[1440px] mx-auto px-8 flex items-center justify-between">
-        
-        {/* Logo */}
-        <div
-          className="flex items-center gap-3 cursor-pointer group transition-transform active:scale-95"
-          onClick={() => scrollToId("hero")}
-        >
-          <img
-            src={Logo}
-            alt="Swasthya Connect"
-            className="w-auto h-12 md:h-14 object-contain"
-          />
-          <div className="hidden lg:block h-6 w-px bg-gray-200 mx-2"></div>
-          <span className="text-xl font-bold text-gray-900 hidden lg:block tracking-tight">Swasthya <span className="text-teal-600">Connect</span></span>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden xl:flex items-center gap-10">
-          <a 
-            href="/store" 
-            className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors flex items-center gap-2 group"
+      <div className={`mx-auto transition-all duration-700 ${
+        scrolled 
+          ? "max-w-6xl bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100/50 py-3" 
+          : "max-w-full bg-transparent py-5"
+      }`}>
+        <div className="max-w-[1440px] mx-auto px-8 flex items-center justify-between">
+          
+          {/* Logo */}
+          <div
+            className="flex items-center gap-3 cursor-pointer group transition-transform active:scale-95"
+            onClick={() => scrollToId("hero")}
           >
-            <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            Store
-          </a>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollToId(item.id)}
-              className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors"
+            <img
+              src={Logo}
+              alt="Swasthya Connect"
+              className={`transition-all duration-700 ${scrolled ? "h-10 md:h-12" : "h-12 md:h-14"} object-contain`}
+            />
+            <div className="hidden lg:block h-6 w-px bg-gray-200 mx-2"></div>
+            <span className="text-xl font-bold text-gray-900 hidden lg:block tracking-tight">Swasthya <span className="text-teal-600">Connect</span></span>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden xl:flex items-center gap-10">
+            <a 
+              href="/store" 
+              className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors flex items-center gap-2 group"
             >
-              {item.label}
+              <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Store
+            </a>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToId(item.id)}
+                className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Actions */}
+          <div className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => navigate("/login")}
+              className="text-[13px] font-black uppercase tracking-widest text-gray-700 hover:text-teal-600 transition-colors flex items-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              Sign In
             </button>
-          ))}
-        </nav>
+            <Button
+              onClick={() => navigate("/register")}
+              className={`bg-teal-600 hover:bg-teal-700 text-white px-8 transition-all duration-700 rounded-xl font-black text-[12px] uppercase tracking-widest shadow-xl shadow-teal-600/20 active:scale-95 ${scrolled ? "h-11" : "h-12"}`}
+            >
+              Join Now
+            </Button>
+          </div>
 
-        {/* Actions */}
-        <div className="hidden md:flex items-center gap-6">
+          {/* Mobile Menu Button */}
           <button
-            onClick={() => navigate("/login")}
-            className="text-[13px] font-black uppercase tracking-widest text-gray-700 hover:text-teal-600 transition-colors flex items-center gap-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-3 rounded-2xl bg-gray-50 text-gray-900 hover:bg-gray-100 transition-colors"
           >
-            <User className="w-4 h-4" />
-            Sign In
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-          <Button
-            onClick={() => navigate("/register")}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-8 h-12 rounded-xl font-black text-[12px] uppercase tracking-widest shadow-xl shadow-teal-600/20 transition-all active:scale-95"
-          >
-            Join Now
-          </Button>
         </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-3 rounded-xl bg-gray-50 text-gray-900 hover:bg-gray-100 transition-colors"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
       {/* Mobile Menu Overlay */}
