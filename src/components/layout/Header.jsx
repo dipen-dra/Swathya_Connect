@@ -27,7 +27,9 @@ import {
     Heart,
     Check,
     X,
-    Upload
+    Upload,
+    Moon,
+    Sun
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/assets/swasthyalogo.png';
@@ -41,6 +43,13 @@ export default function Header() {
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
     const [showRequestMedicine, setShowRequestMedicine] = React.useState(false);
+    const [scrolled, setScrolled] = React.useState(false);
+
+    React.useEffect(() => {
+        const handler = () => setScrolled(window.scrollY > 20);
+        window.addEventListener("scroll", handler);
+        return () => window.removeEventListener("scroll", handler);
+    }, []);
 
     const handleLogout = async () => {
         setShowLogoutDialog(false);
@@ -88,31 +97,38 @@ export default function Header() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath; // Already a full URL
-        return `http://localhost:8080${imagePath}`; // Prepend backend URL
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath}`; // Prepend backend URL
     };
 
     return (
-        <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            <div className="container mx-auto flex h-16 items-center justify-between px-6">
-                {/* Logo */}
-                <div className="flex items-center space-x-3">
-                    <img
-                        src={Logo}
-                        alt="Swasthya Connect Logo"
-                        className="w-auto h-16 object-contain cursor-pointer"
-                        onClick={() => navigate('/')}
-                    />
-                </div>
-
-                {/* Dashboard <-> Store Toggle - Only for Patients */}
-                {user?.role === 'patient' && (
-                    <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
-                        <DashboardToggle />
+        <header className={`fixed z-50 transition-all duration-700 w-full ${
+            scrolled ? "top-4 px-4" : "top-0 px-0"
+        }`}>
+            <div className={`mx-auto transition-all duration-700 ${
+                scrolled 
+                    ? "max-w-7xl bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100/50 py-1" 
+                    : "max-w-full bg-white border-b border-gray-100 py-3"
+            }`}>
+                <div className="container mx-auto flex h-14 items-center justify-between px-6">
+                    {/* Logo */}
+                    <div className="flex items-center space-x-3">
+                        <img
+                            src={Logo}
+                            alt="Swasthya Connect Logo"
+                            className={`transition-all duration-700 ${scrolled ? "h-12" : "h-16"} object-contain cursor-pointer`}
+                            onClick={() => navigate('/')}
+                        />
                     </div>
-                )}
 
-                {/* User Actions */}
-                <div className="flex items-center space-x-4">
+                    {/* Dashboard <-> Store Toggle - Only for Patients */}
+                    {user?.role === 'patient' && (
+                        <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+                            <DashboardToggle />
+                        </div>
+                    )}
+
+                    {/* User Actions */}
+                    <div className="flex items-center space-x-4">
                     {/* Upload Prescription Button - visible on desktop (Patients Only) */}
                     {user?.role === 'patient' && (
                         <Button
@@ -125,6 +141,7 @@ export default function Header() {
                             Upload Prescription
                         </Button>
                     )}
+
 
                     {/* Notifications */}
                     <DropdownMenu>
@@ -341,6 +358,7 @@ export default function Header() {
                 open={showRequestMedicine}
                 onOpenChange={setShowRequestMedicine}
             />
+            </div>
         </header>
     );
 }

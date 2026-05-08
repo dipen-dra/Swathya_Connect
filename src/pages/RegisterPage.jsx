@@ -152,7 +152,7 @@ export default function RegisterPage() {
         formData.append('verificationDocument', verificationFile);
       }
 
-      const res = await fetch('http://localhost:8080/api/auth/register', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/register`, {
         method: 'POST',
         body: formData,
       });
@@ -189,7 +189,7 @@ export default function RegisterPage() {
       }
 
       setIsLoading(true);
-      const res = await axios.post('http://localhost:8080/api/auth/google', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/google`, {
         idToken: credentialResponse.credential,
         role: selectedRole
       });

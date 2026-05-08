@@ -71,7 +71,7 @@ export default function ResetPassword() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/reset-password', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/reset-password`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

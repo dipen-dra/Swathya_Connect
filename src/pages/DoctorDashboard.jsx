@@ -110,7 +110,7 @@ export default function DoctorDashboard() {
     const [consultations, setConsultations] = useState([]);
     const [loadingConsultations, setLoadingConsultations] = useState(true);
 
-    const welcomeNotificationShown = useRef(false);
+    const welcomeNotificationKey = user?.id ? `doctor-dashboard-welcome-shown-${user.id}` : null;
 
     // Fetch consultations from backend
     useEffect(() => {
@@ -476,15 +476,21 @@ export default function DoctorDashboard() {
     ];
 
     useEffect(() => {
-        if (user && profile && !welcomeNotificationShown.current) {
-            welcomeNotificationShown.current = true;
-            addNotification({
-                title: 'Welcome to your dashboard',
-                message: `Hello Dr. ${profile.firstName || user.name}, you have ${pendingRequests.length} pending consultation requests.`,
-                type: 'info',
-            });
+        if (!user || !profile || !welcomeNotificationKey) {
+            return;
         }
-    }, [user?.id, profile?.firstName, addNotification, pendingRequests.length]);
+
+        if (sessionStorage.getItem(welcomeNotificationKey)) {
+            return;
+        }
+
+        sessionStorage.setItem(welcomeNotificationKey, 'true');
+        addNotification({
+            title: 'Welcome to your dashboard',
+            message: `Hello Dr. ${profile.firstName || user.name}, you have ${pendingRequests.length} pending consultation requests.`,
+            type: 'info',
+        });
+    }, [user?.id, profile?.firstName, addNotification, pendingRequests.length, welcomeNotificationKey]);
 
     // Sync activeTab with URL parameter
     useEffect(() => {
@@ -603,7 +609,7 @@ export default function DoctorDashboard() {
         if (actionType === 'approve') {
             try {
                 // Call approve API
-                const response = await fetch(`http://localhost:8080/api/consultations/${selectedRequest._id}/approve`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/consultations/${selectedRequest._id}/approve`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -645,7 +651,7 @@ export default function DoctorDashboard() {
 
             try {
                 // Call rejection API
-                const response = await fetch(`http://localhost:8080/api/consultations/${selectedRequest._id}/reject`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/consultations/${selectedRequest._id}/reject`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -688,6 +694,9 @@ export default function DoctorDashboard() {
 
     const handleLogout = async () => {
         try {
+            if (welcomeNotificationKey) {
+                sessionStorage.removeItem(welcomeNotificationKey);
+            }
             await logout();
             navigate('/');
             addNotification({
@@ -852,7 +861,7 @@ export default function DoctorDashboard() {
                             <Avatar className="h-12 w-12">
                                 {request.patientId?.profileImage && (
                                     <AvatarImage
-                                        src={`http://localhost:8080${request.patientId.profileImage}`}
+                                        src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${request.patientId.profileImage}`}
                                         alt={request.patientId?.fullName || request.patientId?.name}
                                     />
                                 )}
@@ -1144,7 +1153,7 @@ export default function DoctorDashboard() {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:8080${imagePath}`;
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${imagePath}`;
     };
 
     return (

@@ -71,7 +71,7 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
     const getPrescriptionUrl = (path) => {
         if (!path) return null;
         if (path.startsWith('http')) return path;
-        return `http://localhost:8080${path}`;
+        return `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${path}`;
     };
 
     if (!order) return null;

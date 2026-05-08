@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from "./contexts/AuthContext";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -40,19 +41,36 @@ import NotFound from './pages/NotFound';
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+// Inner component: sits inside AuthProvider so it can read the current user
+// and pass userId into NotificationProvider for per-user localStorage namespacing.
+function AppProviders({ children }) {
+  const { user } = useAuth();
+  return (
+    <NotificationProvider userId={user?.id}>
+      {children}
+    </NotificationProvider>
+  );
+}
+
 export default function App() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    // Check if splash has already been shown in this session
+    return !sessionStorage.getItem('splashShown');
+  });
 
   useEffect(() => {
-    // Simulate initial app loading (checking auth, loading configs, etc.)
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Show loader for 2 seconds
+    if (loading) {
+      // Simulate initial app loading
+      const timer = setTimeout(() => {
+        setLoading(false);
+        sessionStorage.setItem('splashShown', 'true');
+      }, 2000); // Show loader for 2 seconds
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
-  // Show loading screen while app initializes
+  // Show loading screen while app initializes (only if not shown before in this session)
   if (loading) {
     return <LoadingScreen />;
   }
@@ -64,7 +82,7 @@ export default function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <ProfileProvider>
-          <NotificationProvider>
+          <AppProviders>
             <ConsultationProvider>
               <RemindersProvider>
                 <SocketProvider>
@@ -363,7 +381,7 @@ export default function App() {
                 </SocketProvider>
               </RemindersProvider>
             </ConsultationProvider>
-          </NotificationProvider>
+          </AppProviders>
         </ProfileProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

@@ -97,7 +97,7 @@ export function CategoryManager({ categories, onCategoryUpdate }) {
                     <div key={cat._id} className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center hover:shadow-md transition-shadow">
                         <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-3 overflow-hidden border border-gray-100">
                             {cat.image ? (
-                                <img src={`http://localhost:8080${cat.image}`} alt={cat.name} className="w-full h-full object-cover" />
+                                <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${cat.image}`} alt={cat.name} className="w-full h-full object-cover" />
                             ) : (
                                 <ImageIcon className="h-8 w-8 text-gray-300" />
                             )}
