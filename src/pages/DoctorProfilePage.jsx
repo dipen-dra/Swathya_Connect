@@ -20,7 +20,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut, MapPin } from 'lucide-react';
+import { User, Edit3, Save, X, Shield, CheckCircle, ArrowLeft, Camera, LogOut, MapPin, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import { profileAPI } from '@/services/api';
@@ -32,7 +32,7 @@ export default function DoctorProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [showSignOutDialog, setShowSignOutDialog] = useState(false);
-    const [profileImage, setProfileImage] = useState(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [profileImagePreview, setProfileImagePreview] = useState(null);
     const fileInputRef = useRef(null);
 
@@ -85,16 +85,10 @@ export default function DoctorProfilePage() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // First, upload profile image if selected
-            if (profileImage) {
-                await uploadProfileImage(profileImage);
-            }
-
-            // Then update profile data
+            // Profile data update (image is now handled separately)
             await updateProfile(formData);
 
             setIsEditing(false);
-            setProfileImage(null);
             setProfileImagePreview(null);
         } catch (error) {
             console.error('Failed to update profile:', error);
@@ -127,19 +121,33 @@ export default function DoctorProfilePage() {
         setIsEditing(false);
     };
 
-    const handleProfileImageChange = (e) => {
+    const handleProfileImageChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) { // 5MB limit
                 toast.error('Image size should be less than 5MB');
                 return;
             }
-            setProfileImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+
+            try {
+                setIsUploadingImage(true);
+                
+                // Show local preview immediately
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setProfileImagePreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to backend immediately
+                await uploadProfileImage(file);
+                
+                toast.success('Profile picture updated');
+            } catch (error) {
+                console.error('❌ Failed to upload image:', error);
+            } finally {
+                setIsUploadingImage(false);
+            }
         }
     };
 
@@ -216,7 +224,7 @@ export default function DoctorProfilePage() {
         <div className="min-h-screen bg-white">
             <Header />
 
-            <div className="container mx-auto px-6 py-8 max-w-7xl">
+            <div className="container mx-auto px-6 py-8 pt-24 max-w-7xl">
                 {/* Back Button */}
                 <Button
                     onClick={() => navigate('/doctor/dashboard')}
@@ -271,28 +279,29 @@ export default function DoctorProfilePage() {
                             <CardContent className="p-6 text-center">
                                 <div className="relative inline-block mb-4">
                                     <Avatar className="h-28 w-28">
-                                        <AvatarImage src={profileImagePreview || getImageUrl(profile?.profileImage)} />
+                                        <AvatarImage src={profileImagePreview || getImageUrl(profile?.profileImage)} className={isUploadingImage ? 'opacity-40' : ''} />
                                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-3xl font-bold">
                                             {formData.firstName[0]?.toUpperCase() || 'D'}
                                         </AvatarFallback>
+                                        {isUploadingImage && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-full">
+                                                <Loader2 className="h-8 w-8 text-white animate-spin" />
+                                            </div>
+                                        )}
                                     </Avatar>
-                                    {isEditing && (
-                                        <>
-                                            <button
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="absolute bottom-0 right-0 w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
-                                            >
-                                                <Camera className="h-4 w-4" />
-                                            </button>
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleProfileImageChange}
-                                                className="hidden"
-                                            />
-                                        </>
-                                    )}
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="absolute bottom-0 right-0 w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-full border-4 border-white flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+                                    >
+                                        <Camera className="h-4 w-4" />
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleProfileImageChange}
+                                        className="hidden"
+                                    />
                                     {!isEditing && (
                                         <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
                                     )}

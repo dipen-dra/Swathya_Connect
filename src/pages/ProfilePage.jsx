@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Check, Shield, Heart, Edit, Save, X, ArrowLeft, Camera, MapPin } from 'lucide-react';
+import { User, Check, Shield, Heart, Edit, Save, X, ArrowLeft, Camera, MapPin, Loader2 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 
 export function ProfilePage() {
@@ -18,6 +18,7 @@ export function ProfilePage() {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [profileImage, setProfileImage] = useState(profile?.profileImage || null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
 
     const [formData, setFormData] = useState({
@@ -70,26 +71,36 @@ export function ProfilePage() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            setSelectedFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImage(reader.result);
-            };
-            reader.readAsDataURL(file);
+            try {
+                setIsUploadingImage(true);
+                
+                // Show local preview immediately
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setProfileImage(reader.result);
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to backend immediately
+                await uploadProfileImage(file);
+                
+                console.log('✅ Image uploaded successfully');
+            } catch (error) {
+                console.error('❌ Failed to upload image:', error);
+                // Revert to original image on error
+                setProfileImage(profile?.profileImage || null);
+            } finally {
+                setIsUploadingImage(false);
+            }
         }
     };
 
     const handleSave = async () => {
         try {
-            // Upload image if a new one was selected
-            if (selectedFile) {
-                await uploadProfileImage(selectedFile);
-            }
-
-            // Update profile data
+            // Profile data update (image is now handled separately)
             await updateProfile(formData);
 
             setIsEditing(false);
@@ -178,7 +189,7 @@ export function ProfilePage() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto px-6 py-8 max-w-7xl">
+            <div className="container mx-auto px-6 py-8 pt-24 max-w-7xl">
                 {/* Back Button */}
                 <Button
                     onClick={handleBackToDashboard}
@@ -233,10 +244,15 @@ export function ProfilePage() {
                             <CardContent className="p-6 text-center">
                                 <div className="relative inline-block mb-4">
                                     <Avatar className="h-28 w-28">
-                                        <AvatarImage src={getImageUrl(profileImage)} />
+                                        <AvatarImage src={getImageUrl(profileImage)} className={isUploadingImage ? 'opacity-40' : ''} />
                                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-3xl font-bold">
                                             {formData.firstName[0]?.toUpperCase()}
                                         </AvatarFallback>
+                                        {isUploadingImage && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-full">
+                                                <Loader2 className="h-8 w-8 text-white animate-spin" />
+                                            </div>
+                                        )}
                                     </Avatar>
                                     <input
                                         type="file"

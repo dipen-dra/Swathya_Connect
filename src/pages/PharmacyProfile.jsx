@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Shield, CheckCircle, Edit, Camera, MapPin, Save, X, ArrowLeft, Upload, FileText, AlertCircle, Clock } from 'lucide-react';
+import { User, Shield, CheckCircle, Edit, Camera, MapPin, Save, X, ArrowLeft, Upload, FileText, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { profileAPI } from '@/services/api';
 
@@ -22,6 +22,7 @@ export default function PharmacyProfile() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
 
     const [formData, setFormData] = useState({
@@ -61,11 +62,12 @@ export default function PharmacyProfile() {
         if (profile) {
             setFormData(prev => ({
                 ...prev,
-                firstName: profile.firstName || prev.firstName,
+                firstName: profile.firstName || '',
                 lastName: profile.lastName || '',
                 email: profile.email || user?.email || '',
                 phone: profile.phoneNumber || '',
                 panNumber: profile.panNumber || '',
+                pharmacyLicenseNumber: profile.pharmacyLicenseNumber || '',
                 dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                 gender: profile.gender || 'other',
                 address: profile.address || '',
@@ -82,11 +84,7 @@ export default function PharmacyProfile() {
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            // Upload profile image if selected
-            if (selectedFile) {
-                await uploadProfileImage(selectedFile);
-            }
-
+            // Profile data update (image is now handled separately)
             // Map 'phone' to 'phoneNumber' for backend
             const dataToSave = {
                 ...formData,
@@ -107,19 +105,33 @@ export default function PharmacyProfile() {
         }
     };
 
-    const handleImageChange = (e) => {
+    const handleImageChange = async (e) => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
                 toast.error('Image size should be less than 5MB');
                 return;
             }
-            setSelectedFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+            
+            try {
+                setIsUploadingImage(true);
+                
+                // Show local preview immediately
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setImagePreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to backend immediately
+                await uploadProfileImage(file);
+                
+                toast.success('Profile picture updated');
+            } catch (error) {
+                console.error('❌ Failed to upload image:', error);
+            } finally {
+                setIsUploadingImage(false);
+            }
         }
     };
 
@@ -201,7 +213,7 @@ export default function PharmacyProfile() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto p-6 max-w-7xl">
+            <div className="container mx-auto p-6 pt-24 max-w-7xl">
                 {/* Back Button */}
                 <Button
                     onClick={handleBackToDashboard}
@@ -226,6 +238,7 @@ export default function PharmacyProfile() {
                             </div>
                         </div>
                         <Avatar className="h-16 w-16 border-4 border-white/30">
+                            <AvatarImage src={getImageUrl(profile?.profileImage)} />
                             <AvatarFallback className="bg-white text-blue-600 text-2xl font-bold">
                                 {formData.firstName?.[0] || 'P'}
                             </AvatarFallback>
@@ -255,10 +268,15 @@ export default function PharmacyProfile() {
                                 <div className="flex flex-col items-center text-center">
                                     <div className="relative">
                                         <Avatar className="h-32 w-32 border-4 border-blue-100">
-                                            <AvatarImage src={imagePreview || getImageUrl(profile?.profileImage)} />
+                                            <AvatarImage src={imagePreview || getImageUrl(profile?.profileImage)} className={isUploadingImage ? 'opacity-40' : ''} />
                                             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-4xl">
                                                 {formData.firstName?.[0] || 'P'}
                                             </AvatarFallback>
+                                            {isUploadingImage && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-full">
+                                                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                                                </div>
+                                            )}
                                         </Avatar>
                                         <input
                                             type="file"

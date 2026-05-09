@@ -209,7 +209,7 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto p-6 space-y-8">
+            <div className="container mx-auto p-6 pt-24 space-y-8">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl">
                     <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
