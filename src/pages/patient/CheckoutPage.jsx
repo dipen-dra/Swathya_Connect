@@ -225,7 +225,7 @@ export default function CheckoutPage() {
         return (
             <>
                 <StoreHeader cartCount={0} />
-                <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+                <div className="max-w-3xl mx-auto px-4 pt-24 py-16 text-center">
                     <div className="bg-white rounded-3xl p-10 shadow-xl border border-teal-100">
                         <div className="w-24 h-24 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Truck className="w-12 h-12 text-teal-600" />
@@ -283,7 +283,7 @@ export default function CheckoutPage() {
                 onSearchChange={() => { }}
             />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 mt-8">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate(-1)}

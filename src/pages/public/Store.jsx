@@ -187,7 +187,7 @@ export default function Store() {
                 onSearchChange={setSearch}
             />
 
-            <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 py-8">
                 {/* Breadcrumbs */}
                 <nav className="flex items-center text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-10 animate-fade-in">
                     <button

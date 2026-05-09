@@ -945,7 +945,7 @@ export function PatientDashboard() {
         <div className="min-h-screen bg-gray-50">
             <Header />
 
-            <div className="container mx-auto p-6 space-y-8">
+            <div className="container mx-auto p-6 pt-24 space-y-8">
                 {/* Welcome Section */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
                     <div className="absolute inset-0 bg-black/20"></div>
