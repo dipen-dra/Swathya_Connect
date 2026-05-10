@@ -540,12 +540,31 @@ export default function PharmacyDashboard() {
         }
     };
 
+    const isProfileComplete = () => {
+        return (
+            profile?.firstName &&
+            profile?.lastName &&
+            profile?.phoneNumber &&
+            profile?.address &&
+            profile?.city
+        );
+    };
+
     const handleSubmitForReview = async () => {
+        // 1. Check basic profile info
+        if (!isProfileComplete()) {
+            toast.error('Please complete your basic profile (Name, Phone, Address) in the Profile tab first');
+            handleTabChange('profile');
+            return;
+        }
+
+        // 2. Check verification document
         if (!profile?.verificationDocument) {
             toast.error('Please upload a verification document first');
             return;
         }
 
+        // 3. Check license and PAN
         const finalLicenseNumber = pharmacyLicenseNumber || profile?.pharmacyLicenseNumber;
         const finalPanNumber = panNumber || profile?.panNumber;
 
@@ -575,7 +594,14 @@ export default function PharmacyDashboard() {
             }
         } catch (error) {
             console.error('Error submitting for review:', error);
-            toast.error(error.response?.data?.message || 'Failed to submit for review');
+            const message = error.response?.data?.message || 'Failed to submit for review';
+            const missingFields = error.response?.data?.missingFields;
+            
+            if (missingFields && missingFields.length > 0) {
+                toast.error(`Please fill missing fields: ${missingFields.join(', ')}`);
+            } else {
+                toast.error(message);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -718,11 +744,11 @@ export default function PharmacyDashboard() {
                 {/* Tabs */}
                 <Card className="border-0 shadow-sm">
                     <CardHeader>
-                        <div className="flex space-x-8 border-b border-gray-200 overflow-x-auto pb-2 scrollbar-none">
+                        <div className="flex space-x-8 border-b border-gray-200 overflow-x-auto scrollbar-none">
                             <button
                                 onClick={() => handleTabChange('orders')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders'
-                                    ? 'border-deep-blue text-deep-blue'
+                                className={`whitespace-nowrap pt-2 pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'orders'
+                                    ? 'border-purple-600 text-purple-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -730,8 +756,8 @@ export default function PharmacyDashboard() {
                             </button>
                             <button
                                 onClick={() => handleTabChange('inventory')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'inventory'
-                                    ? 'border-deep-blue text-deep-blue'
+                                className={`whitespace-nowrap pt-2 pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'inventory'
+                                    ? 'border-purple-600 text-purple-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -740,8 +766,8 @@ export default function PharmacyDashboard() {
 
                             <button
                                 onClick={() => handleTabChange('chat')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'chat'
-                                    ? 'border-deep-blue text-deep-blue'
+                                className={`whitespace-nowrap pt-2 pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'chat'
+                                    ? 'border-purple-600 text-purple-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -751,7 +777,7 @@ export default function PharmacyDashboard() {
                             {profile?.verificationStatus !== 'approved' && (
                                 <button
                                     onClick={() => handleTabChange('verification')}
-                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
+                                    className={`whitespace-nowrap pt-2 pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
                                         ? 'border-purple-500 text-purple-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         } transition-colors`}
@@ -762,8 +788,8 @@ export default function PharmacyDashboard() {
                             )}
                             <button
                                 onClick={() => handleTabChange('profile')}
-                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
-                                    ? 'border-deep-blue text-deep-blue'
+                                className={`whitespace-nowrap pt-2 pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'profile'
+                                    ? 'border-purple-600 text-purple-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -1213,19 +1239,46 @@ export default function PharmacyDashboard() {
                                             )}
 
                                             {!profile?.accountSuspended && profile?.verificationStatus === 'pending' && !profile?.submittedForReview && (
-                                                <Card className="border-2 border-yellow-200 bg-yellow-50">
-                                                    <CardContent className="p-4">
-                                                        <div className="flex items-start space-x-3">
-                                                            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                                                            <div>
-                                                                <h3 className="font-semibold text-yellow-900">Complete Verification</h3>
-                                                                <p className="text-sm text-yellow-800 mt-1">
-                                                                    Upload your pharmacy license document and submit for admin review to start serving customers.
-                                                                </p>
+                                                <div className="space-y-4">
+                                                    {!isProfileComplete() && (
+                                                        <Card className="border-2 border-teal-200 bg-teal-50">
+                                                            <CardContent className="p-4">
+                                                                <div className="flex items-start space-x-3">
+                                                                    <div className="bg-teal-100 p-2 rounded-lg text-teal-600">
+                                                                        <User className="h-5 w-5" />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <h3 className="font-semibold text-teal-900">Step 1: Complete Your Profile</h3>
+                                                                        <p className="text-sm text-teal-800 mt-1">
+                                                                            Please ensure your First Name, Last Name, Phone Number, and Address are filled in the Profile tab before submitting for verification.
+                                                                        </p>
+                                                                        <Button 
+                                                                            variant="link" 
+                                                                            className="p-0 h-auto text-teal-700 font-bold underline mt-2"
+                                                                            onClick={() => handleTabChange('profile')}
+                                                                        >
+                                                                            Go to Profile Tab →
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    )}
+
+                                                    <Card className="border-2 border-yellow-200 bg-yellow-50">
+                                                        <CardContent className="p-4">
+                                                            <div className="flex items-start space-x-3">
+                                                                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                                                                <div>
+                                                                    <h3 className="font-semibold text-yellow-900">{isProfileComplete() ? 'Step 2: Upload Documents' : 'Step 2: Verification Documents'}</h3>
+                                                                    <p className="text-sm text-yellow-800 mt-1">
+                                                                        Upload your pharmacy license document and submit for admin review to start serving customers.
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
+                                                        </CardContent>
+                                                    </Card>
+                                                </div>
                                             )}
 
                                             {profile?.submittedForReview && profile?.verificationStatus === 'pending' && (

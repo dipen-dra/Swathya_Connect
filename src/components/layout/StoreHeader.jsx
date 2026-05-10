@@ -105,8 +105,8 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                 className={`transition-all duration-700 ${scrolled ? "h-8" : "h-9"} object-contain cursor-pointer`}
                                 onClick={() => navigate('/')}
                             />
-                            <div className="h-6 w-px bg-gray-200 hidden xl:block"></div>
-                            <span className="font-bold text-gray-700 hidden xl:block text-lg whitespace-nowrap">Swasthya Connect Store</span>
+                            <div className={`h-6 w-px bg-gray-200 transition-all duration-500 ${scrolled ? "w-0 opacity-0 -ml-4" : "hidden xl:block opacity-100"}`}></div>
+                            <span className={`font-bold text-gray-700 transition-all duration-500 text-lg whitespace-nowrap overflow-hidden ${scrolled ? "inline-block w-0 opacity-0 -ml-4" : "hidden xl:inline-block opacity-100"}`}>Swasthya Connect Store</span>
                         </div>
 
                         {/* Middle Section: Search Bar (Desktop) */}
@@ -187,7 +187,7 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                     <DropdownMenuContent align="end" className="w-60 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2">
                                         <DropdownMenuLabel className="text-gray-900 font-semibold px-3 py-2">My Account</DropdownMenuLabel>
                                         <DropdownMenuSeparator className="bg-gray-100 my-1" />
-                                        <DropdownMenuItem onClick={() => navigate(user.role === 'patient' ? '/dashboard/profile' : `/${user.role}/dashboard`)} className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600">
+                                        <DropdownMenuItem onClick={() => navigate(user.role === 'patient' ? '/dashboard/profile' : user.role === 'pharmacy' ? '/pharmacy-dashboard' : `/${user.role}/dashboard`)} className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600">
                                             <User className="mr-3 h-4 w-4" /> Profile
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => navigate('/dashboard/medicine-orders')} className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600">

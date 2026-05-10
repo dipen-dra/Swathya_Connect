@@ -143,10 +143,16 @@ export default function AdminDashboard() {
             toast.error('No document available');
             return;
         }
+        
+        const baseUrl = import.meta.env.VITE_API_URL 
+            ? import.meta.env.VITE_API_URL.replace("/api", "") 
+            : "http://localhost:8080";
+
         // Ensure proper URL format with slash
         const fullUrl = documentUrl.startsWith('http')
             ? documentUrl
-            : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${documentUrl.startsWith('/') ? '' : '/'}${documentUrl}`;
+            : `${baseUrl}${documentUrl.startsWith('/') ? '' : '/'}${documentUrl}`;
+        
         window.open(fullUrl, '_blank');
     };
 

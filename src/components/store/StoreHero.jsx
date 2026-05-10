@@ -29,7 +29,7 @@ const banners = [
     }
 ];
 
-export function StoreHero() {
+export function StoreHero({ onShopNow }) {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Auto-advance
@@ -75,7 +75,11 @@ export function StoreHero() {
                             <p className={`text-lg md:text-xl mb-8 opacity-90 ${banner.textColor}`}>
                                 {banner.subtitle}
                             </p>
-                            <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 border-0 font-semibold rounded-xl h-12 px-8">
+                            <Button 
+                                size="lg" 
+                                onClick={onShopNow}
+                                className="bg-white text-gray-900 hover:bg-gray-100 border-0 font-semibold rounded-xl h-12 px-8"
+                            >
                                 Shop Now <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>

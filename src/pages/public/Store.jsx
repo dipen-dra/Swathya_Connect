@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import Logo from '@/assets/swasthyalogo.png';
 import { StoreHeader } from '@/components/layout/StoreHeader';
@@ -32,6 +32,7 @@ export default function Store() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const productsSectionRef = useRef(null);
 
     // Products State
     const [products, setProducts] = useState([]);
@@ -164,6 +165,15 @@ export default function Store() {
         navigate('/patient/checkout');
     };
 
+    const handleShopNow = () => {
+        if (!user) {
+            toast.info("Please login to start shopping");
+            navigate('/login', { state: { from: { pathname: '/store' } } });
+            return;
+        }
+        productsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
     // Helper to merge static 'all' with dynamic categories
     const getFilterCategories = () => {
         const dynamicCats = categories.map(c => c.name);
@@ -236,7 +246,7 @@ export default function Store() {
                 {/* Homepage Sections (Hero & Categories) - Only show when NOT searching/filtering */}
                 {category === 'all' && !search && (
                     <div className="mb-16 animate-fade-in">
-                        <StoreHero />
+                        <StoreHero onShopNow={handleShopNow} />
                         <HealthConcerns onCategorySelect={(cat) => setCategory(cat)} />
                         <div className="h-px bg-gray-100 my-16"></div>
                         <h3 className="text-3xl font-black text-gray-900 mb-10 tracking-tight">Explore Products</h3>
@@ -302,37 +312,6 @@ export default function Store() {
                                             })}
                                         </div>
                                     </div>
-
-                                    <div className="h-px bg-gray-50 mx-2"></div>
-
-                                    {/* Sort Options */}
-                                    <div>
-                                        <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 block px-1">Sort By</Label>
-                                        <Select value={sort} onValueChange={setSort}>
-                                            <SelectTrigger className="w-full h-14 bg-gray-50 border-0 rounded-2xl font-bold text-gray-700 px-6 focus:ring-2 focus:ring-teal-600/20 hover:bg-gray-100 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <SlidersHorizontal className="w-4 h-4 text-teal-600" />
-                                                    <SelectValue placeholder="Sort by" />
-                                                </div>
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-2xl border-0 shadow-2xl p-2">
-                                                <SelectItem value="newest" className="rounded-xl py-3 font-bold text-gray-600">Newest First</SelectItem>
-                                                <SelectItem value="price_asc" className="rounded-xl py-3 font-bold text-gray-600">Price: Low to High</SelectItem>
-                                                <SelectItem value="price_desc" className="rounded-xl py-3 font-bold text-gray-600">Price: High to Low</SelectItem>
-                                                <SelectItem value="name_asc" className="rounded-xl py-3 font-bold text-gray-600">Name: A to Z</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    {/* Help Card */}
-                                    <div className="mt-12 bg-gray-900 rounded-[2rem] p-8 text-white relative overflow-hidden group">
-                                        <div className="absolute -right-8 -bottom-8 bg-teal-600 w-24 h-24 rounded-full blur-3xl opacity-20 group-hover:scale-150 transition-transform duration-1000"></div>
-                                        <h4 className="font-bold text-lg mb-2 relative z-10">Need Help?</h4>
-                                        <p className="text-gray-400 text-[11px] leading-relaxed mb-6 relative z-10 font-medium">Our licensed pharmacists are here to assist you with your orders.</p>
-                                        <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors relative z-10">
-                                            Chat Now
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -397,32 +376,6 @@ export default function Store() {
                                                     })}
                                                 </div>
                                             </div>
-
-                                            {/* Sort Section */}
-                                            <div className="space-y-6">
-                                                <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Sort By</Label>
-                                                <div className="space-y-2">
-                                                    {[
-                                                        { id: 'newest', label: 'Newest First' },
-                                                        { id: 'price_asc', label: 'Price: Low to High' },
-                                                        { id: 'price_desc', label: 'Price: High to Low' },
-                                                        { id: 'name_asc', label: 'Name: A to Z' }
-                                                    ].map((item) => (
-                                                        <button
-                                                            key={item.id}
-                                                            onClick={() => setSort(item.id)}
-                                                            className={`w-full h-14 rounded-2xl px-6 font-bold text-sm transition-all flex items-center justify-between ${
-                                                                sort === item.id 
-                                                                    ? 'bg-gray-900 text-white' 
-                                                                    : 'bg-gray-50 text-gray-500'
-                                                            }`}
-                                                        >
-                                                            {item.label}
-                                                            {sort === item.id && <Check className="w-4 h-4" />}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
                                         </div>
 
                                         <div className="pt-6 mt-auto">
@@ -441,7 +394,7 @@ export default function Store() {
 
                         {/* Main Content */}
                         <div className="flex-1">
-                            <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100 p-8 mb-10 flex items-center justify-between">
+                            <div ref={productsSectionRef} className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100 p-8 mb-10 flex items-center justify-between">
                                 <div>
                                     <h2 className="text-2xl font-black text-gray-900 tracking-tight">
                                         {category === 'all' ? 'Featured Products' : <span className="capitalize">{category} Products</span>}
@@ -449,6 +402,23 @@ export default function Store() {
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
                                         Found {products.length} {products.length === 1 ? 'exceptional item' : 'exceptional items'}
                                     </p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hidden sm:block">Sort By</Label>
+                                    <Select value={sort} onValueChange={setSort}>
+                                        <SelectTrigger className="w-[180px] h-12 bg-gray-50 border-0 rounded-xl font-bold text-gray-700 px-5 focus:ring-2 focus:ring-teal-600/20 hover:bg-gray-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <SlidersHorizontal className="w-3.5 h-3.5 text-teal-600" />
+                                                <SelectValue placeholder="Sort by" />
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-2xl border-0 shadow-2xl p-2">
+                                            <SelectItem value="newest" className="rounded-xl py-3 font-bold text-gray-600">Newest First</SelectItem>
+                                            <SelectItem value="price_asc" className="rounded-xl py-3 font-bold text-gray-600">Price: Low to High</SelectItem>
+                                            <SelectItem value="price_desc" className="rounded-xl py-3 font-bold text-gray-600">Price: High to Low</SelectItem>
+                                            <SelectItem value="name_asc" className="rounded-xl py-3 font-bold text-gray-600">Name: A to Z</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
