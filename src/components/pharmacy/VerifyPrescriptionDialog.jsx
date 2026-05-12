@@ -26,6 +26,12 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
 
     const updateMedicine = (index, field, value) => {
         const newMedicines = [...medicines];
+        
+        // Prevent negative values for quantity and price
+        if ((field === 'quantity' || field === 'pricePerUnit') && parseFloat(value) < 0) {
+            return;
+        }
+        
         newMedicines[index][field] = value;
         setMedicines(newMedicines);
     };
@@ -214,7 +220,11 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                                 min="0"
                                 step="0.01"
                                 value={deliveryCharges}
-                                onChange={(e) => setDeliveryCharges(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val < 0) return;
+                                    setDeliveryCharges(val);
+                                }}
                                 placeholder="0"
                             />
                         </div>

@@ -75,8 +75,8 @@ export default function App() {
     return <LoadingScreen />;
   }
 
-  // Placeholder Client ID
-  const GOOGLE_CLIENT_ID = "381818830866-smf0ps7geage5ib54sdavnookdqnlgcq.apps.googleusercontent.com";
+  // Get Google Client ID from environment variables
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "381818830866-smf0ps7geage5ib54sdavnookdqnlgcq.apps.googleusercontent.com";
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

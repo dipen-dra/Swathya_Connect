@@ -43,6 +43,13 @@ api.interceptors.response.use(
     },
     (error) => {
         console.error('❌ API Response Error:', error.response?.status, error.response?.data || error.message);
+        
+        // Handle 401 Unauthorized - redirect to login or clear auth state
+        if (error.response && error.response.status === 401) {
+            console.log('🔐 API: Unauthorized access, triggering logout...');
+            window.dispatchEvent(new CustomEvent('auth:logout'));
+        }
+        
         return Promise.reject(error);
     }
 );

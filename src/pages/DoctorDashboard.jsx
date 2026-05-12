@@ -521,7 +521,13 @@ export default function DoctorDashboard() {
 
     // Handle fee input changes
     const handleFeeChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+        
+        // Prevent negative values for numeric inputs
+        if (type === 'number' && value < 0) {
+            return;
+        }
+        
         setVerificationFees(prev => ({
             ...prev,
             [name]: value
@@ -1519,6 +1525,7 @@ export default function DoctorDashboard() {
                                                 id="chatFee"
                                                 name="chatFee"
                                                 type="number"
+                                                min="0"
                                                 value={verificationFees.chatFee}
                                                 onChange={handleFeeChange}
                                                 disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
@@ -1534,6 +1541,7 @@ export default function DoctorDashboard() {
                                                 id="audioFee"
                                                 name="audioFee"
                                                 type="number"
+                                                min="0"
                                                 value={verificationFees.audioFee}
                                                 onChange={handleFeeChange}
                                                 disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
@@ -1549,6 +1557,7 @@ export default function DoctorDashboard() {
                                                 id="videoFee"
                                                 name="videoFee"
                                                 type="number"
+                                                min="0"
                                                 value={verificationFees.videoFee}
                                                 onChange={handleFeeChange}
                                                 disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}

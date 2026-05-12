@@ -75,10 +75,10 @@ export function AuthProvider({ children }) {
                 verified: data.user.isVerified
             };
 
-            console.log('✅ AuthContext: Login successful, storing user:', userData);
+            console.log('✅ AuthContext: Login successful, storing user and token:', userData);
             setUser(userData);
             localStorage.setItem('swasthya_user', JSON.stringify(userData));
-            // Token is stored in HttpOnly cookie by the backend, no longer in localStorage
+            localStorage.setItem('token', data.token); // Store token for components that need it (like SocketContext)
             setIsLoading(false);
         } catch (error) {
             console.error('❌ AuthContext: Login error:', error);
@@ -118,10 +118,10 @@ export function AuthProvider({ children }) {
                 verified: data.user.isVerified
             };
 
-            console.log('✅ AuthContext: Registration successful, storing user:', newUser);
+            console.log('✅ AuthContext: Registration successful, storing user and token:', newUser);
             setUser(newUser);
             localStorage.setItem('swasthya_user', JSON.stringify(newUser));
-            // Token is stored in HttpOnly cookie by the backend, no longer in localStorage
+            localStorage.setItem('token', data.token); // Store token for components that need it
             setIsLoading(false);
         } catch (error) {
             console.error('❌ AuthContext: Registration error:', error);
@@ -134,6 +134,7 @@ export function AuthProvider({ children }) {
         console.log('🔐 AuthContext: Logging out, clearing session');
         setUser(null);
         localStorage.removeItem('swasthya_user');
+        localStorage.removeItem('token');
         
         // Notify backend to clear the cookie as well
         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/logout`, {

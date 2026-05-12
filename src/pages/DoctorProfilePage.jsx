@@ -75,7 +75,13 @@ export default function DoctorProfilePage() {
     }, [profile, user]);
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+        
+        // Prevent negative values for numeric inputs
+        if (type === 'number' && parseFloat(value) < 0) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -466,6 +472,7 @@ export default function DoctorProfilePage() {
                                                 id="yearsOfExperience"
                                                 name="yearsOfExperience"
                                                 type="number"
+                                                min="0"
                                                 value={formData.yearsOfExperience}
                                                 onChange={handleInputChange}
                                                 disabled={!isEditing}

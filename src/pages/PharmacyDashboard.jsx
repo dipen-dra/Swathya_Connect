@@ -1537,8 +1537,13 @@ export default function PharmacyDashboard() {
                             <Input
                                 id="quantity"
                                 type="number"
+                                min="0"
                                 value={inventoryForm.quantity}
-                                onChange={(e) => setInventoryForm({ ...inventoryForm, quantity: e.target.value })}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val < 0) return;
+                                    setInventoryForm({ ...inventoryForm, quantity: val });
+                                }}
                                 placeholder="e.g., 100"
                             />
                         </div>
@@ -1547,9 +1552,14 @@ export default function PharmacyDashboard() {
                             <Input
                                 id="price"
                                 type="number"
+                                min="0"
                                 step="0.01"
                                 value={inventoryForm.price}
-                                onChange={(e) => setInventoryForm({ ...inventoryForm, price: e.target.value })}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val < 0) return;
+                                    setInventoryForm({ ...inventoryForm, price: val });
+                                }}
                                 placeholder="e.g., 50"
                             />
                         </div>
@@ -1607,8 +1617,13 @@ export default function PharmacyDashboard() {
                             <Input
                                 id="lowStockThreshold"
                                 type="number"
+                                min="0"
                                 value={inventoryForm.lowStockThreshold}
-                                onChange={(e) => setInventoryForm({ ...inventoryForm, lowStockThreshold: e.target.value })}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val < 0) return;
+                                    setInventoryForm({ ...inventoryForm, lowStockThreshold: val });
+                                }}
                                 placeholder="e.g., 10"
                             />
                         </div>
