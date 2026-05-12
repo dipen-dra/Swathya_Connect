@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, ShoppingCart, SlidersHorizontal, PackageX, Check, Star, X, LayoutGrid, Pill, ClipboardList, Zap, Package } from 'lucide-react';
 import { toast } from 'sonner';
+import AnimatedLoadingSkeleton from '@/components/ui/AnimatedLoadingSkeleton';
 import {
     Select,
     SelectContent,
@@ -423,19 +424,7 @@ export default function Store() {
                             </div>
 
                             {loading ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                                        <div key={i} className="bg-white rounded-xl h-[280px] shadow-sm animate-pulse border border-gray-100 p-3">
-                                            <div className="w-full h-32 bg-gray-100 rounded-lg mb-3"></div>
-                                            <div className="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
-                                            <div className="h-3 bg-gray-100 rounded w-1/2 mb-4"></div>
-                                            <div className="flex justify-between mt-auto">
-                                                <div className="h-6 bg-gray-100 rounded w-1/3"></div>
-                                                <div className="h-6 bg-gray-100 rounded w-1/3"></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <AnimatedLoadingSkeleton />
                             ) : products.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
                                     <div className="bg-gray-50 p-6 rounded-full mb-6 relative">
