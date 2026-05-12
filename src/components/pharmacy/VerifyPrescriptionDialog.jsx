@@ -27,12 +27,18 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
     const updateMedicine = (index, field, value) => {
         const newMedicines = [...medicines];
         
-        // Prevent negative values for quantity and price
+        // Prevent negative values
         if ((field === 'quantity' || field === 'pricePerUnit') && parseFloat(value) < 0) {
             return;
         }
         
-        newMedicines[index][field] = value;
+        // Force integers for price and quantity to avoid decimal issues with payment gateways
+        let finalValue = value;
+        if (field === 'quantity' || field === 'pricePerUnit') {
+            finalValue = value === '' ? '' : Math.round(parseFloat(value) || 0);
+        }
+        
+        newMedicines[index][field] = finalValue;
         setMedicines(newMedicines);
     };
 
@@ -189,23 +195,24 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                                                 min="1"
                                                 value={medicine.quantity}
                                                 onChange={(e) => updateMedicine(index, 'quantity', e.target.value)}
+                                                onWheel={(e) => e.target.blur()}
                                             />
                                         </div>
                                         <div>
-                                            <Label className="text-xs">Price per Unit (NPR) *</Label>
+                                            <Label className="text-xs">Price per Unit (रु) *</Label>
                                             <Input
                                                 type="number"
                                                 min="0"
-                                                step="0.01"
                                                 value={medicine.pricePerUnit}
                                                 onChange={(e) => updateMedicine(index, 'pricePerUnit', e.target.value)}
+                                                onWheel={(e) => e.target.blur()}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="text-right">
                                         <span className="text-sm font-semibold text-gray-900">
-                                            Total: NPR {((medicine.quantity || 0) * (medicine.pricePerUnit || 0)).toFixed(2)}
+                                            Total: रु {Math.round((medicine.quantity || 0) * (medicine.pricePerUnit || 0))}
                                         </span>
                                     </div>
                                 </div>
@@ -214,17 +221,17 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
 
                         {/* Delivery Charges */}
                         <div className="space-y-2">
-                            <Label>Delivery Charges (NPR)</Label>
+                            <Label>Delivery Charges (रु)</Label>
                             <Input
                                 type="number"
                                 min="0"
-                                step="0.01"
                                 value={deliveryCharges}
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     if (val < 0) return;
-                                    setDeliveryCharges(val);
+                                    setDeliveryCharges(val === '' ? '' : Math.round(parseFloat(val) || 0));
                                 }}
+                                onWheel={(e) => e.target.blur()}
                                 placeholder="0"
                             />
                         </div>
@@ -234,15 +241,15 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                             <h3 className="font-semibold text-gray-900">Bill Summary</h3>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Subtotal:</span>
-                                <span className="font-medium">NPR {calculateSubtotal().toFixed(2)}</span>
+                                <span className="font-medium">रु {Math.round(calculateSubtotal())}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Delivery Charges:</span>
-                                <span className="font-medium">NPR {(parseFloat(deliveryCharges) || 0).toFixed(2)}</span>
+                                <span className="font-medium">रु {Math.round(parseFloat(deliveryCharges) || 0)}</span>
                             </div>
                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                 <span>Total:</span>
-                                <span className="text-purple-600">NPR {calculateTotal().toFixed(2)}</span>
+                                <span className="text-purple-600">रु {Math.round(calculateTotal())}</span>
                             </div>
                         </div>
 

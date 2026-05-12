@@ -203,7 +203,7 @@ export function PaymentDialog({ open, onOpenChange, bookingDetails, onPaymentSuc
                             </div>
                             <div className="flex justify-between pt-3 border-t border-blue-300">
                                 <span className="text-gray-900 font-semibold">Total Amount:</span>
-                                <span className="text-xl font-bold text-blue-600">NPR {bookingDetails.fee}</span>
+                                <span className="text-xl font-bold text-blue-600">रु {bookingDetails.fee}</span>
                             </div>
                         </div>
                     </div>

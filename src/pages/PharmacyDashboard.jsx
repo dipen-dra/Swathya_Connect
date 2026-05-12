@@ -1548,7 +1548,7 @@ export default function PharmacyDashboard() {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="price">Price (NPR) *</Label>
+                             <Label htmlFor="price">Price (रु) *</Label>
                             <Input
                                 id="price"
                                 type="number"
@@ -2015,7 +2015,7 @@ export default function PharmacyDashboard() {
                                             <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                             <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
                                             <a
-                                                href={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}
+                                                href={`${selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}?token=${localStorage.getItem('token')}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -2027,7 +2027,7 @@ export default function PharmacyDashboard() {
                                     ) : (
                                         // Image file - display inline
                                         <img
-                                            src={selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}
+                                            src={`${selectedOrder.prescriptionImage.startsWith('http') ? selectedOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedOrder.prescriptionImage}`}?token=${localStorage.getItem('token')}`}
                                             alt="Prescription"
                                             className="max-w-full h-auto rounded-lg border"
                                             onError={(e) => {
@@ -2060,8 +2060,8 @@ export default function PharmacyDashboard() {
                                                         <td className="px-4 py-2 text-sm">{med.name}</td>
                                                         <td className="px-4 py-2 text-sm">{med.dosage}</td>
                                                         <td className="px-4 py-2 text-sm">{med.quantity}</td>
-                                                        <td className="px-4 py-2 text-sm">NPR {med.pricePerUnit}</td>
-                                                        <td className="px-4 py-2 text-sm font-semibold">NPR {med.pricePerUnit * med.quantity}</td>
+                                                        <td className="px-4 py-2 text-sm">रु {med.pricePerUnit}</td>
+                                                        <td className="px-4 py-2 text-sm font-semibold">रु {med.pricePerUnit * med.quantity}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -2076,15 +2076,15 @@ export default function PharmacyDashboard() {
                                     <div className="space-y-2">
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Subtotal</span>
-                                            <span className="font-semibold">NPR {selectedOrder.subtotal || 0}</span>
+                                            <span className="font-semibold">रु {selectedOrder.subtotal || 0}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Delivery Charges</span>
-                                            <span className="font-semibold">NPR {selectedOrder.deliveryCharges || 0}</span>
+                                            <span className="font-semibold">रु {selectedOrder.deliveryCharges || 0}</span>
                                         </div>
                                         <div className="flex justify-between text-lg font-bold border-t pt-2">
                                             <span>Total Amount</span>
-                                            <span className="text-purple-600">NPR {selectedOrder.totalAmount}</span>
+                                            <span className="text-purple-600">रु {selectedOrder.totalAmount}</span>
                                         </div>
                                     </div>
                                 </div>

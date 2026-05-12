@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Video, Phone, MessageCircle, Calendar as CalendarIcon, Clock, CreditCard, Stethoscope, CheckCircle } from 'lucide-react';
+import { Video, Phone, MessageCircle, Calendar as CalendarIcon, Clock, CreditCard, Stethoscope, CheckCircle, Award, Star, CheckCircle2, DollarSign, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }) {
@@ -29,7 +29,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
             name: 'Video',
             subtitle: 'Consultation',
             icon: Video,
-            price: doctor.consultationFee,
+            price: doctor.videoFee || doctor.consultationFee || 1000,
             duration: '30 minutes',
             description: 'Face-to-face video call with the doctor',
             features: ['HD Video Call', 'Screen Sharing', 'Recording Available']
@@ -39,7 +39,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
             name: 'Audio',
             subtitle: 'Consultation',
             icon: Phone,
-            price: Math.round(doctor.consultationFee * 0.8),
+            price: doctor.audioFee || Math.round((doctor.consultationFee || 1000) * 0.8),
             duration: '25 minutes',
             description: 'Voice call consultation with the doctor',
             features: ['Clear Audio Call', 'Call Recording', 'Follow-up Notes']
@@ -49,27 +49,153 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
             name: 'Text',
             subtitle: 'Consultation',
             icon: MessageCircle,
-            price: Math.round(doctor.consultationFee * 0.6),
+            price: doctor.chatFee || Math.round((doctor.consultationFee || 1000) * 0.6),
             duration: '24 hours',
             description: 'Text-based consultation over 24 hours',
             features: ['Instant Messaging', 'Photo Sharing', 'Prescription Upload']
         }
     ];
 
-    const timeSlots = [
-        '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-        '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM'
-    ];
+    // Helper to convert 12h time (9:00 AM) to 24h minutes for comparison
+    const timeToMinutes = (timeStr) => {
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+    };
 
-    // Generate next 30 days for date selection (including today)
+    // Helper to convert 24h time (09:00) to 24h minutes
+    const rawTimeToMinutes = (timeStr) => {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
+    };
+
+    // Generate time slots every 30 minutes
+    const generateTimeSlots = () => {
+        const slots = [];
+        for (let h = 0; h < 24; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                const period = h < 12 ? 'AM' : 'PM';
+                const displayH = h % 12 || 12;
+                const displayM = m.toString().padStart(2, '0');
+                slots.push(`${displayH}:${displayM} ${period}`);
+            }
+        }
+        return slots;
+    };
+
+    const allTimeSlots = generateTimeSlots();
+
+    // Filter time slots based on doctor's schedule and current time
+    const getFilteredTimeSlots = () => {
+        if (!selectedDate) return [];
+
+        const dateObj = new Date(selectedDate);
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+        
+        const hasWeeklySchedule = doctor.weeklySchedule && doctor.weeklySchedule.length > 0;
+        const daySchedule = hasWeeklySchedule ? doctor.weeklySchedule.find(s => s.day === dayName) : null;
+
+        let filtered = [];
+
+        if (hasWeeklySchedule && daySchedule) {
+            filtered = allTimeSlots.filter(slotTime => {
+                const slotMinutes = timeToMinutes(slotTime);
+                return daySchedule.slots.some(range => {
+                    const start = rawTimeToMinutes(range.start);
+                    const end = rawTimeToMinutes(range.end);
+                    return slotMinutes >= start && slotMinutes < end;
+                });
+            });
+        } else {
+            // Fallback: use 'hours' string if weeklySchedule is missing
+            const hoursStr = doctor.hours || '09:00 AM - 05:00 PM';
+            const parts = hoursStr.split(' - ');
+            if (parts.length === 2) {
+                const startMinutes = timeToMinutes(parts[0]);
+                const endMinutes = timeToMinutes(parts[1]);
+                filtered = allTimeSlots.filter(slotTime => {
+                    const slotMinutes = timeToMinutes(slotTime);
+                    return slotMinutes >= startMinutes && slotMinutes < endMinutes;
+                });
+            } else {
+                // Default fallback if hours format is weird
+                filtered = allTimeSlots.filter(slotTime => {
+                    const m = timeToMinutes(slotTime);
+                    return m >= 540 && m < 1020; // 9 AM - 5 PM
+                });
+            }
+        }
+
+        // If today, filter out past times (+ 30 min buffer)
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (selectedDate === todayStr) {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30 min buffer
+            filtered = filtered.filter(slotTime => timeToMinutes(slotTime) > currentMinutes);
+        }
+
+        return filtered;
+    };
+
+    const timeSlots = getFilteredTimeSlots();
+
+    // Generate next 30 days for date selection (only including available days)
     const getAvailableDates = () => {
         const dates = [];
         const today = new Date();
-        for (let i = 0; i <= 30; i++) { // Start from 0 to include today
+        
+        // Ensure we have a schedule to work with
+        const hasWeeklySchedule = doctor.weeklySchedule && doctor.weeklySchedule.length > 0;
+        const hasOldSchedule = doctor.availabilityDays && doctor.availabilityDays.length > 0;
+
+        for (let i = 0; i <= 30; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            let isAvailable = false;
+            let daySchedule = null;
+
+            if (hasWeeklySchedule) {
+                daySchedule = doctor.weeklySchedule.find(s => s.day === dayName);
+                isAvailable = daySchedule?.isAvailable;
+            } else if (hasOldSchedule) {
+                // Fallback to old availabilityDays array (case-insensitive)
+                isAvailable = doctor.availabilityDays.some(d => d.toLowerCase() === dayName.toLowerCase());
+            } else {
+                // If no schedule at all, assume available for now
+                isAvailable = true; 
+            }
+
+            if (!isAvailable) continue;
+
+            // If today, check if there are any slots left
+            if (i === 0) {
+                const now = new Date();
+                const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30;
+                
+                let hasFutureSlots = true;
+                if (hasWeeklySchedule && daySchedule) {
+                    hasFutureSlots = daySchedule.slots.some(range => rawTimeToMinutes(range.end) > currentMinutes);
+                } else {
+                    // For old schedule, check against the 'hours' string (e.g., "09:00 AM - 05:00 PM")
+                    const hoursStr = doctor.hours || '09:00 AM - 05:00 PM';
+                    const parts = hoursStr.split(' - ');
+                    if (parts.length === 2) {
+                        const endTime = timeToMinutes(parts[1]);
+                        hasFutureSlots = endTime > currentMinutes;
+                    }
+                }
+                
+                // No longer skipping today if slots are empty, so we can show a message in the time selector
+                // if (!hasFutureSlots) continue;
+            }
+
             dates.push({
-                value: date.toISOString().split('T')[0],
+                value: dateStr,
                 label: i === 0 ? 'Today' : date.toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
@@ -86,8 +212,6 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
         if (!selectedType || !selectedDate || !selectedTime || !reason.trim()) {
             return;
         }
-
-        const selectedConsultationType = consultationTypes.find(type => type.id === selectedType);
 
         onConfirm({
             type: selectedType,
@@ -179,7 +303,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                                     <p className="text-xs text-gray-500 mt-2 leading-relaxed">{type.description}</p>
                                                 </div>
                                                 <div className="space-y-1 pt-2">
-                                                    <div className="text-2xl font-bold text-blue-600">NPR {type.price}</div>
+                                                    <div className="text-2xl font-bold text-blue-600">रु {type.price}</div>
                                                     <div className="text-xs text-gray-500">{type.duration}</div>
                                                 </div>
                                                 <div className="space-y-1 pt-2 border-t border-gray-100">
@@ -205,7 +329,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                         <CalendarIcon className="h-4 w-4 text-blue-600" />
                                         <span className="text-sm font-semibold text-gray-700">Select Date</span>
                                     </div>
-                                    <Select value={selectedDate} onValueChange={setSelectedDate}>
+                                    <Select value={selectedDate} onValueChange={(val) => { setSelectedDate(val); setSelectedTime(''); }}>
                                         <SelectTrigger className="h-11 bg-white border-gray-200">
                                             <SelectValue placeholder="Choose a date" />
                                         </SelectTrigger>
@@ -224,16 +348,26 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                         <Clock className="h-4 w-4 text-blue-600" />
                                         <span className="text-sm font-semibold text-gray-700">Select Time</span>
                                     </div>
-                                    <Select value={selectedTime} onValueChange={setSelectedTime}>
+                                    <Select value={selectedTime} onValueChange={setSelectedTime} disabled={!selectedDate}>
                                         <SelectTrigger className="h-11 bg-white border-gray-200">
-                                            <SelectValue placeholder="Choose time slot" />
+                                            <SelectValue placeholder={selectedDate ? "Choose time slot" : "Select date first"} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-white">
-                                            {timeSlots.map((time) => (
-                                                <SelectItem key={time} value={time}>
-                                                    {time}
-                                                </SelectItem>
-                                            ))}
+                                            {timeSlots.length > 0 ? (
+                                                timeSlots.map((time) => (
+                                                    <SelectItem key={time} value={time}>
+                                                        {time}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="py-6 px-4 text-center">
+                                                    <p className="text-sm font-medium text-gray-500">
+                                                        {selectedDate === new Date().toISOString().split('T')[0]
+                                                            ? "No time slot available for today, try for next days"
+                                                            : "No slots available for this date"}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -303,7 +437,7 @@ export function ConsultationTypeDialog({ open, onOpenChange, doctor, onConfirm }
                                     <div className="flex items-center justify-between py-3 bg-blue-50 rounded-lg px-4 mt-4">
                                         <span className="font-semibold text-gray-900">Total Fee</span>
                                         <span className="text-2xl font-bold text-blue-600">
-                                            NPR {selectedConsultationType.price}
+                                            रु {selectedConsultationType.price}
                                         </span>
                                     </div>
 

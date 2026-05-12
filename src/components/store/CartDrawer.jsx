@@ -65,7 +65,7 @@ export default function CartDrawer({ open, onOpenChange, cartItems, onUpdateQuan
                                             <div>
                                                 <div className="flex justify-between items-start gap-2">
                                                     <h3 className="font-semibold text-gray-900 line-clamp-2 leading-snug">{item.medicineName}</h3>
-                                                    <p className="font-bold text-gray-900 whitespace-nowrap">NPR {(item.price * item.cartQuantity).toLocaleString()}</p>
+                                                    <p className="font-bold text-gray-900 whitespace-nowrap">रु {(item.price * item.cartQuantity).toLocaleString()}</p>
                                                 </div>
                                                 <p className="text-xs text-gray-500 mt-1">{item.manufacturer}</p>
                                             </div>
@@ -110,11 +110,11 @@ export default function CartDrawer({ open, onOpenChange, cartItems, onUpdateQuan
                     <div className="border-t border-gray-100 bg-white p-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <div className="flex justify-between text-base mb-2 text-gray-500">
                             <p>Subtotal</p>
-                            <p>NPR {subtotal.toLocaleString()}</p>
+                            <p>रु {subtotal.toLocaleString()}</p>
                         </div>
                         <div className="flex justify-between text-lg font-bold text-gray-900 mb-6">
                             <p>Total</p>
-                            <p className="text-blue-600">NPR {subtotal.toLocaleString()}</p>
+                            <p className="text-blue-600">रु {subtotal.toLocaleString()}</p>
                         </div>
 
                         <Button

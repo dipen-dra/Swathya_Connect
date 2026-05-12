@@ -723,7 +723,7 @@ export function PatientDashboard() {
 
                             <div className="text-right">
                                 <p className="text-sm text-gray-600">Consultation Fee</p>
-                                <p className="text-lg font-bold text-blue-600">NPR {consultation.fee}</p>
+                                <p className="text-lg font-bold text-blue-600">रु {consultation.fee}</p>
                             </div>
 
 
@@ -1017,7 +1017,7 @@ export function PatientDashboard() {
 
                                 const Icon = config.icon;
                                 const displayValue = config.key === 'totalSpent'
-                                    ? `NPR ${(stat.value || 0).toLocaleString()}`
+                                    ? `रु ${(stat.value || 0).toLocaleString()}`
                                     : (stat.value !== undefined ? stat.value : 0);
 
                                 return (
@@ -1057,7 +1057,7 @@ export function PatientDashboard() {
                             { key: 'totalConsultations', icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-50', title: 'Total Consultations', value: 0 },
                             { key: 'upcomingAppointments', icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-50', title: 'Upcoming Appointments', value: 0 },
                             { key: 'completedConsultations', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', title: 'Completed Consultations', value: 0 },
-                            { key: 'totalSpent', icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Total Spent', value: 'NPR 0' }
+                            { key: 'totalSpent', icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-50', title: 'Total Spent', value: 'रु 0' }
                         ].map((config, index) => {
                             const Icon = config.icon;
 
@@ -1433,7 +1433,7 @@ export function PatientDashboard() {
                                                 {/* Price and Book Button */}
                                                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                                                     <div>
-                                                        <p className="text-lg font-bold text-green-600">From NPR {Math.round(doctor.consultationFee * 0.6)}</p>
+                                                        <p className="text-lg font-bold text-green-600">From रु {doctor.chatFee || doctor.consultationFee || 0}</p>
                                                         <p className="text-xs text-gray-500">Starting price for chat</p>
                                                     </div>
                                                     <Button
@@ -1676,7 +1676,7 @@ export function PatientDashboard() {
                                                         </p>
                                                         {order.totalAmount > 0 && (
                                                             <p className="text-sm font-semibold text-gray-900 mt-2">
-                                                                Total: NPR {order.totalAmount}
+                                                                Total: रु {order.totalAmount}
                                                             </p>
                                                         )}
                                                     </div>
@@ -1876,7 +1876,7 @@ export function PatientDashboard() {
                                 addNotification({
                                     type: 'success',
                                     title: 'Payment Successful!',
-                                    message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                                    message: `Your medicine order payment of रु ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
                                 });
 
                                 toast.success('Payment successful! Order is being prepared.');
@@ -1959,7 +1959,7 @@ export function PatientDashboard() {
                             addNotification({
                                 type: 'success',
                                 title: 'Payment Successful!',
-                                message: `Your medicine order payment of NPR ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
+                                message: `Your medicine order payment of रु ${pendingBooking.amount} has been processed via ${paymentMethod}. The pharmacy will start preparing your order.`
                             });
                         } catch (error) {
                             console.error('Error after payment success:', error);
@@ -2145,7 +2145,7 @@ export function PatientDashboard() {
                                                 <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                                 <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
                                                 <a
-                                                    href={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}
+                                                    href={`${selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}?token=${localStorage.getItem('token')}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -2156,7 +2156,7 @@ export function PatientDashboard() {
                                             </div>
                                         ) : (
                                             <img
-                                                src={selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}
+                                                src={`${selectedMedicineOrder.prescriptionImage.startsWith('http') ? selectedMedicineOrder.prescriptionImage : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:8080"}${selectedMedicineOrder.prescriptionImage}`}?token=${localStorage.getItem('token')}`}
                                                 alt="Prescription"
                                                 className="max-w-full h-auto rounded-lg border"
                                             />
@@ -2185,8 +2185,8 @@ export function PatientDashboard() {
                                                             <td className="px-4 py-2 text-sm">{med.name}</td>
                                                             <td className="px-4 py-2 text-sm">{med.dosage}</td>
                                                             <td className="px-4 py-2 text-sm">{med.quantity}</td>
-                                                            <td className="px-4 py-2 text-sm">NPR {med.pricePerUnit}</td>
-                                                            <td className="px-4 py-2 text-sm font-semibold">NPR {med.pricePerUnit * med.quantity}</td>
+                                                            <td className="px-4 py-2 text-sm">रु {med.pricePerUnit}</td>
+                                                            <td className="px-4 py-2 text-sm font-semibold">रु {med.pricePerUnit * med.quantity}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -2201,21 +2201,21 @@ export function PatientDashboard() {
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Subtotal</span>
-                                                <span className="font-semibold">NPR {selectedMedicineOrder.subtotal || 0}</span>
+                                                <span className="font-semibold">रु {selectedMedicineOrder.subtotal || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Delivery Charges</span>
-                                                <span className="font-semibold">NPR {selectedMedicineOrder.deliveryCharges || 0}</span>
+                                                <span className="font-semibold">रु {selectedMedicineOrder.deliveryCharges || 0}</span>
                                             </div>
                                             {selectedMedicineOrder.discountAmount > 0 && (
                                                 <div className="flex justify-between text-red-600">
                                                     <span>Discount {selectedMedicineOrder.promoCode ? `(${selectedMedicineOrder.promoCode})` : ''}</span>
-                                                    <span className="font-semibold">- NPR {selectedMedicineOrder.discountAmount}</span>
+                                                    <span className="font-semibold">- रु {selectedMedicineOrder.discountAmount}</span>
                                                 </div>
                                             )}
                                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                                 <span>Total Amount</span>
-                                                <span className="text-purple-600">NPR {Number(selectedMedicineOrder.totalAmount).toLocaleString()}</span>
+                                                <span className="text-purple-600">रु {Number(selectedMedicineOrder.totalAmount).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

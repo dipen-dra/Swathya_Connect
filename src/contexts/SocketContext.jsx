@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useNotifications } from './NotificationContext';
 
 const SocketContext = createContext();
 
@@ -16,6 +17,7 @@ export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [connected, setConnected] = useState(false);
     const { user } = useAuth();
+    const { addNotification } = useNotifications();
 
     useEffect(() => {
         // Get token from localStorage
@@ -39,6 +41,17 @@ export const SocketProvider = ({ children }) => {
                 setConnected(true);
             });
 
+            // Global notification listener
+            newSocket.on('notification', (data) => {
+                console.log('🔔 Received real-time notification:', data);
+                addNotification({
+                    type: data.type || 'info',
+                    title: data.title,
+                    message: data.message,
+                    actionUrl: data.actionUrl
+                });
+            });
+
             newSocket.on('disconnect', () => {
                 console.log('❌ Socket disconnected');
                 setConnected(false);
@@ -57,6 +70,7 @@ export const SocketProvider = ({ children }) => {
 
             return () => {
                 console.log('🔌 Closing socket connection');
+                newSocket.off('notification');
                 newSocket.close();
             };
         } else {
@@ -67,7 +81,7 @@ export const SocketProvider = ({ children }) => {
                 setConnected(false);
             }
         }
-    }, [user]);
+    }, [user, addNotification]);
 
     const value = {
         socket,

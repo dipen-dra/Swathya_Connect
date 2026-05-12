@@ -70,3 +70,19 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Hide number input arrows/spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Optional: smooth transitions for all interactive elements */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}

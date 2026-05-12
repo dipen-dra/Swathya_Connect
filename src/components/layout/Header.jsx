@@ -29,7 +29,13 @@ import {
     X,
     Upload,
     Moon,
-    Sun
+    Sun,
+    CheckCircle2,
+    Info,
+    AlertTriangle,
+    AlertCircle,
+    Trash2,
+    BellOff
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/assets/swasthyalogo.png';
@@ -144,84 +150,128 @@ export default function Header() {
                         {/* Notifications */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="relative hidden lg:flex">
-                                    <Bell className="h-5 w-5" />
+                                <Button variant="ghost" size="icon" className="relative hidden lg:flex hover:bg-gray-100 transition-colors duration-200">
+                                    <Bell className="h-5 w-5 text-gray-600" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
-                                            {unreadCount}
+                                        <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-blue-600 border-2 border-white animate-pulse">
                                         </span>
                                     )}
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-96 bg-white rounded-2xl shadow-xl border border-gray-100 p-0 mt-2 overflow-hidden">
+                            <DropdownMenuContent align="end" className="w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-0 mt-4 overflow-hidden animate-in fade-in zoom-in duration-200">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-4 py-3 border-b">
-                                    <h3 className="font-semibold text-gray-900">Notifications</h3>
-                                    <div className="flex items-center space-x-3 text-sm">
-                                        {unreadCount > 0 && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    markAllAsRead();
-                                                }}
-                                                className="text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-                                            >
-                                                <Check className="w-4 h-4" />
-                                                <span>Mark all read</span>
-                                            </button>
-                                        )}
-                                        {notifications.length > 0 && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    clearAll();
-                                                }}
-                                                className="text-red-600 hover:text-red-700"
-                                            >
-                                                Clear all
-                                            </button>
-                                        )}
+                                <div className="px-5 py-4 border-b bg-gray-50/50">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2">
+                                            <h3 className="font-bold text-gray-900">Notifications</h3>
+                                            {unreadCount > 0 && (
+                                                <Badge className="bg-blue-600 text-white border-0 h-5 px-1.5 min-w-[20px] justify-center">
+                                                    {unreadCount}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center space-x-4 text-xs font-semibold">
+                                            {unreadCount > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        markAllAsRead();
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-700 transition-colors flex items-center"
+                                                >
+                                                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                                                    Mark all read
+                                                </button>
+                                            )}
+                                            {notifications.length > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        clearAll();
+                                                    }}
+                                                    className="text-gray-500 hover:text-red-600 transition-colors flex items-center"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                    Clear all
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-
+                                
                                 {/* Notifications List */}
-                                <div className="max-h-96 overflow-y-auto">
+                                <div className="max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                                     {notifications.length === 0 ? (
-                                        <div className="p-8 text-center text-sm text-gray-500">
-                                            <Bell className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                                            <p className="font-medium">No notifications yet</p>
-                                            <p className="text-xs mt-1">We'll notify you when something arrives</p>
+                                        <div className="py-16 px-6 text-center">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <BellOff className="h-8 w-8 text-gray-300" />
+                                            </div>
+                                            <h4 className="font-semibold text-gray-900 mb-1">No notifications yet</h4>
+                                            <p className="text-sm text-gray-500">We'll let you know when there's an update for you.</p>
                                         </div>
                                     ) : (
-                                        <div className="divide-y">
-                                            {notifications.map((notification) => (
-                                                <div
-                                                    key={notification.id}
-                                                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/50' : ''}`}
-                                                >
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex-1 pr-3">
-                                                            <h4 className="font-medium text-sm text-gray-900 mb-1">
-                                                                {notification.title}
-                                                            </h4>
-                                                            <p className="text-sm text-gray-600 mb-2">
-                                                                {notification.message}
-                                                            </p>
-                                                            <p className="text-xs text-gray-400">
-                                                                {getTimeAgo(notification.createdAt)}
-                                                            </p>
+                                        <div className="divide-y divide-gray-50">
+                                            {notifications.map((notification) => {
+                                                // Determine icon and color based on notification type
+                                                let Icon = Bell;
+                                                let iconColor = "text-blue-500 bg-blue-50";
+                                                
+                                                if (notification.type === 'success' || notification.title?.toLowerCase().includes('approved') || notification.title?.toLowerCase().includes('success')) {
+                                                    Icon = CheckCircle2;
+                                                    iconColor = "text-green-500 bg-green-50";
+                                                } else if (notification.type === 'warning') {
+                                                    Icon = AlertTriangle;
+                                                    iconColor = "text-amber-500 bg-amber-50";
+                                                } else if (notification.type === 'error' || notification.title?.toLowerCase().includes('failed') || notification.title?.toLowerCase().includes('cancelled')) {
+                                                    Icon = AlertCircle;
+                                                    iconColor = "text-red-500 bg-red-50";
+                                                } else {
+                                                    Icon = Info;
+                                                    iconColor = "text-blue-500 bg-blue-50";
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={notification.id}
+                                                        onClick={() => {
+                                                            markAsRead(notification.id);
+                                                            if (notification.actionUrl) {
+                                                                navigate(notification.actionUrl);
+                                                            }
+                                                        }}
+                                                        className={`group relative p-5 transition-all duration-200 cursor-pointer ${!notification.read ? 'bg-blue-50/30' : 'hover:bg-gray-50'}`}
+                                                    >
+                                                        <div className="flex items-start gap-4">
+                                                            <div className={`mt-1 h-10 w-10 shrink-0 rounded-xl flex items-center justify-center ${iconColor} transition-transform group-hover:scale-110`}>
+                                                                <Icon className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <h4 className={`text-sm font-bold truncate ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                                                                        {notification.title}
+                                                                    </h4>
+                                                                    <p className="text-[10px] font-medium text-gray-400 whitespace-nowrap ml-2">
+                                                                        {getTimeAgo(notification.createdAt)}
+                                                                    </p>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                                                    {notification.message}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center space-x-2">
+                                                        
+                                                        {/* Floating Actions on Hover */}
+                                                        <div className="absolute top-4 right-4 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-sm">
                                                             {!notification.read && (
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         markAsRead(notification.id);
                                                                     }}
-                                                                    className="text-green-600 hover:text-green-700"
+                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                                                                     title="Mark as read"
                                                                 >
-                                                                    <Check className="w-5 h-5" />
+                                                                    <Check className="w-4 h-4" />
                                                                 </button>
                                                             )}
                                                             <button
@@ -229,18 +279,31 @@ export default function Header() {
                                                                     e.stopPropagation();
                                                                     deleteNotification(notification.id);
                                                                 }}
-                                                                className="text-red-500 hover:text-red-600"
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                                                                 title="Delete"
                                                             >
-                                                                <X className="w-5 h-5" />
+                                                                <X className="w-4 h-4" />
                                                             </button>
                                                         </div>
+
+                                                        {/* Unread dot */}
+                                                        {!notification.read && (
+                                                            <div className="absolute top-5 right-5 h-2 w-2 rounded-full bg-blue-600"></div>
+                                                        )}
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
+                                
+                                {notifications.length > 5 && (
+                                    <div className="p-3 border-t text-center">
+                                        <button className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                                            View all notifications
+                                        </button>
+                                    </div>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -271,9 +334,9 @@ export default function Header() {
                                     <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" alignOffset={-10} className="w-60 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2">
-                                <DropdownMenuLabel className="text-gray-900 font-semibold px-3 py-2">My Account</DropdownMenuLabel>
-                                <DropdownMenuSeparator className="bg-gray-100 my-1" />
+                            <DropdownMenuContent align="end" alignOffset={-10} className="w-64">
+                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     onClick={() => {
                                         // Admin exception - show coming soon toast
@@ -293,8 +356,6 @@ export default function Header() {
                                             navigate('/dashboard/profile'); // Patient profile
                                         }
                                     }}
-
-                                    className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600"
                                 >
                                     <User className="mr-2 h-4 w-4" />
                                     <span>Profile Settings</span>
@@ -305,21 +366,20 @@ export default function Header() {
                                     <>
                                         <DropdownMenuItem
                                             onClick={() => navigate('/settings')}
-                                            className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600"
                                         >
                                             <Settings className="mr-2 h-4 w-4" />
                                             <span>Account Settings</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="bg-gray-100 my-1" />
+                                        <DropdownMenuSeparator />
                                     </>
                                 )}
 
                                 {/* Show separator for admin before Sign Out */}
-                                {user?.role === 'admin' && <DropdownMenuSeparator className="bg-gray-100 my-1" />}
+                                {user?.role === 'admin' && <DropdownMenuSeparator />}
 
                                 <DropdownMenuItem
                                     onClick={() => setShowLogoutDialog(true)}
-                                    className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50 rounded-xl px-3 py-2.5 font-medium transition-colors"
+                                    className="text-red-600 focus:text-red-700 focus:bg-red-50"
                                 >
                                     <LogOut className="mr-2 h-4 w-4" />
                                     <span>Sign Out</span>

@@ -184,17 +184,17 @@ export function StoreHeader({ cartCount, onSearchChange, searchValue }) {
                                             <ChevronDown className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-60 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2">
-                                        <DropdownMenuLabel className="text-gray-900 font-semibold px-3 py-2">My Account</DropdownMenuLabel>
-                                        <DropdownMenuSeparator className="bg-gray-100 my-1" />
-                                        <DropdownMenuItem onClick={() => navigate(user.role === 'patient' ? '/dashboard/profile' : user.role === 'pharmacy' ? '/pharmacy-dashboard' : `/${user.role}/dashboard`)} className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600">
+                                    <DropdownMenuContent align="end" className="w-64">
+                                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => navigate(user.role === 'patient' ? '/dashboard/profile' : user.role === 'pharmacy' ? '/pharmacy-dashboard' : `/${user.role}/dashboard`)}>
                                             <User className="mr-3 h-4 w-4" /> Profile
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => navigate('/dashboard/medicine-orders')} className="cursor-pointer rounded-xl px-3 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-teal-600 font-medium transition-colors focus:bg-gray-50 focus:text-teal-600">
+                                        <DropdownMenuItem onClick={() => navigate('/dashboard/medicine-orders')}>
                                             <Activity className="mr-3 h-4 w-4" /> My Orders
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="bg-gray-100 my-1" />
-                                        <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50 cursor-pointer rounded-xl px-3 py-2.5 font-medium transition-colors">
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-red-600 focus:text-red-700 focus:bg-red-50">
                                             <LogOut className="mr-3 h-4 w-4" /> Sign Out
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
