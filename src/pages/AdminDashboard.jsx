@@ -12,6 +12,8 @@ import RejectedProfiles from '../components/admin/RejectedProfiles';
 import RejectDialog from '../components/admin/RejectDialog';
 import AllUsers from '../components/admin/AllUsers';
 import AnalyticsOverview from '../components/admin/AnalyticsOverview';
+import DocumentRejectDialog from '../components/admin/DocumentRejectDialog';
+import { documentsAPI } from '@/services/api';
 
 export default function AdminDashboard() {
     // State management
@@ -26,6 +28,10 @@ export default function AdminDashboard() {
     // Reject dialog state
     const [rejectDialog, setRejectDialog] = useState(false);
     const [selectedProfile, setSelectedProfile] = useState(null);
+
+    // Document reject dialog state
+    const [docRejectDialog, setDocRejectDialog] = useState(false);
+    const [selectedDocument, setSelectedDocument] = useState(null);
 
     // Fetch all data on mount
     useEffect(() => {
@@ -156,6 +162,45 @@ export default function AdminDashboard() {
         window.open(fullUrl, '_blank');
     };
 
+    const handleVerifyDocument = async (docId) => {
+        try {
+            setProcessing(true);
+            const response = await documentsAPI.verifyDocument(docId);
+            if (response.data.success) {
+                toast.success('Document verified successfully');
+                await fetchAllData(); // Refresh to show updated status
+            }
+        } catch (error) {
+            console.error('Error verifying document:', error);
+            toast.error('Failed to verify document');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleRejectDocumentClick = (doc) => {
+        setSelectedDocument(doc);
+        setDocRejectDialog(true);
+    };
+
+    const handleRejectDocumentConfirm = async (reason) => {
+        try {
+            setProcessing(true);
+            const response = await documentsAPI.rejectDocument(selectedDocument._id, reason);
+            if (response.data.success) {
+                toast.success('Document rejected');
+                setDocRejectDialog(false);
+                setSelectedDocument(null);
+                await fetchAllData();
+            }
+        } catch (error) {
+            console.error('Error rejecting document:', error);
+            toast.error('Failed to reject document');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
     // Fetch users with pagination and filters
     const handleFetchUsers = async (params) => {
         try {
@@ -177,6 +222,8 @@ export default function AdminDashboard() {
                         onApprove={handleApprove}
                         onReject={handleRejectClick}
                         onViewDocument={handleViewDocument}
+                        onVerifyDocument={handleVerifyDocument}
+                        onRejectDocument={handleRejectDocumentClick}
                         loading={loading}
                     />
                 );
@@ -254,6 +301,18 @@ export default function AdminDashboard() {
                     }}
                     onConfirm={handleRejectConfirm}
                     profile={selectedProfile}
+                    processing={processing}
+                />
+
+                {/* Document Reject Dialog */}
+                <DocumentRejectDialog
+                    open={docRejectDialog}
+                    onClose={() => {
+                        setDocRejectDialog(false);
+                        setSelectedDocument(null);
+                    }}
+                    onConfirm={handleRejectDocumentConfirm}
+                    document={selectedDocument}
                     processing={processing}
                 />
             </div>

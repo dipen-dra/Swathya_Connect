@@ -246,59 +246,62 @@ export default function DoctorDocuments() {
                                                 {doc.notes && (
                                                     <p className="text-sm text-gray-500 mb-2">{doc.notes}</p>
                                                 )}
-                                                {doc.rejectionReason && (
-                                                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                                                        <p className="text-sm text-red-800">
-                                                            <strong>Rejection Reason:</strong> {doc.rejectionReason}
+                                                {doc.rejectionReason && doc.status === 'rejected' && (
+                                                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                                        <p className="text-xs font-bold text-red-800 uppercase tracking-wider mb-1 flex items-center">
+                                                            <X className="h-3 w-3 mr-1" /> Rejection Reason
                                                         </p>
+                                                        <p className="text-sm text-red-700">{doc.rejectionReason}</p>
                                                     </div>
                                                 )}
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-3">
                                                     <div>
-                                                        <p className="text-gray-500 font-medium">Upload Date</p>
-                                                        <p className="text-gray-900">{new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                                                        <p className="text-gray-500 font-medium flex items-center">
+                                                            <Clock className="h-3 w-3 mr-1" /> Upload Date
+                                                        </p>
+                                                        <p className="text-gray-900 font-medium">{new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString()}</p>
                                                     </div>
-                                                    {doc.verifiedAt && (
+                                                    {doc.status === 'verified' && doc.verifiedAt && (
                                                         <div>
-                                                            <p className="text-gray-500 font-medium">Verified Date</p>
-                                                            <p className="text-gray-900">{new Date(doc.verifiedAt).toLocaleDateString()}</p>
+                                                            <p className="text-gray-500 font-medium flex items-center">
+                                                                <CheckCircle2 className="h-3 w-3 mr-1" /> Verified Date
+                                                            </p>
+                                                            <p className="text-gray-900 font-medium">{new Date(doc.verifiedAt).toLocaleDateString()}</p>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex space-x-2">
+                                        <div className="flex flex-wrap gap-2">
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={() => handleDownload(doc)}
-                                                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                                className="border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
                                             >
                                                 <Download className="h-3 w-3 mr-1" />
                                                 Download
                                             </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => openEditDialog(doc)}
+                                                className={`border-gray-200 transition-colors ${doc.status === 'rejected' ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100' : 'hover:bg-green-50 hover:text-green-600 hover:border-green-200'}`}
+                                            >
+                                                <Edit3 className="h-3 w-3 mr-1" />
+                                                {doc.status === 'rejected' ? 'Replace' : 'Edit'}
+                                            </Button>
                                             {!doc.isVerificationDocument && (
-                                                <>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => openEditDialog(doc)}
-                                                        className="border-green-200 text-green-600 hover:bg-green-50"
-                                                    >
-                                                        <Edit3 className="h-3 w-3 mr-1" />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => openDeleteDialog(doc)}
-                                                        className="border-red-200 text-red-600 hover:bg-red-50"
-                                                    >
-                                                        <Trash2 className="h-3 w-3 mr-1" />
-                                                        Delete
-                                                    </Button>
-                                                </>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => openDeleteDialog(doc)}
+                                                    className="border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                                                >
+                                                    <Trash2 className="h-3 w-3 mr-1" />
+                                                    Delete
+                                                </Button>
                                             )}
                                         </div>
                                     </div>
@@ -391,7 +394,7 @@ export default function DoctorDocuments() {
                         <Button
                             onClick={handleUpload}
                             disabled={uploading}
-                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                         >
                             {uploading ? 'Uploading...' : 'Upload'}
                         </Button>
@@ -491,7 +494,7 @@ export default function DoctorDocuments() {
                         </Button>
                         <Button
                             onClick={handleEdit}
-                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                         >
                             Save Changes
                         </Button>

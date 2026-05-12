@@ -149,7 +149,9 @@ export const documentsAPI = {
     uploadDocument: (formData) => api.post('/documents/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    deleteDocument: (id) => api.delete(`/documents/${id}`)
+    deleteDocument: (id) => api.delete(`/documents/${id}`),
+    verifyDocument: (id) => api.put(`/documents/${id}/verify`),
+    rejectDocument: (id, reason) => api.put(`/documents/${id}/reject`, { reason })
 };
 
 // Prescriptions API

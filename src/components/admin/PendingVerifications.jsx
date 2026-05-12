@@ -3,7 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, CheckCircle } from 'lucide-react';
 import ProfileCard from './ProfileCard';
 
-export default function PendingVerifications({ profiles, onApprove, onReject, onViewDocument, loading }) {
+export default function PendingVerifications({ 
+    profiles, 
+    onApprove, 
+    onReject, 
+    onViewDocument, 
+    onVerifyDocument, 
+    onRejectDocument, 
+    loading 
+}) {
     if (loading) {
         return (
             <Card>
@@ -50,6 +58,8 @@ export default function PendingVerifications({ profiles, onApprove, onReject, on
                             onApprove={onApprove}
                             onReject={onReject}
                             onViewDocument={onViewDocument}
+                            onVerifyDocument={onVerifyDocument}
+                            onRejectDocument={onRejectDocument}
                             showActions={true}
                             status="pending"
                         />

@@ -5,7 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, FileText, Eye, Calendar } from 'lucide-react';
 
-export default function ProfileCard({ profile, onApprove, onReject, onViewDocument, showActions = true, status = 'pending' }) {
+export default function ProfileCard({ 
+    profile, 
+    onApprove, 
+    onReject, 
+    onViewDocument, 
+    onVerifyDocument, 
+    onRejectDocument, 
+    showActions = true, 
+    status = 'pending' 
+}) {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
@@ -114,18 +123,76 @@ export default function ProfileCard({ profile, onApprove, onReject, onViewDocume
                                 </div>
                             </div>
 
-                            {/* Documents Badge - Show for both doctors and pharmacies */}
-                            {profile.verificationDocument && (
-                                <div className="mt-3">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => onViewDocument && onViewDocument(profile.verificationDocument)}
-                                        className="text-xs"
-                                    >
-                                        <FileText className="h-3 w-3 mr-1" />
-                                        View Verification Document
-                                    </Button>
+                            {/* Documents Section */}
+                            {(profile.verificationDocument || (profile.documents && profile.documents.length > 0)) && (
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Professional Documents</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {/* Primary Verification Document */}
+                                        {profile.verificationDocument && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const token = localStorage.getItem('token');
+                                                    onViewDocument && onViewDocument(`${profile.verificationDocument}${profile.verificationDocument.includes('?') ? '&' : '?'}token=${token}`);
+                                                }}
+                                                className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                                            >
+                                                <FileText className="h-3 w-3 mr-1" />
+                                                Primary Verification
+                                            </Button>
+                                        )}
+                                        
+                                        {/* Additional Documents from collection */}
+                                        {profile.documents && profile.documents.map((doc, idx) => (
+                                            <div key={doc._id || idx} className="flex items-center space-x-2">
+                                                <div className="flex flex-col">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            const token = localStorage.getItem('token');
+                                                            onViewDocument && onViewDocument(`${doc.documentUrl}${doc.documentUrl.includes('?') ? '&' : '?'}token=${token}`);
+                                                        }}
+                                                        className={`text-xs border-gray-200 hover:bg-gray-50 ${doc.status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' : doc.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' : 'text-gray-600'}`}
+                                                    >
+                                                        <Eye className="h-3 w-3 mr-1" />
+                                                        {doc.documentName || `Document ${idx + 1}`}
+                                                        {doc.status !== 'pending' && (
+                                                            <span className="ml-2 uppercase text-[10px] font-bold">
+                                                                ({doc.status})
+                                                            </span>
+                                                        )}
+                                                    </Button>
+                                                </div>
+
+                                                {/* Individual Document Actions */}
+                                                {status === 'pending' && doc.status === 'pending' && (
+                                                    <div className="flex items-center space-x-1">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                            onClick={() => onVerifyDocument && onVerifyDocument(doc._id)}
+                                                            title="Verify Document"
+                                                        >
+                                                            <CheckCircle className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            onClick={() => onRejectDocument && onRejectDocument(doc)}
+                                                            title="Reject Document"
+                                                        >
+                                                            <XCircle className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -150,14 +217,28 @@ export default function ProfileCard({ profile, onApprove, onReject, onViewDocume
                     {/* Action Buttons */}
                     {showActions && status === 'pending' && (
                         <div className="flex flex-col space-y-2 ml-4">
-                            <Button
-                                onClick={() => onApprove(profile._id)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve
-                            </Button>
+                            {(() => {
+                                const allDocsVerified = !profile.documents || profile.documents.length === 0 || 
+                                                       profile.documents.every(doc => doc.status === 'verified');
+                                return (
+                                    <>
+                                        <Button
+                                            onClick={() => onApprove(profile._id)}
+                                            className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            size="sm"
+                                            disabled={!allDocsVerified}
+                                        >
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            {allDocsVerified ? 'Approve Profile' : 'Verify All Docs First'}
+                                        </Button>
+                                        {!allDocsVerified && (
+                                            <p className="text-[10px] text-orange-600 font-medium text-center max-w-[100px]">
+                                                Individual document verification required before approval
+                                            </p>
+                                        )}
+                                    </>
+                                );
+                            })()}
                             <Button
                                 onClick={() => onReject(profile)}
                                 variant="outline"

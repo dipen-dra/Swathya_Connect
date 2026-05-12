@@ -30,6 +30,7 @@ import {
     Phone,
     Video,
     CheckCircle,
+    CheckCircle2,
     TrendingUp,
     Shield,
     Award,
@@ -38,19 +39,20 @@ import {
     User,
     Settings,
     LogOut,
+    Plus,
+    Trash2,
     X,
-    Check,
-    AlertCircle,
-    DollarSign,
-    FileText,
-    Eye,
-    Calendar as CalendarIcon,
+    XCircle,
+    ChevronRight,
+    ArrowLeft,
     Upload,
+    FileText,
+    AlertCircle,
+    Eye,
     Download,
     Edit3,
-    Trash2,
-    Plus,
-    CheckCircle2
+    DollarSign,
+    Check
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/layout/Header';
@@ -102,7 +104,16 @@ export default function DoctorDashboard() {
         videoFee: '',
         workplace: '',
         availabilityDays: [],
-        availabilityTime: ''
+        availabilityTime: '',
+        weeklySchedule: [
+            { day: 'Monday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Tuesday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Wednesday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Thursday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Friday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Saturday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+            { day: 'Sunday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] }
+        ]
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -499,7 +510,6 @@ export default function DoctorDashboard() {
         }
     }, [tab]);
 
-    // Initialize verification fees from profile
     useEffect(() => {
         if (profile) {
             setVerificationFees({
@@ -508,10 +518,57 @@ export default function DoctorDashboard() {
                 videoFee: profile.videoFee || '',
                 workplace: profile.workplace || '',
                 availabilityDays: profile.availabilityDays || [],
-                availabilityTime: profile.availabilityTime || ''
+                availabilityTime: profile.availabilityTime || '',
+                weeklySchedule: profile.weeklySchedule && profile.weeklySchedule.length > 0 
+                    ? profile.weeklySchedule 
+                    : [
+                        { day: 'Monday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Tuesday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Wednesday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Thursday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Friday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Saturday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] },
+                        { day: 'Sunday', isAvailable: false, slots: [{ start: '09:00', end: '17:00' }] }
+                    ]
             });
         }
     }, [profile]);
+
+    const handleWeeklyScheduleChange = (dayIndex, field, value) => {
+        setVerificationFees(prev => {
+            const newSchedule = [...prev.weeklySchedule];
+            newSchedule[dayIndex] = { ...newSchedule[dayIndex], [field]: value };
+            return { ...prev, weeklySchedule: newSchedule };
+        });
+    };
+
+    const handleSlotChange = (dayIndex, slotIndex, field, value) => {
+        setVerificationFees(prev => {
+            const newSchedule = [...prev.weeklySchedule];
+            const newSlots = [...newSchedule[dayIndex].slots];
+            newSlots[slotIndex] = { ...newSlots[slotIndex], [field]: value };
+            newSchedule[dayIndex] = { ...newSchedule[dayIndex], slots: newSlots };
+            return { ...prev, weeklySchedule: newSchedule };
+        });
+    };
+
+    const addSlot = (dayIndex) => {
+        setVerificationFees(prev => {
+            const newSchedule = [...prev.weeklySchedule];
+            const newSlots = [...newSchedule[dayIndex].slots, { start: '09:00', end: '17:00' }];
+            newSchedule[dayIndex] = { ...newSchedule[dayIndex], slots: newSlots };
+            return { ...prev, weeklySchedule: newSchedule };
+        });
+    };
+
+    const removeSlot = (dayIndex, slotIndex) => {
+        setVerificationFees(prev => {
+            const newSchedule = [...prev.weeklySchedule];
+            const newSlots = newSchedule[dayIndex].slots.filter((_, idx) => idx !== slotIndex);
+            newSchedule[dayIndex] = { ...newSchedule[dayIndex], slots: newSlots };
+            return { ...prev, weeklySchedule: newSchedule };
+        });
+    };
 
     // Handle tab change and update URL
     const handleTabChange = (newTab) => {
@@ -534,15 +591,7 @@ export default function DoctorDashboard() {
         }));
     };
 
-    // Handle availability day toggle
-    const handleAvailabilityDayToggle = (day) => {
-        setVerificationFees(prev => ({
-            ...prev,
-            availabilityDays: prev.availabilityDays.includes(day)
-                ? prev.availabilityDays.filter(d => d !== day)
-                : [...prev.availabilityDays, day]
-        }));
-    };
+
 
     // Handle verification submission
     const handleSubmitVerification = async () => {
@@ -552,10 +601,11 @@ export default function DoctorDashboard() {
             return;
         }
 
-        // Validate availability fields
-        if (!verificationFees.workplace || verificationFees.availabilityDays.length === 0 || !verificationFees.availabilityTime) {
+        // Validate weekly schedule (at least one day must be available)
+        const hasAvailability = verificationFees.weeklySchedule.some(day => day.isAvailable);
+        if (!verificationFees.workplace || !hasAvailability) {
             toast.error('Please fill in all availability details', {
-                description: 'Workplace, availability days, and time are required'
+                description: 'Workplace and at least one available day are required'
             });
             return;
         }
@@ -577,8 +627,14 @@ export default function DoctorDashboard() {
                 audioFee: parseInt(verificationFees.audioFee),
                 videoFee: parseInt(verificationFees.videoFee),
                 workplace: verificationFees.workplace,
-                availabilityDays: verificationFees.availabilityDays,
-                availabilityTime: verificationFees.availabilityTime
+                weeklySchedule: verificationFees.weeklySchedule,
+                availabilityDays: verificationFees.weeklySchedule
+                    .filter(day => day.isAvailable)
+                    .map(day => day.day),
+                availabilityTime: verificationFees.weeklySchedule
+                    .filter(day => day.isAvailable)
+                    .map(day => `${day.day.substring(0,3)}: ${day.slots.map(s => `${s.start}-${s.end}`).join(', ')}`)
+                    .join(' | ')
             });
 
             // Then submit for review
@@ -1301,12 +1357,12 @@ export default function DoctorDashboard() {
                 </Card>
 
                 <div className="space-y-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8 overflow-x-auto pb-2 scrollbar-none" aria-label="Tabs">
+                    <div className="border-b border-gray-300">
+                        <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none" aria-label="Tabs">
                             <button
                                 onClick={() => handleTabChange('requests')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'requests'
-                                    ? 'border-green-600 text-green-600'
+                                    ? 'border-emerald-600 text-emerald-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -1315,7 +1371,7 @@ export default function DoctorDashboard() {
                             <button
                                 onClick={() => handleTabChange('schedule')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'schedule'
-                                    ? 'border-green-600 text-green-600'
+                                    ? 'border-emerald-600 text-emerald-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -1326,7 +1382,7 @@ export default function DoctorDashboard() {
                                 <button
                                     onClick={() => handleTabChange('verification')}
                                     className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'verification'
-                                        ? 'border-green-600 text-green-600'
+                                        ? 'border-emerald-600 text-emerald-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
@@ -1336,7 +1392,7 @@ export default function DoctorDashboard() {
                             <button
                                 onClick={() => handleTabChange('profile')}
                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
-                                    ? 'border-green-600 text-green-600'
+                                    ? 'border-emerald-600 text-emerald-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -1404,7 +1460,7 @@ export default function DoctorDashboard() {
 
                             {approvedRequests.length === 0 && completedRequests.length === 0 && (
                                 <div className="text-center py-12">
-                                    <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                                    <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                                     <p className="text-gray-600 font-medium">No scheduled consultations</p>
                                     <p className="text-sm text-gray-500 mt-1">Approved consultations will appear here</p>
                                 </div>
@@ -1583,45 +1639,110 @@ export default function DoctorDashboard() {
                                             />
                                         </div>
 
-                                        {/* Availability Days */}
-                                        <div>
-                                            <Label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Availability Days
-                                            </Label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                                                    <div key={day} className="flex items-center space-x-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            id={day}
-                                                            checked={verificationFees.availabilityDays.includes(day)}
-                                                            onChange={() => handleAvailabilityDayToggle(day)}
-                                                            disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
-                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                                        />
-                                                        <label htmlFor={day} className="text-sm text-gray-700">
-                                                            {day}
-                                                        </label>
+                                        {/* Weekly Schedule Builder */}
+                                        <div className="pt-6 border-t border-gray-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <Label className="text-base font-bold text-gray-900">Weekly Availability</Label>
+                                                    <p className="text-xs text-gray-500">Set your specific working hours for each day</p>
+                                                </div>
+                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                                                    <Clock className="w-3 h-3 mr-1" /> Flexible Hours
+                                                </Badge>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {verificationFees.weeklySchedule.map((item, dayIdx) => (
+                                                    <div 
+                                                        key={item.day} 
+                                                        className={`p-4 rounded-2xl border transition-all duration-300 ${
+                                                            item.isAvailable 
+                                                                ? 'bg-white border-blue-100 shadow-sm' 
+                                                                : 'bg-gray-50/50 border-gray-100 opacity-60'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center space-x-3">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                                                                    item.isAvailable ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                                                                }`}>
+                                                                    <Calendar className="w-5 h-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-bold text-gray-900">{item.day}</span>
+                                                                    <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                                                                        {item.isAvailable ? 'Available' : 'Unavailable'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center space-x-4">
+                                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        className="sr-only peer"
+                                                                        checked={item.isAvailable}
+                                                                        onChange={(e) => handleWeeklyScheduleChange(dayIdx, 'isAvailable', e.target.checked)}
+                                                                        disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                                    />
+                                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                        {item.isAvailable && (
+                                                            <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                                                                {item.slots.map((slot, slotIdx) => (
+                                                                    <div key={slotIdx} className="flex items-center space-x-2">
+                                                                        <div className="flex-1 grid grid-cols-2 gap-2">
+                                                                            <div className="relative">
+                                                                                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                                                                                <Input 
+                                                                                    type="time"
+                                                                                    value={slot.start}
+                                                                                    onChange={(e) => handleSlotChange(dayIdx, slotIdx, 'start', e.target.value)}
+                                                                                    disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                                                    className="pl-9 bg-gray-50 border-0 rounded-xl"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="relative">
+                                                                                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                                                                                <Input 
+                                                                                    type="time"
+                                                                                    value={slot.end}
+                                                                                    onChange={(e) => handleSlotChange(dayIdx, slotIdx, 'end', e.target.value)}
+                                                                                    disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                                                    className="pl-9 bg-gray-50 border-0 rounded-xl"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        {item.slots.length > 1 && (
+                                                                            <Button 
+                                                                                variant="ghost" 
+                                                                                size="icon"
+                                                                                onClick={() => removeSlot(dayIdx, slotIdx)}
+                                                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                                                className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                                                                            >
+                                                                                <Trash2 className="w-4 h-4" />
+                                                                            </Button>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm"
+                                                                    onClick={() => addSlot(dayIdx)}
+                                                                    disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
+                                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-bold text-xs"
+                                                                >
+                                                                    <Plus className="w-3 h-3 mr-1" /> Add Break / Split Shift
+                                                                </Button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
-                                        </div>
-
-                                        {/* Availability Time */}
-                                        <div>
-                                            <Label htmlFor="availabilityTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Availability Time
-                                            </Label>
-                                            <Input
-                                                id="availabilityTime"
-                                                name="availabilityTime"
-                                                type="text"
-                                                value={verificationFees.availabilityTime}
-                                                onChange={handleFeeChange}
-                                                disabled={profile?.submittedForReview && profile?.verificationStatus === 'pending'}
-                                                className="border-gray-200"
-                                                placeholder="e.g., 9:00 AM - 5:00 PM"
-                                            />
                                         </div>
 
                                         {/* Submit Button */}
@@ -1829,7 +1950,7 @@ export default function DoctorDashboard() {
                                         handleDocumentUpload();
                                         setDocumentDialog(false);
                                     }}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                 >
                                     Upload Document
                                 </Button>
