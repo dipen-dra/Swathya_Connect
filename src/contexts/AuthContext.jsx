@@ -1,14 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 const AuthContext = createContext(undefined);
 
-// Demo users for testing
-const demoUsers = [
-    { id: '1', name: 'John Patient', email: 'patient@demo.com', password: 'demo123', role: 'patient', verified: true },
-    { id: '2', name: 'Dr. Sarah Wilson', email: 'doctor@demo.com', password: 'demo123', role: 'doctor', verified: true },
-    { id: '3', name: 'MediCare Pharmacy', email: 'pharmacy@demo.com', password: 'demo123', role: 'pharmacy', verified: true },
-    { id: '4', name: 'Admin User', email: 'admin@demo.com', password: 'demo123', role: 'admin', verified: true },
-];
+// Listen for global logout events dispatched by api interceptor
+const handleGlobalLogout = (e) => {
+    console.log('🔐 AuthContext: Global logout event received');
+    // Using a separate function to avoid closure issues with logout()
+    localStorage.removeItem('swasthya_user');
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+    
+    if (e.detail?.message) {
+        setTimeout(() => {
+            toast.error(e.detail.message, { 
+                duration: 6000,
+                position: 'top-center',
+                style: {
+                    minWidth: '350px',
+                    fontWeight: 'bold'
+                }
+            });
+        }, 500);
+    }
+};
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -30,12 +45,6 @@ export function AuthProvider({ children }) {
             }
         }
         setIsLoading(false);
-
-        // Listen for global logout events dispatched by api interceptor
-        const handleGlobalLogout = () => {
-            console.log('🔐 AuthContext: Global logout event received');
-            logout();
-        };
 
         window.addEventListener('auth:logout', handleGlobalLogout);
 

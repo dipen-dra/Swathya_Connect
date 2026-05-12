@@ -44,10 +44,20 @@ api.interceptors.response.use(
     (error) => {
         console.error('❌ API Response Error:', error.response?.status, error.response?.data || error.message);
         
-        // Handle 401 Unauthorized - redirect to login or clear auth state
-        if (error.response && error.response.status === 401) {
-            console.log('🔐 API: Unauthorized access, triggering logout...');
-            window.dispatchEvent(new CustomEvent('auth:logout'));
+        // Handle 401/403 - trigger logout for deactivation
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            const message = error.response.data?.message || '';
+            
+            // If it's a deactivation message, show toast and logout
+            if (message.includes('deactivated')) {
+                console.log('🔐 API: Account deactivated, triggering logout...');
+                window.dispatchEvent(new CustomEvent('auth:logout', { 
+                    detail: { message: message } 
+                }));
+            } else if (error.response.status === 401) {
+                console.log('🔐 API: Unauthorized access, triggering logout...');
+                window.dispatchEvent(new CustomEvent('auth:logout'));
+            }
         }
         
         return Promise.reject(error);
@@ -174,7 +184,9 @@ export const adminAPI = {
     approveProfile: (profileId) => api.put(`/admin/approve/${profileId}`),
     rejectProfile: (profileId, reason) => api.put(`/admin/reject/${profileId}`, { reason }),
     getAllUsers: (params) => api.get('/admin/users', { params }),
-    getAnalytics: () => api.get('/admin/analytics')
+    getAnalytics: () => api.get('/admin/analytics'),
+    deactivateUser: (userId) => api.put(`/admin/users/${userId}/deactivate`),
+    activateUser: (userId) => api.put(`/admin/users/${userId}/activate`)
 };
 
 // Category API
