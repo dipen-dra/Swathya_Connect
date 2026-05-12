@@ -140,15 +140,17 @@ export default function Navbar() {
               alt="Swasthya Connect"
               className={`transition-all duration-700 ${scrolled ? "h-10 md:h-12" : "h-12 md:h-14"} object-contain`}
             />
-            <div className="hidden lg:block h-6 w-px bg-gray-200 mx-2"></div>
-            <span className="text-xl font-bold text-gray-900 hidden lg:block tracking-tight">Swasthya <span className="text-teal-600">Connect</span></span>
+            <div className={`hidden lg:block h-6 w-px transition-colors duration-700 mx-2 ${scrolled ? "bg-gray-200" : "bg-white/20"}`}></div>
+            <span className={`text-xl font-bold hidden lg:block tracking-tight transition-colors duration-700 ${scrolled ? "text-gray-900" : "text-white"}`}>
+              Swasthya <span className="text-teal-600">Connect</span>
+            </span>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden xl:flex items-center gap-10">
             <a 
               href="/store" 
-              className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors flex items-center gap-2 group"
+              className={`text-[13px] font-black uppercase tracking-widest transition-colors duration-700 flex items-center gap-2 group ${scrolled ? "text-gray-600 hover:text-teal-600" : "text-white/70 hover:text-white"}`}
             >
               <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
               Store
@@ -157,7 +159,7 @@ export default function Navbar() {
               <button
                 key={item.id}
                 onClick={() => scrollToId(item.id)}
-                className="text-[13px] font-black uppercase tracking-widest text-gray-600 hover:text-teal-600 transition-colors"
+                className={`text-[13px] font-black uppercase tracking-widest transition-colors duration-700 ${scrolled ? "text-gray-600 hover:text-teal-600" : "text-white/70 hover:text-white"}`}
               >
                 {item.label}
               </button>
