@@ -349,7 +349,7 @@ export default function Header() {
 
                                         // Navigate based on user role
                                         if (user?.role === 'doctor') {
-                                            navigate('/doctor/dashboard'); // Doctor dashboard has profile tab
+                                            navigate('/doctor/profile'); 
                                         } else if (user?.role === 'pharmacy') {
                                             navigate('/pharmacy-dashboard/profile');
                                         } else {
