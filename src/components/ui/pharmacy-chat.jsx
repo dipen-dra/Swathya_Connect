@@ -496,8 +496,11 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                     </div>
                                 ) : (
                                     messages.map((message) => {
-                                        const senderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
-                                        const isOwnMessage = senderId === user?.id;
+                                        // Ultra-robust sender check
+                                        const msgSenderId = message.sender?._id || message.sender?.id || (typeof message.sender === 'string' ? message.sender : null);
+                                        const currentUserId = user?.id || user?._id;
+                                        const isOwnMessage = msgSenderId && currentUserId && String(msgSenderId) === String(currentUserId);
+
                                         return (
                                             <div
                                                 key={message._id}
@@ -507,7 +510,7 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarFallback
                                                         className={`${isOwnMessage
-                                                            ? 'bg-blue-600 text-white'
+                                                            ? 'bg-blue-600 text-white shadow-sm'
                                                             : 'bg-purple-100 text-purple-600'
                                                             }`}
                                                     >
