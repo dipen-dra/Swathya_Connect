@@ -1,5 +1,5 @@
 import React from "react";
-import { Info, Video, CheckCircle2, Calendar, Star, ShieldCheck, Activity, Target, Plus, Zap, Heart } from "lucide-react";
+import { Info, CheckCircle2, Calendar, Star, ShieldCheck, Activity, Target, Plus, Zap, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ShaderAnimation } from "@/components/ui/ShaderAnimation";
@@ -175,16 +175,6 @@ export default function Hero() {
                       </div>
                    </div>
                 </motion.div>
-             </div>
-             
-             <div className="flex items-center gap-6 mt-12 justify-end">
-                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5">
-                   <Video className="w-5 h-5 text-teal-400" />
-                </div>
-                <div className="text-right">
-                   <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Watch Guide</p>
-                   <p className="text-sm font-bold text-white underline underline-offset-4 cursor-pointer hover:text-teal-400 transition-colors">Digital Onboarding</p>
-                </div>
              </div>
           </div>
 

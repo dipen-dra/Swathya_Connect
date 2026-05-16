@@ -277,7 +277,8 @@ export const storeAPI = {
     getProducts: (params) => api.get('/store/products', { params }),
     getProduct: (id) => api.get(`/store/products/${id}`),
     getCategories: () => api.get('/store/categories'),
-    validatePromo: (code) => api.post('/store/promo/validate', { code })
+    validatePromo: (code) => api.post('/store/promo/validate', { code }),
+    getPrescriptionRecommendations: () => api.get('/store/prescription-recommendations')
 };
 
 export default api;

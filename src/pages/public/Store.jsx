@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import Logo from '@/assets/swasthyalogo.png';
 import { StoreHeader } from '@/components/layout/StoreHeader';
@@ -6,12 +6,13 @@ import { StoreHero } from '@/components/store/StoreHero';
 import { HealthConcerns } from '@/components/store/HealthConcerns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
+import { useSocket } from "@/contexts/SocketContext";
 import { storeAPI, categoryAPI } from '@/services/api';
 import ProductCard from '@/components/store/ProductCard';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, ShoppingCart, SlidersHorizontal, PackageX, Check, Star, X, LayoutGrid, Pill, ClipboardList, Zap, Package } from 'lucide-react';
+import { Search, Filter, ShoppingCart, SlidersHorizontal, PackageX, Check, Star, X, LayoutGrid, Pill, ClipboardList, Zap, Package, Stethoscope, FileText, Sparkles, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import AnimatedLoadingSkeleton from '@/components/ui/AnimatedLoadingSkeleton';
 import {
@@ -33,6 +34,7 @@ export default function Store() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const { socket } = useSocket();
     const productsSectionRef = useRef(null);
 
     // Products State
@@ -42,6 +44,13 @@ export default function Store() {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
+
+    // Prescription Recommendations State
+    const [prescriptionRecs, setPrescriptionRecs] = useState([]);
+    const [prescriptionSummaries, setPrescriptionSummaries] = useState([]);
+    const [recsLoading, setRecsLoading] = useState(false);
+    const [recsExpanded, setRecsExpanded] = useState(true);
+    const [newPrescriptionAlert, setNewPrescriptionAlert] = useState(false);
 
     // Filter State
     const [search, setSearch] = useState('');
@@ -60,6 +69,54 @@ export default function Store() {
         fetchProducts(true); // Initial fetch, reset
         fetchCategories();
     }, []);
+
+    // Fetch prescription-based recommendations when patient is logged in
+    const fetchPrescriptionRecs = useCallback(async () => {
+        if (!user || user.role !== 'patient') return;
+        try {
+            setRecsLoading(true);
+            console.log('[Store] Fetching prescription recommendations for:', user.id);
+            const res = await storeAPI.getPrescriptionRecommendations();
+            if (res.data.success) {
+                console.log('[Store] Recommendations loaded:', res.data.data?.length, 'products,', res.data.prescriptions?.length, 'prescriptions');
+                setPrescriptionRecs(res.data.data || []);
+                setPrescriptionSummaries(res.data.prescriptions || []);
+            }
+        } catch (err) {
+            console.error('[Store] Could not load prescription recommendations:', err);
+        } finally {
+            setRecsLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchPrescriptionRecs();
+    }, [fetchPrescriptionRecs]);
+
+    // Real-time: listen for new prescription from doctor
+    useEffect(() => {
+        if (!socket || !user || user.role !== 'patient') return;
+
+        const handleNewPrescription = (data) => {
+            console.log('💊 New prescription received, refreshing store recommendations:', data);
+            setNewPrescriptionAlert(true);
+            fetchPrescriptionRecs();
+            toast.success(
+                `New prescription received! ${data.medicines?.length || 0} medicine(s) added to your store recommendations.`,
+                { duration: 5000, icon: '💊' }
+            );
+            // Auto-hide the "NEW" badge after 30s
+            setTimeout(() => setNewPrescriptionAlert(false), 30000);
+        };
+
+        socket.on('prescription:created', handleNewPrescription);
+        socket.on('prescription:updated', handleNewPrescription);
+        return () => {
+            socket.off('prescription:created', handleNewPrescription);
+            socket.off('prescription:updated', handleNewPrescription);
+        };
+    }, [socket, user, fetchPrescriptionRecs]);
+
 
     // Update localStorage when cart changes
     useEffect(() => {
@@ -244,15 +301,175 @@ export default function Store() {
                     </div>
                 </div>
 
+
                 {/* Homepage Sections (Hero & Categories) - Only show when NOT searching/filtering */}
                 {category === 'all' && !search && (
                     <div className="mb-16 animate-fade-in">
                         <StoreHero onShopNow={handleShopNow} />
                         <HealthConcerns onCategorySelect={(cat) => setCategory(cat)} />
                         <div className="h-px bg-gray-100 my-16"></div>
+
+                        {/* ===== PRESCRIBED FOR YOU SECTION ===== */}
+                        {user && user.role === 'patient' && (prescriptionSummaries.length > 0 || recsLoading) && (
+                            <div className="mb-12 animate-fade-in">
+                                {/* Section Header Banner */}
+                                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-500 p-6 mb-6 shadow-xl shadow-teal-100">
+                                    {/* Background decoration */}
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-20 translate-x-20" />
+                                    <div className="absolute bottom-0 left-1/2 w-40 h-40 bg-white/5 rounded-full translate-y-16" />
+
+                                    <div className="relative z-10 flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+                                                <Stethoscope className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h3 className="text-lg font-black text-white tracking-tight">Prescribed for You</h3>
+                                                    {newPrescriptionAlert && (
+                                                        <span className="inline-flex items-center gap-1 bg-yellow-400 text-yellow-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                                                            <Sparkles className="w-2.5 h-2.5" /> New
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-teal-100 text-sm font-medium">
+                                                    Based on your latest {prescriptionSummaries.length > 1 ? `${prescriptionSummaries.length} prescriptions` : 'prescription'}
+                                                    {prescriptionSummaries[0]?.diagnosis && (
+                                                        <span className="text-white font-semibold"> · {prescriptionSummaries[0].diagnosis}</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            {/* Prescription pills summary */}
+                                            {prescriptionSummaries[0] && (
+                                                <div className="hidden sm:flex flex-wrap gap-1.5 max-w-[300px]">
+                                                    {prescriptionSummaries[0].medicines.slice(0, 3).map((med, i) => (
+                                                        <span key={i} className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
+                                                            {med}
+                                                        </span>
+                                                    ))}
+                                                    {prescriptionSummaries[0].medicines.length > 3 && (
+                                                        <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
+                                                            +{prescriptionSummaries[0].medicines.length - 3} more
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <button
+                                                onClick={() => setRecsExpanded(v => !v)}
+                                                className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+                                            >
+                                                {recsExpanded
+                                                    ? <ChevronUp className="w-4 h-4 text-white" />
+                                                    : <ChevronDown className="w-4 h-4 text-white" />
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Doctor info row */}
+                                    {prescriptionSummaries.length > 0 && (
+                                        <div className="relative z-10 flex items-center gap-4 mt-4 pt-4 border-t border-white/20">
+                                            <FileText className="w-3.5 h-3.5 text-teal-200 flex-shrink-0" />
+                                            <div className="flex gap-4 overflow-x-auto no-scrollbar">
+                                                {prescriptionSummaries.map((rx, i) => (
+                                                    <span key={rx._id} className="text-[10px] font-bold text-teal-100 whitespace-nowrap">
+                                                        Prescribed by <span className="text-white">{rx.doctorName}</span>
+                                                        <span className="text-teal-200 mx-1">·</span>
+                                                        {new Date(rx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                        {i < prescriptionSummaries.length - 1 && <span className="text-teal-300 ml-4">|</span>}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Recommended Products Grid */}
+                                {recsExpanded && (
+                                    <div>
+                                        {recsLoading ? (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                                {[...Array(6)].map((_, i) => (
+                                                    <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+                                                        <div className="h-32 bg-gray-100" />
+                                                        <div className="p-3 space-y-2">
+                                                            <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                                                            <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : prescriptionRecs.length === 0 ? (
+                                            <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4">
+                                                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                                <p className="text-sm text-amber-700 font-medium">
+                                                    Your prescribed medicines are not yet available in the store inventory. We'll update you as soon as they're in stock!
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                                {prescriptionRecs.map((product) => (
+                                                    <div
+                                                        key={product._id}
+                                                        className="group relative bg-white rounded-2xl border-2 border-teal-100 shadow-sm hover:shadow-lg hover:border-teal-300 transition-all duration-300 overflow-hidden cursor-pointer"
+                                                        onClick={() => setSelectedProduct(product)}
+                                                    >
+                                                        {/* Prescribed badge */}
+                                                        <div className="absolute top-2 left-2 z-10 bg-teal-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                            Prescribed
+                                                        </div>
+
+                                                        {/* Image */}
+                                                        <div className="h-32 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                                            {product.image ? (
+                                                                <img
+                                                                    src={product.image.startsWith('http') ? product.image : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8080'}${product.image}`}
+                                                                    alt={product.medicineName}
+                                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                                    onError={(e) => { e.target.onerror = null; e.target.src = Logo; }}
+                                                                />
+                                                            ) : (
+                                                                <div className="flex flex-col items-center text-teal-200">
+                                                                    <Pill className="w-10 h-10" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Info */}
+                                                        <div className="p-3">
+                                                            <p className="text-[10px] text-teal-600 font-bold uppercase tracking-wider mb-0.5 truncate">
+                                                                {product.prescribedMedicineMatches?.[0] || product.category}
+                                                            </p>
+                                                            <h4 className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-2">
+                                                                {product.medicineName}
+                                                            </h4>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-sm font-black text-gray-900">Rs. {product.price?.toLocaleString()}</span>
+                                                            </div>
+                                                            <button
+                                                                className="mt-2 w-full h-8 bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white text-[10px] font-black rounded-xl transition-all duration-200 active:scale-95 border border-teal-100 hover:border-teal-600"
+                                                                onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+                                                            >
+                                                                Add to Cart
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {/* ===== END PRESCRIBED FOR YOU ===== */}
+
                         <h3 className="text-3xl font-black text-gray-900 mb-10 tracking-tight">Explore Products</h3>
                     </div>
                 )}
+
 
                 <div className="max-w-[1920px] mx-auto relative z-20 pb-20">
                     <div className="flex flex-col lg:flex-row gap-8">
