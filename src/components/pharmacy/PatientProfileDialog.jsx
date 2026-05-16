@@ -15,7 +15,7 @@ export function PatientProfileDialog({ open, onOpenChange, patient }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white">
                 <DialogHeader className="border-b border-gray-100 pb-4">
                     <DialogTitle>Patient Profile</DialogTitle>
                 </DialogHeader>

@@ -39,7 +39,7 @@ export function RejectPrescriptionDialog({ open, onOpenChange, order, onRejected
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white">
                 <DialogHeader>
                     <DialogTitle>Reject Prescription</DialogTitle>
                 </DialogHeader>

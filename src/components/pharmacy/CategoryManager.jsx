@@ -110,7 +110,7 @@ export function CategoryManager({ categories, onCategoryUpdate }) {
 
             {/* Create Dialog */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto bg-white">
                     <DialogHeader>
                         <DialogTitle>Add New Category</DialogTitle>
                         <DialogDescription>Create a category to organize your medicines.</DialogDescription>

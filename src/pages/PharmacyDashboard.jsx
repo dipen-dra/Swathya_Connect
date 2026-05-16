@@ -1487,7 +1487,7 @@ export default function PharmacyDashboard() {
 
             {/* Inventory Dialog */}
             < Dialog open={showInventoryDialog} onOpenChange={setShowInventoryDialog} >
-                <DialogContent className="max-w-2xl bg-white">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
                     <DialogHeader>
                         <DialogTitle>{editingItem ? 'Edit Medicine' : 'Add New Medicine'}</DialogTitle>
                         <DialogDescription>
@@ -1832,7 +1832,7 @@ export default function PharmacyDashboard() {
 
             {/* Add Category Dialog */}
             <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-                <DialogContent className="bg-white sm:max-w-md">
+                <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Create New Category</DialogTitle>
                         <DialogDescription>Add a new category for your medicines.</DialogDescription>

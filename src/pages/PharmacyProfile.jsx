@@ -39,7 +39,9 @@ export default function PharmacyProfile() {
         country: 'Nepal',
         pharmacyName: '',
         licenseNumber: '',
-        registrationDate: ''
+        registrationDate: '',
+        latitude: profile?.latitude || null,
+        longitude: profile?.longitude || null
     });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +74,9 @@ export default function PharmacyProfile() {
                 gender: profile.gender || 'other',
                 address: profile.address || '',
                 city: profile.city || '',
-                country: profile.country || 'Nepal'
+                country: profile.country || 'Nepal',
+                latitude: profile.latitude || null,
+                longitude: profile.longitude || null
             }));
         }
     }, [profile, user]);
@@ -174,7 +178,9 @@ export default function PharmacyProfile() {
                         setFormData(prev => ({
                             ...prev,
                             address: fullAddress,
-                            city: city
+                            city: city,
+                            latitude: latitude,
+                            longitude: longitude
                         }));
 
                         toast.dismiss();

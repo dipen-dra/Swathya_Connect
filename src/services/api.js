@@ -126,7 +126,7 @@ export const doctorsAPI = {
 
 // Pharmacies API
 export const pharmaciesAPI = {
-    getPharmacies: () => api.get('/pharmacies'),
+    getPharmacies: (params) => api.get('/pharmacies', { params }),
     getPharmacyById: (id) => api.get(`/pharmacies/${id}`)
 };
 

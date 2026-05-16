@@ -700,7 +700,7 @@ export default function Store() {
 
                 {/* Product Details Dialog */}
                 <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
-                    <DialogContent className="max-w-lg bg-white p-0 gap-0 overflow-hidden rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border-0">
+                    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white p-0 gap-0 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border-0">
                         {selectedProduct && (
                             <div className="flex flex-col">
                                 {/* Top: Immersive Image */}

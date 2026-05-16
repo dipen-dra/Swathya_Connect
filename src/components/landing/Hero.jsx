@@ -1,5 +1,5 @@
 import React from "react";
-import { Info, CheckCircle2, Calendar, Star, ShieldCheck, Activity, Target, Plus, Zap, Heart } from "lucide-react";
+import { Info, CheckCircle2, Video, Calendar, Star, ShieldCheck, Activity, Target, Plus, Zap, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ShaderAnimation } from "@/components/ui/ShaderAnimation";

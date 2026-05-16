@@ -34,7 +34,9 @@ export function ProfilePage() {
         medicalHistory: profile?.medicalHistory || '',
         address: profile?.address || '',
         city: profile?.city || '',
-        country: profile?.country || 'Nepal'
+        country: profile?.country || 'Nepal',
+        latitude: profile?.latitude || null,
+        longitude: profile?.longitude || null
     });
 
     // Update formData when profile loads from API
@@ -54,7 +56,9 @@ export function ProfilePage() {
                 medicalHistory: profile.medicalHistory || '',
                 address: profile.address || '',
                 city: profile.city || '',
-                country: profile.country || 'Nepal'
+                country: profile.country || 'Nepal',
+                latitude: profile.latitude || null,
+                longitude: profile.longitude || null
             });
             setProfileImage(profile.profileImage || null);
         }
@@ -76,7 +80,7 @@ export function ProfilePage() {
         if (file) {
             try {
                 setIsUploadingImage(true);
-                
+
                 // Show local preview immediately
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -86,7 +90,7 @@ export function ProfilePage() {
 
                 // Upload to backend immediately
                 await uploadProfileImage(file);
-                
+
                 console.log('✅ Image uploaded successfully');
             } catch (error) {
                 console.error('❌ Failed to upload image:', error);
@@ -162,7 +166,9 @@ export function ProfilePage() {
                         setFormData(prev => ({
                             ...prev,
                             address: fullAddress,
-                            city: city
+                            city: city,
+                            latitude: latitude,
+                            longitude: longitude
                         }));
 
                         alert('Location retrieved successfully!');

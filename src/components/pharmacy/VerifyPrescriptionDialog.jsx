@@ -1,21 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Plus, X, ZoomIn, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { pharmacyAPI } from '@/services/api';
 
 export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified }) {
-    const [medicines, setMedicines] = useState([{ name: '', dosage: '', quantity: 1, pricePerUnit: 0 }]);
+    const [medicines, setMedicines] = useState([{ name: '', dosage: '', quantity: 1, pricePerUnit: 0, inventoryId: null }]);
     const [deliveryCharges, setDeliveryCharges] = useState(0);
     const [loading, setLoading] = useState(false);
     const [showPrescription, setShowPrescription] = useState(false);
+    const [inventory, setInventory] = useState([]);
+    const [inventoryLoading, setInventoryLoading] = useState(false);
+
+    // Fetch inventory on mount
+    useEffect(() => {
+        const fetchInventory = async () => {
+            try {
+                setInventoryLoading(true);
+                const response = await pharmacyAPI.getInventory();
+                if (response.data.success) {
+                    setInventory(response.data.data || []);
+                }
+            } catch (error) {
+                console.error('Error fetching inventory:', error);
+            } finally {
+                setInventoryLoading(false);
+            }
+        };
+
+        if (open) {
+            fetchInventory();
+        }
+    }, [open]);
 
     const addMedicine = () => {
-        setMedicines([...medicines, { name: '', dosage: '', quantity: 1, pricePerUnit: 0 }]);
+        setMedicines([...medicines, { name: '', dosage: '', quantity: 1, pricePerUnit: 0, inventoryId: null }]);
     };
 
     const removeMedicine = (index) => {
@@ -32,13 +54,27 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
             return;
         }
         
-        // Force integers for price and quantity to avoid decimal issues with payment gateways
+        // Force integers for price and quantity
         let finalValue = value;
         if (field === 'quantity' || field === 'pricePerUnit') {
             finalValue = value === '' ? '' : Math.round(parseFloat(value) || 0);
         }
         
         newMedicines[index][field] = finalValue;
+
+        // Auto-fill logic when medicine name is selected/typed from datalist
+        if (field === 'name') {
+            const match = inventory.find(i => i.medicineName.toLowerCase() === value.toLowerCase());
+            if (match) {
+                newMedicines[index].inventoryId = match._id;
+                newMedicines[index].dosage = match.dosage;
+                newMedicines[index].pricePerUnit = match.price;
+                newMedicines[index].name = match.medicineName; // Use exact name
+            } else {
+                newMedicines[index].inventoryId = null;
+            }
+        }
+        
         setMedicines(newMedicines);
     };
 
@@ -69,7 +105,7 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                 onVerified();
                 onOpenChange(false);
                 // Reset form
-                setMedicines([{ name: '', dosage: '', quantity: 1, pricePerUnit: 0 }]);
+                setMedicines([{ name: '', dosage: '', quantity: 1, pricePerUnit: 0, inventoryId: null }]);
                 setDeliveryCharges(0);
             }
         } catch (error) {
@@ -111,7 +147,6 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                         <div className="space-y-2">
                             <Label>Prescription</Label>
                             {order.prescriptionImage?.toLowerCase().endsWith('.pdf') ? (
-                                // PDF file - show download button
                                 <div className="border rounded-lg p-6 bg-gray-50 text-center">
                                     <FileText className="h-16 w-16 mx-auto text-purple-600 mb-3" />
                                     <p className="text-sm text-gray-600 mb-3">PDF Prescription Document</p>
@@ -126,7 +161,6 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                                     </a>
                                 </div>
                             ) : (
-                                // Image file - display with zoom
                                 <div className="relative border rounded-lg overflow-hidden bg-white">
                                     <img
                                         src={getPrescriptionUrl(order.prescriptionImage)}
@@ -144,7 +178,8 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                                         View Full
                                     </Button>
                                 </div>
-                            )}                        </div>
+                            )}
+                        </div>
 
                         {/* Medicines */}
                         <div className="space-y-4">
@@ -175,10 +210,18 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                                         <div>
                                             <Label className="text-xs">Medicine Name *</Label>
                                             <Input
-                                                placeholder="e.g., Paracetamol"
+                                                placeholder="Search or type medicine name..."
                                                 value={medicine.name}
                                                 onChange={(e) => updateMedicine(index, 'name', e.target.value)}
+                                                list={`inventory-list-${index}`}
                                             />
+                                            <datalist id={`inventory-list-${index}`}>
+                                                {inventory.map((item) => (
+                                                    <option key={item._id} value={item.medicineName}>
+                                                        {item.dosage} - रु {item.price} (Stock: {item.quantity})
+                                                    </option>
+                                                ))}
+                                            </datalist>
                                         </div>
                                         <div>
                                             <Label className="text-xs">Dosage *</Label>
@@ -275,7 +318,6 @@ export function VerifyPrescriptionDialog({ open, onOpenChange, order, onVerified
                 </DialogContent>
             </Dialog>
 
-            {/* Full Prescription View Dialog */}
             <Dialog open={showPrescription} onOpenChange={setShowPrescription}>
                 <DialogContent className="max-w-4xl">
                     <DialogHeader>

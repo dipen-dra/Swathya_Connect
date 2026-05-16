@@ -141,6 +141,7 @@ export function PatientDashboard() {
     const [videoDialogOpen, setVideoDialogOpen] = useState(false);
     const [videoConsultationId, setVideoConsultationId] = useState(null);
     const [videoConsultationData, setVideoConsultationData] = useState(null);
+    const [liveLocation, setLiveLocation] = useState(null);
 
     // API data states
     const [doctors, setDoctors] = useState([]);
@@ -195,7 +196,6 @@ export function PatientDashboard() {
     // Doctors are already filtered by API based on search and specialty
     const sortedDoctors = doctors;
 
-    // Fetch data from API
     useEffect(() => {
         if (user) {
             fetchDoctors();
@@ -203,7 +203,33 @@ export function PatientDashboard() {
             fetchConsultations();
             fetchChats(); // Fetch chats for unread indicators
         }
-    }, [user]);
+    }, [user, liveLocation]);
+
+    // Get live location for real-time distance
+    useEffect(() => {
+        if (!navigator.geolocation) return;
+
+        const handleSuccess = (position) => {
+            const { latitude, longitude } = position.coords;
+            setLiveLocation({ lat: latitude, lon: longitude });
+        };
+
+        const handleError = (error) => {
+            console.error('Geolocation error:', error);
+        };
+
+        // Get initial position
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError);
+
+        // Watch for changes if moving
+        const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 5000
+        });
+
+        return () => navigator.geolocation.clearWatch(watchId);
+    }, []);
 
     // Listen for real-time chat updates via Socket.IO
     useEffect(() => {
@@ -280,13 +306,14 @@ export function PatientDashboard() {
         try {
             setLoadingPharmacies(true);
 
-            // Get user's location from profile or use Kathmandu default
-            const userLat = profile?.latitude || 27.7172;
-            const userLon = profile?.longitude || 85.3240;
+            // Priority: Live geolocation -> Profile -> Kathmandu default
+            const userLat = liveLocation?.lat || profile?.latitude || 27.7172;
+            const userLon = liveLocation?.lon || profile?.longitude || 85.3240;
 
             const response = await pharmaciesAPI.getPharmacies({
                 userLat,
-                userLon
+                userLon,
+                city: profile?.city || ''
             });
 
             if (response.data.success) {
@@ -1469,6 +1496,12 @@ export function PatientDashboard() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                     </svg>
                                     <h3 className="text-lg font-semibold text-gray-900">Available Pharmacies</h3>
+                                    {liveLocation && (
+                                        <Badge className="bg-blue-50 text-blue-600 border-blue-100 flex items-center space-x-1 py-0.5 animate-pulse">
+                                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                                            <span className="text-[10px] font-bold">LIVE TRACKING</span>
+                                        </Badge>
+                                    )}
                                 </div>
                                 <p className="text-sm text-gray-600 mb-6">
                                     Connect with verified pharmacies for medicine consultation and delivery
