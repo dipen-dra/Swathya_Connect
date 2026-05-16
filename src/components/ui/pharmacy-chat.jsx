@@ -496,7 +496,8 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                     </div>
                                 ) : (
                                     messages.map((message) => {
-                                        const isOwnMessage = message.sender._id === user?.id;
+                                        const senderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
+                                        const isOwnMessage = senderId === user?.id;
                                         return (
                                             <div
                                                 key={message._id}
@@ -506,11 +507,11 @@ export function PharmacyChat({ open, onOpenChange, pharmacyId, pharmacyName, pha
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarFallback
                                                         className={`${isOwnMessage
-                                                            ? 'bg-blue-100 text-blue-600'
+                                                            ? 'bg-blue-600 text-white'
                                                             : 'bg-purple-100 text-purple-600'
                                                             }`}
                                                     >
-                                                        {isOwnMessage ? 'You' : pharmacyName?.charAt(0) || 'P'}
+                                                        {isOwnMessage ? 'You' : (pharmacyName?.charAt(0) || 'P')}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div
