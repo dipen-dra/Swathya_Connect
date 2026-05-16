@@ -1478,9 +1478,7 @@ export default function PharmacyDashboard() {
 
 
 
-                        {activeTab === 'chat' && (
-                            <PharmacyChatList />
-                        )}
+
                     </CardContent>
                 </Card >
             </div >
