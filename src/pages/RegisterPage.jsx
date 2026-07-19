@@ -165,8 +165,12 @@ export default function RegisterPage() {
         });
         navigate("/login"); // Redirect to login page
       } else {
+        let errorMsg = data.message || "Could not create account";
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMsg = data.errors.map(err => `${err.field}: ${err.message}`).join('\n');
+        }
         toast.error("Registration Failed", {
-          description: data.message || "Could not create account",
+          description: errorMsg,
         });
       }
     } catch (error) {
