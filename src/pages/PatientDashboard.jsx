@@ -1147,6 +1147,11 @@ export function PatientDashboard() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="h-11 border-gray-200"
                                 />
+                                {searchTerm && (
+                                    <p className="text-sm text-gray-600 mt-2">
+                                        Results for: <span dangerouslySetInnerHTML={{ __html: searchTerm }} />
+                                    </p>
+                                )}
                             </div>
                             <Select value={sortBy} onValueChange={setSortBy}>
                                 <SelectTrigger className="w-full md:w-48 h-11 border-gray-200">
@@ -1263,73 +1268,73 @@ export function PatientDashboard() {
                                 <>
                                     {/* Upcoming Consultations */}
                                     {upcomingConsultations.length > 0 && (
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center space-x-2 mb-4">
-                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                            <Clock className="h-5 w-5 text-orange-600" />
+                                        <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                            <div className="flex items-center space-x-2 mb-4">
+                                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                    <Clock className="h-5 w-5 text-orange-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                        Upcoming Consultations
+                                                        <span className="ml-2 text-sm font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                                                            {upcomingConsultations.length}
+                                                        </span>
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">Your scheduled appointments and upcoming consultations</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {upcomingConsultations.map(renderConsultationCard)}
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Upcoming Consultations
-                                                <span className="ml-2 text-sm font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                                                    {upcomingConsultations.length}
-                                                </span>
-                                            </h3>
-                                            <p className="text-sm text-gray-600">Your scheduled appointments and upcoming consultations</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {upcomingConsultations.map(renderConsultationCard)}
-                                    </div>
-                                </div>
-                            )}
+                                    )}
 
 
-                            {/* Completed Consultations / Consultation History */}
-                            {completedConsultations.length > 0 && (
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center space-x-2 mb-4">
-                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                            <CheckCircle className="h-5 w-5 text-green-600" />
+                                    {/* Completed Consultations / Consultation History */}
+                                    {completedConsultations.length > 0 && (
+                                        <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                            <div className="flex items-center space-x-2 mb-4">
+                                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                        Consultation History
+                                                        <span className="ml-2 text-sm font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                                            {completedConsultations.length}
+                                                        </span>
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">Your past consultations and medical records</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {completedConsultations.map(renderConsultationCard)}
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Consultation History
-                                                <span className="ml-2 text-sm font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                                                    {completedConsultations.length}
-                                                </span>
-                                            </h3>
-                                            <p className="text-sm text-gray-600">Your past consultations and medical records</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {completedConsultations.map(renderConsultationCard)}
-                                    </div>
-                                </div>
-                            )}
+                                    )}
 
-                            {/* Rejected Consultations */}
-                            {rejectedConsultations.length > 0 && (
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center space-x-2 mb-4">
-                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                            <XCircle className="h-5 w-5 text-red-600" />
+                                    {/* Rejected Consultations */}
+                                    {rejectedConsultations.length > 0 && (
+                                        <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                            <div className="flex items-center space-x-2 mb-4">
+                                                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                    <XCircle className="h-5 w-5 text-red-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                        Rejected Consultations
+                                                        <span className="ml-2 text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                                                            {rejectedConsultations.length}
+                                                        </span>
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">Consultations that were rejected by the doctor</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {rejectedConsultations.map(renderConsultationCard)}
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Rejected Consultations
-                                                <span className="ml-2 text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
-                                                    {rejectedConsultations.length}
-                                                </span>
-                                            </h3>
-                                            <p className="text-sm text-gray-600">Consultations that were rejected by the doctor</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {rejectedConsultations.map(renderConsultationCard)}
-                                    </div>
-                                </div>
-                            )}
+                                    )}
 
                                     {sortedConsultations.length === 0 && (
                                         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
@@ -1384,97 +1389,97 @@ export function PatientDashboard() {
                                 ) : (
                                     sortedDoctors.map((doctor) => (
                                         <Card key={doctor.id} className="border border-gray-200 hover:shadow-lg transition-all duration-200">
-                                        <CardContent className="p-6">
-                                            <div className="space-y-4">
-                                                {/* Doctor Header */}
-                                                <div className="flex items-start space-x-4">
-                                                    <div className="relative">
-                                                        <Avatar className="h-16 w-16">
-                                                            <AvatarImage src={getImageUrl(doctor.image)} alt={doctor.name} />
-                                                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl font-bold">
-                                                                {doctor.name ? doctor.name.split(' ').map(n => n[0]).join('') : 'DR'}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        {doctor.isOnline && (
-                                                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold text-lg text-gray-900">Dr. {doctor.name}</h4>
-                                                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
-                                                            {doctor.specialty}
-                                                        </Badge>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
-                                                            <div className="flex items-center space-x-1">
-                                                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                                                <span>{doctor.rating}</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Activity className="h-4 w-4" />
-                                                                <span>{doctor.experience} years</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-1">
-                                                                <Users className="h-4 w-4" />
-                                                                <span>{doctor.patients}+ patients</span>
+                                            <CardContent className="p-6">
+                                                <div className="space-y-4">
+                                                    {/* Doctor Header */}
+                                                    <div className="flex items-start space-x-4">
+                                                        <div className="relative">
+                                                            <Avatar className="h-16 w-16">
+                                                                <AvatarImage src={getImageUrl(doctor.image)} alt={doctor.name} />
+                                                                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl font-bold">
+                                                                    {doctor.name ? doctor.name.split(' ').map(n => n[0]).join('') : 'DR'}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            {doctor.isOnline && (
+                                                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold text-lg text-gray-900">Dr. {doctor.name}</h4>
+                                                            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
+                                                                {doctor.specialty}
+                                                            </Badge>
+                                                            <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
+                                                                <div className="flex items-center space-x-1">
+                                                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                                                    <span>{doctor.rating}</span>
+                                                                </div>
+                                                                <div className="flex items-center space-x-1">
+                                                                    <Activity className="h-4 w-4" />
+                                                                    <span>{doctor.experience} years</span>
+                                                                </div>
+                                                                <div className="flex items-center space-x-1">
+                                                                    <Users className="h-4 w-4" />
+                                                                    <span>{doctor.patients}+ patients</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Description */}
-                                                <p className="text-sm text-gray-600 leading-relaxed">
-                                                    {doctor.description}
-                                                </p>
+                                                    {/* Description */}
+                                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                                        {doctor.description}
+                                                    </p>
 
-                                                {/* Location and Hours */}
-                                                <div className="space-y-2 text-sm text-gray-600">
-                                                    <div className="flex items-center space-x-2">
-                                                        <MapPin className="h-4 w-4" />
-                                                        <span>{doctor.location}</span>
+                                                    {/* Location and Hours */}
+                                                    <div className="space-y-2 text-sm text-gray-600">
+                                                        <div className="flex items-center space-x-2">
+                                                            <MapPin className="h-4 w-4" />
+                                                            <span>{doctor.location}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <Clock className="h-4 w-4" />
+                                                            <span>{doctor.hours}</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <Clock className="h-4 w-4" />
-                                                        <span>{doctor.hours}</span>
-                                                    </div>
-                                                </div>
 
-                                                {/* Consultation Types */}
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700 mb-2">Available Consultation Types:</p>
-                                                    <div className="flex items-center space-x-2">
-                                                        <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
-                                                            <Video className="h-3 w-3 mr-1" />
-                                                            Video Call
-                                                        </Badge>
-                                                        <Badge variant="outline" className="text-xs border-green-200 text-green-700">
-                                                            <Phone className="h-3 w-3 mr-1" />
-                                                            Audio Call
-                                                        </Badge>
-                                                        <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
-                                                            <MessageCircle className="h-3 w-3 mr-1" />
-                                                            Text Chat
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-
-                                                {/* Price and Book Button */}
-                                                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                                                    {/* Consultation Types */}
                                                     <div>
-                                                        <p className="text-lg font-bold text-green-600">From रु {doctor.chatFee || doctor.consultationFee || 0}</p>
-                                                        <p className="text-xs text-gray-500">Starting price for chat</p>
+                                                        <p className="text-sm font-medium text-gray-700 mb-2">Available Consultation Types:</p>
+                                                        <div className="flex items-center space-x-2">
+                                                            <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
+                                                                <Video className="h-3 w-3 mr-1" />
+                                                                Video Call
+                                                            </Badge>
+                                                            <Badge variant="outline" className="text-xs border-green-200 text-green-700">
+                                                                <Phone className="h-3 w-3 mr-1" />
+                                                                Audio Call
+                                                            </Badge>
+                                                            <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
+                                                                <MessageCircle className="h-3 w-3 mr-1" />
+                                                                Text Chat
+                                                            </Badge>
+                                                        </div>
                                                     </div>
-                                                    <Button
-                                                        onClick={() => handleBookConsultation(doctor)}
-                                                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                    >
-                                                        <Calendar className="h-4 w-4 mr-2" />
-                                                        Book Consultation
-                                                    </Button>
+
+                                                    {/* Price and Book Button */}
+                                                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                                                        <div>
+                                                            <p className="text-lg font-bold text-green-600">From रु {doctor.chatFee || doctor.consultationFee || 0}</p>
+                                                            <p className="text-xs text-gray-500">Starting price for chat</p>
+                                                        </div>
+                                                        <Button
+                                                            onClick={() => handleBookConsultation(doctor)}
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                        >
+                                                            <Calendar className="h-4 w-4 mr-2" />
+                                                            Book Consultation
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )))}
+                                            </CardContent>
+                                        </Card>
+                                    )))}
                             </div>
 
                             {sortedDoctors.length === 0 && (
@@ -1537,7 +1542,10 @@ export function PatientDashboard() {
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <div className="flex items-center space-x-2 mb-1">
-                                                                        <h4 className="font-semibold text-lg text-gray-900">{pharmacy.name}</h4>
+                                                                        <h4
+                                                                            className="font-semibold text-lg text-gray-900"
+                                                                            dangerouslySetInnerHTML={{ __html: pharmacy.name }}
+                                                                        />
                                                                         {pharmacy.isOpen && (
                                                                             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Online</Badge>
                                                                         )}
