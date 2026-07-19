@@ -252,16 +252,10 @@ export const pharmacyAPI = {
     // Inventory
     getInventory: () => api.get('/pharmacies/dashboard/inventory'),
     addInventory: (data) => {
-        const isFormData = data instanceof FormData;
-        return api.post('/pharmacies/dashboard/inventory', data, {
-            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
-        });
+        return api.post('/pharmacies/dashboard/inventory', data);
     },
     updateInventory: (id, data) => {
-        const isFormData = data instanceof FormData;
-        return api.put(`/pharmacies/dashboard/inventory/${id}`, data, {
-            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
-        });
+        return api.put(`/pharmacies/dashboard/inventory/${id}`, data);
     },
     deleteInventory: (id) => api.delete(`/pharmacies/dashboard/inventory/${id}`),
 
