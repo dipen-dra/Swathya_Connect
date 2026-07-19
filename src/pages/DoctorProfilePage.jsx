@@ -9,7 +9,7 @@ import { Star, MapPin, Clock, MessageCircle, Phone, Video, Calendar, ArrowLeft, 
 import { doctorsAPI, consultationsAPI, paymentAPI, profileAPI } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import PaymentDialog from '@/components/ui/payment-dialog';
+import { PaymentDialog } from '@/components/ui/payment-dialog';
 
 export default function DoctorProfilePage() {
     const { id } = useParams();
